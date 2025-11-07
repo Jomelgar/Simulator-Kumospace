@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5
+    container_name: rocketchat_mongodb
+    restart: unless-stopped
+    volumes:
+      - ./data/db:/data/db
+      - ./data/dump:/dump
+    environment:
+      - MONGO_INITDB_DATABASE=rocketchat
+
+  rocketchat:
+    image: rocketchat/rocket.chat:latest
+    container_name: rocketchat_app
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/rocketchat
+      - ROOT_URL=http://localhost:3000
+      - PORT=3000
+
