@@ -6,11 +6,23 @@ import Chat from "./Chat"
 
 function App() {
   const [count, setCount] = useState(0)
+  const [username, setUsername] = useState("");
+  const [password,serPassword] = useState("");
+  const [enter,setEnter] = useState(false);
 
   return (
     <>
       <div>
-        <Chat username={"jomel"} password={"Josue2307"}/>
+        <h1>Login</h1>
+        <div className='flex flex-col p-2 gap-2'>
+          <input value={username} placeholder='Usuario' onChange={(e) => setUsername(e.target.value)}/> 
+          <input value={password} type="password" placeholder='Contraseña' onChange={(e) => serPassword(e.target.value)}/>
+        </div>
+        <button onClick={() =>{setEnter(true)}}>Iniciar</button>
+        <button onClick={()=> {setEnter(false)}}> Quitar</button>
+      </div>
+      <div>
+        <Chat username={username} password={password} tryEnter={enter} resetEnter={() => setEnter(false)}/>
       </div>
     </>
   )

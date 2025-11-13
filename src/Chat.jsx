@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
+import { BarLoader } from 'react-spinners';
 import axiosInstance from "./axios";
 
-export default function RocketChatIframe({ username, password }) {
+export default function RocketChatIframe({ username, password,tryEnter,resetEnter }) {
   const [token, setToken] = useState();
-  const [width, setWidth] = useState(500);
+  const [width, setWidth] = useState(window.innerWidth *0.33);
   const iframeRef = useRef(null);
   const isResizing = useRef(false);
   const lastX = useRef(0);
@@ -13,14 +14,21 @@ export default function RocketChatIframe({ username, password }) {
       if (!username || !password) return;
       try {
         const response = await axiosInstance.post('/login', { username, password });
-        if (response.status === 200) setToken(response.data.auth_token);
-        else setToken(null);
+        if (response.status === 200) {
+          setToken(response.data.auth_token);
+          console.log(response.data.auth_token);
+        }
+        else{ 
+          setToken(null); 
+          resetEnter();
+        }
       } catch (error) {
         setToken(null);
+        resetEnter();
       }
     };
-    fetchUser();
-  }, [username, password]);
+    if(tryEnter === true) fetchUser()
+  }, [tryEnter]);
 
   const startResize = (e) => {
     isResizing.current = true;
@@ -54,7 +62,7 @@ export default function RocketChatIframe({ username, password }) {
 
   return (
     <div
-      className="fixed bottom-0 right-0 h-screen bg-gray-100 flex flex-col shadow-lg"
+      className="fixed bottom-0 right-0 items-center justify-center h-screen bg-gray-100 flex flex-col shadow-lg"
       style={{ width }}
     >
       {token ? (
@@ -65,7 +73,7 @@ export default function RocketChatIframe({ username, password }) {
           className="w-full h-full border-none"
         />
       ) : (
-        <p>Cargando...</p>
+        <BarLoader width={0.2 * window.innerWidth}/>
       )}
       <div
         className="absolute top-0 left-0 w-1 h-full cursor-ew-resize bg-transparent"
