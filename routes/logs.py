@@ -20,10 +20,10 @@ def login():
     
     if not res.get("success", True):
         return jsonify({"Error": "Check your username or password"}), 400
-
+    print(res)
     return jsonify({
         "user_id": res["_id"],
-        "auth_token": rocket_user.headers["X-Auth-Token"]
+        "auth_token": rocket_user.headers["X-Auth-Token"],
     }), 200
 
 @logs_bp.route('/register', methods=['POST'])

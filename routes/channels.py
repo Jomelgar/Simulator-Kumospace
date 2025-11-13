@@ -7,7 +7,6 @@ load_dotenv()
 channels_bp = Blueprint('channels_bp', __name__)
 api_ns = Namespace('channels', description='Canales e IMs')        
 
-#Solo son validos de nombre cosas que no incluyan ' '    
 @channels_bp.route('/',methods=['POST'])
 def createChannel():
     data = request.get_json()
@@ -16,10 +15,13 @@ def createChannel():
     if not name:
         return jsonify({"error": "Channel name is required"}), 400
 
-    res = rocket.channels_create(name).json()
-    if not res.get("success"):
-        return jsonify({"error": res}), 400
+    res = rocket.call_api_post(
+        "channels.create",
+        name=name,
+        type='p'  
+    ).json()
 
+    rocket.call_api_post("channels.setType", roomId=res.get("channel")["_id"], type="p")
     return jsonify({
         "message": f"Channel created: {name}",
         "channel": res.get("channel")
