@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
-
+import Chat from "./components/chat/Chat";
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
 
@@ -634,55 +634,8 @@ export default function App() {
 
         {/* Chat Panel */}
         {isChatOpen && (
-          <div className="w-80 bg-white border-l border-slate-200 flex flex-col">
-            <div className="px-4 py-3 border-b border-slate-200 bg-slate-900">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white text-sm">MENSAJERÍA</h3>
-                <button
-                  onClick={() => setIsChatOpen(false)}
-                  className="text-white hover:bg-slate-800 h-7 w-7 flex items-center justify-center rounded"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <select
-                value={chatTarget}
-                onChange={(e) => setChatTarget(e.target.value)}
-                className="w-full bg-slate-800 border-slate-700 text-white text-sm h-9 rounded px-3 border"
-              >
-                <option value="general">Chat General</option>
-                {allUsers.filter(u => u.id !== currentUser.id).map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50">
-              {messages.length === 0 && (
-                <div className="text-center text-xs text-slate-400 py-8">Sin mensajes</div>
-              )}
-            </div>
-
-            <div className="p-3 border-t border-slate-200 bg-white">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Mensaje..."
-                  className="flex-1 text-sm h-9 px-3 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  className="h-9 w-9 bg-blue-600 text-white rounded flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+          <div className="w-80 bg-white border-l border-slate-200 flex">
+            <Chat username={"jomel"} password={"Josue2307"} tryEnter={true} />
           </div>
         )}
       </div>
