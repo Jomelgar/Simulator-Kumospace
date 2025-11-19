@@ -1,84 +1,37 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { BarLoader } from 'react-spinners';
-import axiosInstance from "./axios";
+import axiosInstance,{login} from "./axios";
 
-export default function RocketChatIframe({ username, password,tryEnter,resetEnter }) {
+export default function RocketChatIframe({ username, password,tryEnter,exit }) {
   const [token, setToken] = useState();
-  const [width, setWidth] = useState(window.innerWidth *0.33);
-  const iframeRef = useRef(null);
-  const isResizing = useRef(false);
-  const lastX = useRef(0);
 
   useEffect(() => {
     const fetchUser = async () => {
       if (!username || !password) return;
       try {
-        const response = await axiosInstance.post('/login', { username, password });
-        if (response.status === 200) {
-          setToken(response.data.auth_token);
-          console.log(response.data.auth_token);
-        }
-        else{ 
-          setToken(null); 
-          resetEnter();
-        }
+        const response = await login(username, password);
+        setToken(response.token); 
       } catch (error) {
         setToken(null);
-        resetEnter();
+        exit();
       }
     };
     if(tryEnter === true) fetchUser()
   }, [tryEnter]);
 
-  const startResize = (e) => {
-    isResizing.current = true;
-    lastX.current = e.clientX;
-    e.preventDefault();
-  };
-
-  const stopResize = () => {
-    isResizing.current = false;
-  };
-
-  const resize = (e) => {
-    if (isResizing.current) {
-      const dx = lastX.current - e.clientX;
-      const newWidth = width + dx;
-      if (newWidth >= 300 && newWidth <= 800) {
-        setWidth(newWidth);
-        lastX.current = e.clientX; 
-      }
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResize);
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResize);
-    };
-  }, [width]);
-
   return (
     <div
-      className="fixed bottom-0 right-0 items-center justify-center h-screen bg-gray-100 flex flex-col shadow-lg"
-      style={{ width }}
+      className="fixed bottom-0 right-0 w-full items-center justify-center h-screen bg-gray-100 flex flex-col shadow-lg"
     >
       {token ? (
         <iframe
-          ref={iframeRef}
           title="Rocket.Chat"
           src={`http://localhost:3000/home?resumeToken=${token}`}
           className="w-full h-full border-none"
         />
       ) : (
-        <BarLoader width={0.2 * window.innerWidth}/>
+        <BarLoader/>
       )}
-      <div
-        className="absolute top-0 left-0 w-1 h-full cursor-ew-resize bg-transparent"
-        onMouseDown={startResize}
-      />
     </div>
   );
 }

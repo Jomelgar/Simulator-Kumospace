@@ -6,9 +6,9 @@ import Chat from "./Chat"
 
 function App() {
   const [count, setCount] = useState(0)
-  const [username, setUsername] = useState("");
-  const [password,serPassword] = useState("");
-  const [enter,setEnter] = useState(false);
+  const [username, setUsername] = useState("jomel");
+  const [password,serPassword] = useState("Josue2307");
+  const [enter,setEnter] = useState(true);
 
   return (
     <>
@@ -22,7 +22,7 @@ function App() {
         <button onClick={()=> {setEnter(false)}}> Quitar</button>
       </div>
       <div>
-        <Chat username={username} password={password} tryEnter={enter} resetEnter={() => setEnter(false)}/>
+        <Chat username={username} password={password} tryEnter={enter} exit={() => setEnter(false)}/>
       </div>
     </>
   )
