@@ -1,0 +1,227 @@
+.rcx-box.rcx-box--full{
+  background-color: #ffffff !important;
+  color: #5c5c5c !important;
+}
+
+.rc-box{
+  color: yellow;
+}
+/* Sidebar principal */
+.rcx-sidebar {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Menús y opciones */
+.rcx-menu {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.rcx-option {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.rcx-option:hover {
+  background-color: #ffcf4a !important;
+  color: #000000 !important;
+}
+
+/* Header de la sala de mensajes */
+.rcx-room-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+/* Nombre de la sala en el header - CORREGIDO */
+.rcx-room-header__name {
+  background-color: transparent !important;
+  color: #000000 !important;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+}
+
+/* Topic/descripción de la sala */
+.rcx-room-header__topic {
+  color: #5c5c5c !important;
+  font-size: 0.9rem !important;
+}
+
+/* Iconos del header */
+.rcx-room-header__icon {
+  color: #d4af37 !important;
+}
+
+.rcx-room-header__icon:hover {
+  color: #000000 !important;
+  background-color: rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Botones generales */
+.rcx-button {
+  background-color: #f5f5f5 !important;
+  color: #000000 !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+.rcx-button--primary {
+  background-color: #ffcf4a !important;
+  color: #5c5c5c !important;
+  border: none !important;
+}
+
+.rcx-button--primary:hover {
+  background-color: #fabd43 !important;
+}
+
+/* Items de la sidebar - CORREGIDO */
+.rcx-sidebar-item {
+  color: #5c5c5c !important;
+  background-color: transparent !important;
+}
+
+.rcx-sidebar-item:hover {
+  background-color: #ffcf4a !important;
+  color: #000000 !important;
+}
+
+.rcx-sidebar-item--selected {
+  color: #000000 !important;
+  background-color: #fabd43 !important;
+}
+
+.rcx-sidebar-item--clickable {
+  color: #5c5c5c !important;
+}
+
+/* Iconos de la sidebar - CORREGIDO */
+.rcx-sidebar-item__icon {
+  color: #5c5c5c !important;
+}
+
+.rcx-sidebar-item:hover .rcx-sidebar-item__icon {
+  color: #000000 !important;
+}
+
+.rcx-sidebar-item--selected .rcx-sidebar-item__icon {
+  color: #000000 !important;
+}
+
+/* Área principal de mensajes */
+.rcx-room {
+  background-color: #ffffff !important;
+}
+
+.messages-container-main {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* CONTENEDOR DE MENSAJES - TEXTO VISIBLE */
+.rcx-messages-container {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* MENSAJES INDIVIDUALES - TEXTO NEGRO */
+.rcx-message {
+  color: #000000 !important;
+  background-color: transparent !important;
+}
+
+.rcx-message:hover {
+  background-color: #f8f8f8 !important;
+}
+
+/* TEXTO DEL CUERPO DEL MENSAJE */
+.rcx-message-body {
+  color: #000000 !important;
+}
+
+/* NOMBRE DE USUARIO EN MENSAJES */
+.rcx-message-header__name {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* TIMESTAMP DE MENSAJES */
+.rcx-message-header__time {
+  color: #5c5c5c !important;
+}
+
+/* TEXTO DE MENSAJES - TODOS LOS ELEMENTOS DE TEXTO */
+.rcx-message-body,
+.rcx-message-body *,
+.rcx-message-body p,
+.rcx-message-body span,
+.rcx-message-body div {
+  color: #000000 !important;
+}
+
+/* MENSAJES DE SISTEMA */
+.rcx-message-system {
+  color: #5c5c5c !important;
+}
+
+/* CAJA DE ENTRADA DE MENSAJES - CORREGIDO */
+.rcx-input-box__wrapper {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+/* INPUT DE MENSAJE - TEXTO AL ESCRIBIR */
+.rcx-input-box {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* PLACEHOLDER DEL INPUT - "Escribe tu mensaje..." */
+.rcx-input-box::placeholder {
+  color: #8a8a8a !important;
+  opacity: 1 !important;
+}
+
+/* TEXTAREA DEL MENSAJE (si usa textarea) */
+.rcx-message-composer__input {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+.rcx-message-composer__input::placeholder {
+  color: #8a8a8a !important;
+  opacity: 1 !important;
+}
+
+/* CONTENEDOR DEL COMPOSITOR DE MENSAJES */
+.rcx-message-composer {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Elementos de texto generales */
+.rcx-box {
+  color: #000000 !important;
+}
+
+/* Estados de hover generales */
+.rc-box:hover {
+  color: #000000 !important;
+}
+
+/* TEXTO EN TODA LA APLICACIÓN */
+body,
+.rcx-css-1,
+.rcx-css-2,
+[class*="rcx-"] {
+  color: #000000 !important;
+}
+
+/* CONTENEDORES DE TEXTO ESPECÍFICOS */
+.rcx-attachment__content,
+.rcx-message-generic,
+.rcx-thread-message,
+.rcx-message-list {
+  color: #000000 !important;
+}
