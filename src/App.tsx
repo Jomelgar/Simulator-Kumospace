@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
+import { set } from 'react-hook-form';
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
@@ -33,7 +34,8 @@ export interface ChatMessage {
 }
 
 export default function App() {
-  const [currentUser] = useState<User>({
+
+  const [currentUser, setCurrentUser] = useState<User>({
     id: 'current-user',
     name: 'Tú',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current',
@@ -42,99 +44,69 @@ export default function App() {
     locationType: 'private'
   });
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'María González',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
-      status: 'online',
-      currentLocation: 'shared-1',
-      locationType: 'shared'
-    },
-    {
-      id: '2',
-      name: 'Carlos Ruiz',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
-      status: 'busy',
-      currentLocation: 'shared-1',
-      locationType: 'shared'
-    },
-    {
-      id: '3',
-      name: 'Ana Martínez',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana',
-      status: 'online',
-      currentLocation: 'shared-2',
-      locationType: 'shared'
-    },
-    {
-      id: '4',
-      name: 'Luis Pérez',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luis',
-      status: 'away',
-      currentLocation: 'private-4',
-      locationType: 'private'
-    }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([
-    {
-      id: 'shared-1',
-      name: 'Sala de Desarrollo',
-      type: 'shared',
-      isLocked: false,
-      maxUsers: 8
-    },
-    {
-      id: 'shared-2',
-      name: 'Sala de Diseño',
-      type: 'shared',
-      isLocked: false,
-      maxUsers: 6
-    },
-    {
-      id: 'shared-3',
-      name: 'Sala de Reuniones',
-      type: 'shared',
-      isLocked: true,
-      maxUsers: 4
-    },
-    {
-      id: 'private-current',
-      name: 'Mi Oficina',
-      type: 'private',
-      ownerId: 'current-user',
-      isLocked: false
-    },
-    {
-      id: 'private-1',
-      name: 'Oficina de María',
-      type: 'private',
-      ownerId: '1',
-      isLocked: false
-    },
-    {
-      id: 'private-2',
-      name: 'Oficina de Carlos',
-      type: 'private',
-      ownerId: '2',
-      isLocked: true
-    },
-    {
-      id: 'private-3',
-      name: 'Oficina de Ana',
-      type: 'private',
-      ownerId: '3',
-      isLocked: false
-    },
-    {
-      id: 'private-4',
-      name: 'Oficina de Luis',
-      type: 'private',
-      ownerId: '4',
-      isLocked: true
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+
+  const [socket, setSocket] = useState<WebSocket|null>(null);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:3001");
+    setSocket(ws);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "init" || data.type === "update") {
+        setUsers(data.users);
+        setWorkspaces(data.workspaces);
+
+        // Mantener currentUser actualizado
+        const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
+        if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
+  const enterWorkSpace = (workspaceID: string) =>{
+    if(socket){
+      socket.send(JSON.stringify({
+        type: "enterWorkspace",
+        userId: currentUser.id,
+        workspaceId: workspaceID
+      }));
     }
-  ]);
+  }
+
+  const lockWorkSpace = (workspaceID: string) =>{
+    if(socket){
+      socket.send(JSON.stringify({
+        type: "lockWorkspace",
+        workspaceId: workspaceID
+      }));
+    }
+  }
+
+  const createWorkSpace = (workspaceMaxUSERS: string) =>{
+    if(socket){
+      socket.send(JSON.stringify({
+        type: "createWorkSpace",
+        workspaceMaxUsers: workspaceMaxUSERS
+      }));
+    }
+  }
+
+  const deleteWorkSpace = (workspaceID: string) =>{
+    if(socket){
+      socket.send(JSON.stringify({
+        type: "deleteWorkSpace",
+        userId: currentUser.id,
+        workspaceId: workspaceID
+      }));
+    }
+  }
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -148,87 +120,8 @@ export default function App() {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
 
-  const handleCreateSharedWorkspace = () => {
-    const maxUsers = parseInt(newWorkspaceMaxUsers);
-    if (isNaN(maxUsers) || maxUsers < 1) return;
-    
-    // Generar nombre automático
-    const sharedCount = sharedWorkspaces.length + 1;
-    
-    const newWorkspace: Workspace = {
-      id: `shared-${Date.now()}`,
-      name: `Sala ${sharedCount}`,
-      type: 'shared',
-      isLocked: false,
-      maxUsers: maxUsers
-    };
-    
-    setWorkspaces([...workspaces, newWorkspace]);
-    setNewWorkspaceMaxUsers('8');
-    setShowCreateWorkspace(false);
-  };
-
-  const handleDeleteSharedWorkspace = (workspaceId: string) => {
-    // No permitir eliminar si el usuario actual está en ese espacio
-    if (currentUser.currentLocation === workspaceId) return;
-    
-    // Mover usuarios que estén en ese espacio a su oficina privada
-    const updatedUsers = users.map(user => {
-      if (user.currentLocation === workspaceId) {
-        const userPrivateOffice = workspaces.find(w => w.ownerId === user.id && w.type === 'private');
-        return {
-          ...user,
-          currentLocation: userPrivateOffice?.id || user.currentLocation,
-          locationType: 'private' as WorkspaceType
-        };
-      }
-      return user;
-    });
-    
-    setUsers(updatedUsers);
-    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-  };
-
-  const handleEnterWorkspace = (workspaceId: string) => {
-    const workspace = workspaces.find(w => w.id === workspaceId);
-    if (!workspace) return;
-    
-    // No permitir entrar a oficinas privadas bloqueadas de otros usuarios
-    if (workspace.type === 'private' && workspace.isLocked && workspace.ownerId !== currentUser.id) {
-      return;
-    }
-    
-    // Para oficinas privadas: verificar si el owner está presente y no ocupado
-    if (workspace.type === 'private' && workspace.ownerId !== currentUser.id) {
-      const owner = allUsers.find(u => u.id === workspace.ownerId);
-      if (!owner) return;
-      
-      // No permitir entrar si el owner no está en su oficina
-      if (owner.currentLocation !== workspaceId) {
-        return;
-      }
-      
-      // No permitir entrar si el owner está ocupado
-      if (owner.status === 'busy') {
-        return;
-      }
-    }
-    
-    currentUser.currentLocation = workspaceId;
-    currentUser.locationType = workspace.type;
-    setUsers([...users]);
-  };
-
-  const handleToggleLock = (workspaceId: string) => {
-    setWorkspaces(prev =>
-      prev.map(w =>
-        w.id === workspaceId ? { ...w, isLocked: !w.isLocked } : w
-      )
-    );
-  };
-
   const getUsersInLocation = (locationId: string): User[] => {
-    const usersInLocation = users.filter(u => u.currentLocation === locationId);
+    const usersInLocation = users.filter(u => u.currentLocation === locationId && u.id !== currentUser.id);
     if (currentUser.currentLocation === locationId) {
       return [currentUser, ...usersInLocation];
     }
@@ -252,7 +145,7 @@ export default function App() {
     setNewMessage('');
   };
 
-  const allUsers = [currentUser, ...users];
+  const allUsers = users;
   const privateWorkspaces = workspaces.filter(w => w.type === 'private');
   const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
 
@@ -382,7 +275,7 @@ export default function App() {
                     return (
                       <div
                         key={workspace.id}
-                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
+                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
                         className={`border-2 rounded-lg p-4 transition-all ${
                           canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                         } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-blue-500 hover:shadow-md'}`}
@@ -399,7 +292,7 @@ export default function App() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleToggleLock(workspace.id);
+                                  lockWorkSpace(workspace.id);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
                                   workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
@@ -518,12 +411,12 @@ export default function App() {
                       min="1"
                       value={newWorkspaceMaxUsers}
                       onChange={(e) => setNewWorkspaceMaxUsers(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleCreateSharedWorkspace()}
+                      onKeyPress={(e) => e.key === 'Enter' && createWorkSpace(newWorkspaceMaxUsers)}
                       placeholder="Capacidad máxima..."
                       className="flex-1 text-sm h-10 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
-                      onClick={handleCreateSharedWorkspace}
+                      onClick={()=>createWorkSpace(newWorkspaceMaxUsers)}
                       disabled={!newWorkspaceMaxUsers.trim() || parseInt(newWorkspaceMaxUsers) < 1}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
@@ -551,7 +444,7 @@ export default function App() {
                     return (
                       <div 
                         key={workspace.id} 
-                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
+                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
                         className={`rounded-lg p-4 transition-all cursor-pointer ${
                           workspace.isLocked 
                             ? 'border-2 border-red-600 bg-red-50' 
@@ -569,7 +462,7 @@ export default function App() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteSharedWorkspace(workspace.id);
+                                deleteWorkSpace(workspace.id);
                               }}
                               disabled={isCurrentUserHere}
                               className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
@@ -585,7 +478,7 @@ export default function App() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleToggleLock(workspace.id);
+                                  lockWorkSpace(workspace.id);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
                                   workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
