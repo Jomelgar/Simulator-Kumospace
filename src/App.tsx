@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
 import Chat from "./components/chat/Chat";
+import { JitsiWidget, JitsiWidgetRef } from "./components/JitsiWidget";
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
 
@@ -79,22 +80,22 @@ export default function App() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
     {
-      id: 'shared-1',
-      name: 'Sala de Desarrollo',
+      id: 'espacio 1',
+      name: 'Espacio compartido 1',
       type: 'shared',
       isLocked: false,
       maxUsers: 8
     },
     {
-      id: 'shared-2',
-      name: 'Sala de Diseño',
+      id: 'espacio 2',
+      name: 'Espacio compartido 2',
       type: 'shared',
       isLocked: false,
       maxUsers: 6
     },
     {
-      id: 'shared-3',
-      name: 'Sala de Reuniones',
+      id: 'espacio 3',
+      name: 'Espacio compartido 3',
       type: 'shared',
       isLocked: true,
       maxUsers: 4
@@ -147,6 +148,12 @@ export default function App() {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
+
+  // Estados para Jitsi
+  const [isInMeeting, setIsInMeeting] = useState(false);
+  const [currentMeetingRoom, setCurrentMeetingRoom] = useState<string>('');
+  const [showMeetingView, setShowMeetingView] = useState(false);
+  const jitsiWidgetRef = useRef<JitsiWidgetRef | null>(null);
 
   const handleCreateSharedWorkspace = () => {
     const maxUsers = parseInt(newWorkspaceMaxUsers);
@@ -217,6 +224,23 @@ export default function App() {
     currentUser.currentLocation = workspaceId;
     currentUser.locationType = workspace.type;
     setUsers([...users]);
+    
+    // Iniciar reunión automáticamente al entrar al espacio (sin cambiar de vista)
+    
+    const roomName = `${workspace.name.replace(/\s+/g, '_')}`;
+    setCurrentMeetingRoom(roomName);
+    setIsInMeeting(true);
+    setShowMeetingView(false); 
+  };
+
+  const handleToggleView = () => {
+    setShowMeetingView(!showMeetingView);
+  };
+
+  const handleEndMeeting = () => {
+    setIsInMeeting(false);
+    setCurrentMeetingRoom('');
+    setShowMeetingView(false);
   };
 
   const handleToggleLock = (workspaceId: string) => {
@@ -272,7 +296,14 @@ export default function App() {
             {/* Controles de medios */}
             <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
               <button
-                onClick={() => setIsCameraOn(!isCameraOn)}
+                onClick={() => {
+                  if (isInMeeting && jitsiWidgetRef.current) {
+                    jitsiWidgetRef.current.toggleCamera();
+                    setIsCameraOn(!isCameraOn);
+                  } else {
+                    setIsCameraOn(!isCameraOn);
+                  }
+                }}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
                   isCameraOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
                 }`}
@@ -282,7 +313,14 @@ export default function App() {
               </button>
               
               <button
-                onClick={() => setIsMicOn(!isMicOn)}
+                onClick={() => {
+                  if (isInMeeting && jitsiWidgetRef.current) {
+                    jitsiWidgetRef.current.toggleMic();
+                    setIsMicOn(!isMicOn);
+                  } else {
+                    setIsMicOn(!isMicOn);
+                  }
+                }}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
                   isMicOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
                 }`}
@@ -292,7 +330,19 @@ export default function App() {
               </button>
               
               <button
-                onClick={() => setIsSharingScreen(!isSharingScreen)}
+                onClick={() => {
+                  const newState = !isSharingScreen;
+                  setIsSharingScreen(newState);
+                  // Si hay una reunión activa, controlar el compartir pantalla de Jitsi
+                  if (isInMeeting) {
+                    if (jitsiWidgetRef.current) {
+                      console.log('Toggle compartir pantalla desde header');
+                      jitsiWidgetRef.current.toggleScreenshare();
+                    } else {
+                      console.warn('jitsiWidgetRef.current no está disponible');
+                    }
+                  }
+                }}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
                   isSharingScreen ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'
                 }`}
@@ -307,6 +357,16 @@ export default function App() {
               <span className="text-sm text-white">{currentUser.name}</span>
             </div>
 
+            {isInMeeting && (
+              <button
+                onClick={handleToggleView}
+                className="px-4 py-2 rounded-lg flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                <Video className="w-4 h-4" />
+                {showMeetingView ? 'Ver Oficinas' : 'Ver Reunión'}
+              </button>
+            )}
+
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
@@ -320,8 +380,37 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 overflow-auto">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Widget Jitsi siempre montado cuando hay reunión para que el ref esté disponible */}
+        {isInMeeting && (
+          <div 
+            className={showMeetingView ? "flex-1 flex flex-col p-4" : "absolute overflow-hidden pointer-events-none"}
+            style={showMeetingView ? {} : { 
+              width: '800px', 
+              height: '600px', 
+              left: '-9999px', 
+              top: '-9999px',
+              zIndex: -1,
+              opacity: 0
+            }}
+          >
+            <div className={showMeetingView ? "flex-1 bg-white rounded-lg shadow-lg" : "w-full h-full"} style={showMeetingView ? {} : { width: '800px', height: '600px' }}>
+              <JitsiWidget
+                ref={jitsiWidgetRef}
+                roomName={currentMeetingRoom}
+                visible={true}
+                userName="HECTOR"
+                onClose={handleEndMeeting}
+                className="w-full h-full"
+                onAudioMuteChanged={(muted) => setIsMicOn(!muted)}
+                onVideoMuteChanged={(muted) => setIsCameraOn(!muted)}
+              />
+            </div>
+          </div>
+        )}
+
+        {(!isInMeeting || !showMeetingView) && (
+          <main className="flex-1 overflow-auto">
           <div className="max-w-[1800px] mx-auto p-8 space-y-6">
             {/* Oficinas Privadas */}
             <div className="bg-white rounded-lg border border-slate-200">
@@ -631,11 +720,12 @@ export default function App() {
             </div>
           </div>
         </main>
+        )}
 
         {/* Chat Panel */}
-        {isChatOpen && (
+        {isChatOpen && !isInMeeting && (
           <div className="w-80 bg-white border-l border-slate-200 flex">
-            <Chat username={"jomel"} password={"Josue2307"} tryEnter={true} />
+            <Chat username={"jomel"} password={"Josue2307"} tryEnter={true} exit={() => {}} />
           </div>
         )}
       </div>
