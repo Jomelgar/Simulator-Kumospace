@@ -1,0 +1,14 @@
+{
+  "name": "websockets",
+  "version": "1.0.0",
+  "description": "Websockets for HiveRooms",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js"
+  },
+  "author": "bryanbanegas",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}
