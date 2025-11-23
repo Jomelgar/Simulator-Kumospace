@@ -7,9 +7,9 @@ import os
 load_dotenv()
 
 rocket = RocketChat(
-    user_id=os.getenv('rocket_id'),
-    auth_token=os.getenv('rocket_token'),
-    server_url=os.getenv('rocket_url')
+    user=os.getenv('ROCKET_USERNAME'),
+    password=os.getenv('ROCKET_PASSWORD'),
+    server_url=os.getenv('ROCKET_URL')
 )
 
 
@@ -20,7 +20,7 @@ else:
     print(f"✅ Admin conectado correctamente como: {check.get('username')}")
 
 def getRocketUser(user_id, token):
-    rocketUser = RocketChat(user_id=user_id,auth_token=token,server_url=os.getenv('rocket_url'))
+    rocketUser = RocketChat(user_id=user_id,auth_token=token,server_url=os.getenv('ROCKET_URL'))
     res = rocketUser.me().json()
     if not res.get("success", True):
         return None

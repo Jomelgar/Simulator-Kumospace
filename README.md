@@ -35,9 +35,10 @@ pip install -r requirements.txt
 ```
 4. Crear archivo .env con las credenciales del admin de Rocket.Chat:
 ```env
-rocket_url=http://localhost:3000
-rocket_id=<ADMIN_USER_ID>
-rocket_token=<ADMIN_AUTH_TOKEN>
+ROCKET_URL=http://rocketchat:3000
+ROCKET_USERNAME=user
+ROCKET_PASSWORD=pass123
+PORT=8000
 ```
 
 ---

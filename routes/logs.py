@@ -15,7 +15,7 @@ def login():
     data = request.get_json()
     username = data["username"]
     password = data["password"]
-    rocket_user = RocketChat(username,password,server_url=os.getenv('rocket_url'))
+    rocket_user = RocketChat(username,password,server_url=os.getenv('ROCKET_URL'))
     res = rocket_user.me().json()
     
     if not res.get("success", True):
