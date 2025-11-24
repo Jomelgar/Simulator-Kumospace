@@ -30,7 +30,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Right side - Login form */}
-      <div className="w-[56%] bg-black flex items-center justify-center">
+      <div className="w-[56%] !bg-black flex items-center justify-center">
         <div className="w-full max-w-[500px] px-8">
           {/* Title - "Login" with golden "o" */}
           <h1 className="text-[64px] mb-10 text-center flex items-center justify-center" style={{ fontWeight: '400', letterSpacing: '0.02em' }}>
