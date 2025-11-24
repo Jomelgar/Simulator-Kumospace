@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
-import { set } from 'react-hook-form';
-import Chat from '../components/chat/Chat';
+import Chat from "../components/chat/Chat";
+import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
@@ -113,13 +113,95 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatTarget, setChatTarget] = useState<string>('general');
-  const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState('8');
+  const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState('001');
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
 
   // Estados para controles de medios
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
+
+  // Estado para videoconferencia con Jitsi
+  const [isInMeeting, setIsInMeeting] = useState(false);
+
+  const handleCreateSharedWorkspace = () => {
+    const maxUsers = parseInt(newWorkspaceMaxUsers);
+    if (isNaN(maxUsers) || maxUsers < 1) return;
+
+    // Generar nombre automático
+    const sharedCount = sharedWorkspaces.length + 1;
+
+    const newWorkspace: Workspace = {
+      id: `shared-${Date.now()}`,
+      name: `Sala ${sharedCount}`,
+      type: 'shared',
+      isLocked: false,
+      maxUsers: maxUsers
+    };
+
+    setWorkspaces([...workspaces, newWorkspace]);
+    setNewWorkspaceMaxUsers('8');
+    setShowCreateWorkspace(false);
+  };
+
+  const handleDeleteSharedWorkspace = (workspaceId: string) => {
+    // No permitir eliminar si el usuario actual está en ese espacio
+    if (currentUser.currentLocation === workspaceId) return;
+
+    // Mover usuarios que estén en ese espacio a su oficina privada
+    const updatedUsers = users.map(user => {
+      if (user.currentLocation === workspaceId) {
+        const userPrivateOffice = workspaces.find(w => w.ownerId === user.id && w.type === 'private');
+        return {
+          ...user,
+          currentLocation: userPrivateOffice?.id || user.currentLocation,
+          locationType: 'private' as WorkspaceType
+        };
+      }
+      return user;
+    });
+
+    setUsers(updatedUsers);
+    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
+  };
+
+  const handleEnterWorkspace = (workspaceId: string) => {
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace) return;
+
+    // No permitir entrar a oficinas privadas bloqueadas de otros usuarios
+    if (workspace.type === 'private' && workspace.isLocked && workspace.ownerId !== currentUser.id) {
+      return;
+    }
+
+    // Para oficinas privadas: verificar si el owner está presente y no ocupado
+    if (workspace.type === 'private' && workspace.ownerId !== currentUser.id) {
+      const owner = allUsers.find(u => u.id === workspace.ownerId);
+      if (!owner) return;
+
+      // No permitir entrar si el owner no está en su oficina
+      if (owner.currentLocation !== workspaceId) {
+        return;
+      }
+
+      // No permitir entrar si el owner está ocupado
+      if (owner.status === 'busy') {
+        return;
+      }
+    }
+
+    currentUser.currentLocation = workspaceId;
+    currentUser.locationType = workspace.type;
+    setUsers([...users]);
+  };
+
+  const handleToggleLock = (workspaceId: string) => {
+    setWorkspaces(prev =>
+      prev.map(w =>
+        w.id === workspaceId ? { ...w, isLocked: !w.isLocked } : w
+      )
+    );
+  };
 
   const getUsersInLocation = (locationId: string): User[] => {
     const usersInLocation = users.filter(u => u.currentLocation === locationId && u.id !== currentUser.id);
@@ -146,7 +228,21 @@ export default function App() {
     setNewMessage('');
   };
 
-  const allUsers = users;
+  // Funciones para videoconferencia
+  const shouldEnableVideoConference = (): boolean => {
+    const usersInCurrentWorkspace = getUsersInLocation(currentUser.currentLocation);
+    return usersInCurrentWorkspace.length >= 2;
+  };
+
+  const getMeetingRoomName = (): string => {
+    return `workspace-${currentUser.currentLocation}`;
+  };
+
+  const handleMeetingEnd = () => {
+    setIsInMeeting(false);
+  };
+
+  const allUsers = [currentUser, ...users];
   const privateWorkspaces = workspaces.filter(w => w.type === 'private');
   const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
 
@@ -167,9 +263,8 @@ export default function App() {
             <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
               <button
                 onClick={() => setIsCameraOn(!isCameraOn)}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  isCameraOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
-                }`}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isCameraOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
+                  }`}
                 title={isCameraOn ? 'Desactivar cámara' : 'Activar cámara'}
               >
                 {isCameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
@@ -177,9 +272,8 @@ export default function App() {
               
               <button
                 onClick={() => setIsMicOn(!isMicOn)}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  isMicOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
-                }`}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isMicOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
+                  }`}
                 title={isMicOn ? 'Desactivar micrófono' : 'Activar micrófono'}
               >
                 {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
@@ -187,12 +281,32 @@ export default function App() {
               
               <button
                 onClick={() => setIsSharingScreen(!isSharingScreen)}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  isSharingScreen ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'
-                }`}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isSharingScreen ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'
+                  }`}
                 title={isSharingScreen ? 'Dejar de compartir pantalla' : 'Compartir pantalla'}
               >
                 {isSharingScreen ? <MonitorUp className="w-4 h-4" /> : <MonitorX className="w-4 h-4" />}
+              </button>
+
+              {/* Botón de Videoconferencia */}
+              <button
+                onClick={() => shouldEnableVideoConference() && setIsInMeeting(!isInMeeting)}
+                disabled={!shouldEnableVideoConference()}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${!shouldEnableVideoConference()
+                  ? 'bg-slate-900 text-slate-600 cursor-not-allowed opacity-50'
+                  : isInMeeting
+                    ? 'bg-green-600 text-white'
+                    : 'bg-slate-700 text-white hover:bg-slate-600'
+                  }`}
+                title={
+                  !shouldEnableVideoConference()
+                    ? 'Necesitas 2+ personas para iniciar videoconferencia'
+                    : isInMeeting
+                      ? 'Salir de videoconferencia'
+                      : 'Iniciar videoconferencia'
+                }
+              >
+                <Users className="w-4 h-4" />
               </button>
             </div>
 
@@ -203,9 +317,8 @@ export default function App() {
 
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                isChatOpen ? 'bg-blue-600 text-white' : 'bg-white text-slate-900 border border-slate-300'
-              }`}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${isChatOpen ? 'bg-blue-600 text-white' : 'bg-white text-slate-900 border border-slate-300'
+                }`}
             >
               <MessageCircle className="w-4 h-4" />
               Chat
@@ -276,10 +389,9 @@ export default function App() {
                     return (
                       <div
                         key={workspace.id}
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
-                        className={`border-2 rounded-lg p-4 transition-all ${
-                          canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
-                        } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-blue-500 hover:shadow-md'}`}
+                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
+                        className={`border-2 rounded-lg p-4 transition-all ${canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+                          } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-blue-500 hover:shadow-md'}`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           {isCurrentUserHere && (
@@ -295,9 +407,8 @@ export default function App() {
                                   e.stopPropagation();
                                   lockWorkSpace(workspace.id);
                                 }}
-                                className={`h-8 w-8 rounded flex items-center justify-center ${
-                                  workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
-                                }`}
+                                className={`h-8 w-8 rounded flex items-center justify-center ${workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  }`}
                               >
                                 {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                               </button>
@@ -314,31 +425,28 @@ export default function App() {
                               return (
                                 <div key={user.id} className="flex flex-col items-center gap-1">
                                   <div className="relative">
-                                    <img 
-                                      src={user.avatar} 
-                                      alt={user.name} 
-                                      className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
-                                        isUserInSharedSpace ? 'grayscale opacity-50' : ''
-                                      }`} 
+                                    <img
+                                      src={user.avatar}
+                                      alt={user.name}
+                                      className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
+                                        }`}
                                     />
-                                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                      isUserInSharedSpace ? 'bg-slate-400' :
-                                      user.status === 'online' ? 'bg-green-500' : 
-                                      user.status === 'busy' ? 'bg-red-500' : 
-                                      'bg-yellow-500'
-                                    }`} />
+                                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isUserInSharedSpace ? 'bg-slate-400' :
+                                      user.status === 'online' ? 'bg-green-500' :
+                                        user.status === 'busy' ? 'bg-red-500' :
+                                          'bg-yellow-500'
+                                      }`} />
                                   </div>
                                   <span className="text-xs text-slate-700 text-center">{user.name}</span>
-                                  <span className={`text-xs ${
-                                    isUserInSharedSpace ? 'text-slate-400' :
-                                    user.status === 'online' ? 'text-green-600' : 
-                                    user.status === 'busy' ? 'text-red-600' : 
-                                    'text-yellow-600'
-                                  }`}>
+                                  <span className={`text-xs ${isUserInSharedSpace ? 'text-slate-400' :
+                                    user.status === 'online' ? 'text-green-600' :
+                                      user.status === 'busy' ? 'text-red-600' :
+                                        'text-yellow-600'
+                                    }`}>
                                     {isUserInSharedSpace ? 'Activo' :
-                                     user.status === 'online' ? 'Activo' : 
-                                     user.status === 'busy' ? 'Ocupado' : 
-                                     'Ausente'}
+                                      user.status === 'online' ? 'Activo' :
+                                        user.status === 'busy' ? 'Ocupado' :
+                                          'Ausente'}
                                   </span>
                                 </div>
                               );
@@ -349,31 +457,28 @@ export default function App() {
                             <div className="flex justify-center mb-3">
                               <div className="flex flex-col items-center gap-1">
                                 <div className="relative">
-                                  <img 
-                                    src={owner.avatar} 
-                                    alt={owner.name} 
-                                    className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
-                                      isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
-                                    }`} 
+                                  <img
+                                    src={owner.avatar}
+                                    alt={owner.name}
+                                    className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
+                                      }`}
                                   />
-                                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                    isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'bg-slate-400' :
-                                    owner.status === 'online' ? 'bg-green-500' : 
-                                    owner.status === 'busy' ? 'bg-red-500' : 
-                                    'bg-yellow-500'
-                                  }`} />
+                                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'bg-slate-400' :
+                                    owner.status === 'online' ? 'bg-green-500' :
+                                      owner.status === 'busy' ? 'bg-red-500' :
+                                        'bg-yellow-500'
+                                    }`} />
                                 </div>
                                 <span className="text-xs text-slate-700 text-center">{owner.name}</span>
-                                <span className={`text-xs ${
-                                  isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
-                                  owner.status === 'online' ? 'text-green-600' : 
-                                  owner.status === 'busy' ? 'text-red-600' : 
-                                  'text-yellow-600'
-                                }`}>
+                                <span className={`text-xs ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
+                                  owner.status === 'online' ? 'text-green-600' :
+                                    owner.status === 'busy' ? 'text-red-600' :
+                                      'text-yellow-600'
+                                  }`}>
                                   {isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'Activo' :
-                                   owner.status === 'online' ? 'Activo' : 
-                                   owner.status === 'busy' ? 'Ocupado' : 
-                                   'Ausente'}
+                                    owner.status === 'online' ? 'Activo' :
+                                      owner.status === 'busy' ? 'Ocupado' :
+                                        'Ausente'}
                                 </span>
                               </div>
                             </div>
@@ -443,14 +548,13 @@ export default function App() {
                     const isCurrentUserHere = currentUser.currentLocation === workspace.id;
 
                     return (
-                      <div 
-                        key={workspace.id} 
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
-                        className={`rounded-lg p-4 transition-all cursor-pointer ${
-                          workspace.isLocked 
-                            ? 'border-2 border-red-600 bg-red-50' 
-                            : 'border border-slate-200 bg-slate-50'
-                        } ${!isCurrentUserHere && 'hover:border-blue-500 hover:shadow-md'}`}
+                      <div
+                        key={workspace.id}
+                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
+                        className={`rounded-lg p-4 transition-all cursor-pointer ${workspace.isLocked
+                          ? 'border-2 border-red-600 bg-red-50'
+                          : 'border border-slate-200 bg-slate-50'
+                          } ${!isCurrentUserHere && 'hover:border-blue-500 hover:shadow-md'}`}
                       >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -466,11 +570,10 @@ export default function App() {
                                 deleteWorkSpace(workspace.id);
                               }}
                               disabled={isCurrentUserHere}
-                              className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
-                                isCurrentUserHere 
-                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
-                              }`}
+                              className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${isCurrentUserHere
+                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
+                                }`}
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
@@ -481,9 +584,8 @@ export default function App() {
                                   e.stopPropagation();
                                   lockWorkSpace(workspace.id);
                                 }}
-                                className={`h-8 w-8 rounded flex items-center justify-center ${
-                                  workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
-                                }`}
+                                className={`h-8 w-8 rounded flex items-center justify-center ${workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  }`}
                               >
                                 {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                               </button>
@@ -533,6 +635,15 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Jitsi Meeting Overlay */}
+      {isInMeeting && (
+        <JitsiMeeting
+          roomName={getMeetingRoomName()}
+          displayName={currentUser.name}
+          onMeetingEnd={handleMeetingEnd}
+        />
+      )}
     </div>
   );
 }
