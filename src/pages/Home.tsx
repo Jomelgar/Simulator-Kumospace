@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
 import { set } from 'react-hook-form';
-import Chat from '../components/Chat/Chat';
+import Chat from '../components/chat/Chat';
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';

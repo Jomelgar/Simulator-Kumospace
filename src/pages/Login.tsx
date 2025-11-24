@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logoImage from "../asset/logo.png";
+
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -13,51 +15,76 @@ const Login: React.FC = () => {
     navigate('/inicio');
   };
 
+  const onNavigateToSignUp = () => {
+    navigate('/sign_in');
+  };
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-slate-900 mb-6">Iniciar Sesión</h2>
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
-              Usuario
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+    <div className="flex h-screen">
+      {/* Left side - Logo */}
+      <div className="w-[44%] bg-[rgb(255,255,255)] flex items-center justify-center">
+        <img
+          src={logoImage}
+          alt="Rooms Hive Logo"
+          className="w-[1100px] h-auto"
+        />
+      </div>
+
+      {/* Right side - Login form */}
+      <div className="w-[56%] bg-black flex items-center justify-center">
+        <div className="w-full max-w-[500px] px-8">
+          {/* Title - "Login" with golden "o" */}
+          <h1 className="text-[64px] mb-10 text-center flex items-center justify-center" style={{ fontWeight: '400', letterSpacing: '0.02em' }}>
+            <span className="text-white">L</span>
+            <span className="text-[#f4b942]">o</span>
+            <span className="text-white">gin</span>
+          </h1>
+
+          {/* Form */}
+          <form className="space-y-7">
+            {/* Username field */}
+            <div>
+              <label className="text-white text-[24px] block mb-2" style={{ fontWeight: '300' }}>
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Example username"
+                className="w-full bg-transparent border border-white rounded-lg px-4 py-3 text-white placeholder-gray-500 text-[16px]"
+                style={{ outline: 'none' }}
+              />
+            </div>
+
+            {/* Password field */}
+            <div>
+              <label className="text-white text-[24px] block mb-2" style={{ fontWeight: '300' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="**********"
+                className="w-full bg-transparent border border-white rounded-lg px-4 py-3 text-white placeholder-gray-500 text-[16px]"
+                style={{ outline: 'none' }}
+              />
+            </div>
+          </form>
+
+          {/* Bottom links */}
+          <div className="flex justify-between mt-20">
+            <button
+              onClick={onNavigateToSignUp}
+              className="text-[#f4b942] text-[24px] underline hover:opacity-80 bg-transparent border-none cursor-pointer"
+              style={{ textUnderlineOffset: '4px' }}
+            >
+              Sign up
+            </button>
+            <button
+              onClick={handleLogin}
+              className="text-[#f4b942] text-[24px] underline hover:opacity-80 bg-transparent border-none cursor-pointer"
+              style={{ textUnderlineOffset: '4px' }}
+            >
+              Login
+            </button>
           </div>
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Iniciar Sesión
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => navigate('/sign_in')}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            ¿No tienes cuenta? Regístrate
-          </button>
         </div>
       </div>
     </div>

@@ -3,13 +3,13 @@ import logoImage from "../asset/logo.png";
 
 const SignIn: React.FC = () => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen w-full">
       {/* Left side - Logo */}
       <div className="w-[44%] bg-[rgb(255,255,255)] flex items-center justify-center">
         <img
           src={logoImage}
           alt="Rooms Hive Logo"
-          className="w-[1100px] h-auto"
+          className="w-3/4 max-w-[500px] h-auto"
         />
       </div>
 

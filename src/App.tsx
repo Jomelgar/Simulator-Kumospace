@@ -1,4 +1,5 @@
 import SignIn from './pages/SignIn';
+import Login from './pages/Login';
 
 type TabType = 'inicio' | 'login' | 'sign_in';
 
@@ -9,18 +10,12 @@ interface AppProps {
 export default function App({ page = 'inicio' }: AppProps) {
   if (page === 'login') {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-slate-900">Login</h1>
-        </div>
-      </div>
+      <Login />
     );
   }
 
   if (page === 'sign_in') {
-    return (
-      <SignIn/>
-    );
+    return <SignIn />;
   }
 
   return null;
