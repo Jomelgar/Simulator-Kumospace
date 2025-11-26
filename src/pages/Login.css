@@ -1,0 +1,101 @@
+.login-container {
+    display: flex;
+    height: 100vh;
+}
+
+.login-left-side {
+    width: 44%;
+    background-color: rgb(255, 255, 255);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-logo {
+    width: 1100px;
+    height: auto;
+}
+
+.login-right-side {
+    width: 56%;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-form-wrapper {
+    width: 100%;
+    max-width: 500px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.login-title {
+    font-size: 64px;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.text-white {
+    color: #fff;
+}
+
+.text-gold {
+    color: #f4b942;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.login-label {
+    color: #fff;
+    font-size: 24px;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+}
+
+.login-input {
+    width: 100%;
+    background-color: transparent;
+    border: 1px solid #fff;
+    border-radius: 0.625rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+}
+
+.login-input::placeholder {
+    color: #888;
+    /* Approximate gray-500 */
+}
+
+.login-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5rem;
+}
+
+.login-action-btn {
+    color: #f4b942;
+    font-size: 24px;
+    text-decoration: underline;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    text-underline-offset: 4px;
+}
+
+.login-action-btn:hover {
+    opacity: 0.8;
+}
