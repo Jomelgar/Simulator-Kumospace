@@ -295,6 +295,11 @@ export default function App() {
     setIsCameraOn(!muted);
   }, []);
 
+  const handleScreenSharingChange = useCallback((sharing: boolean) => {
+    console.log('Screen sharing cambió:', sharing);
+    setIsSharingScreen(sharing);
+  }, []);
+
   // Sincroniza periódicamente el estado real de Jitsi con el header
   useEffect(() => {
     if (!isJitsiActive || !jitsiApiRef.current) return;
@@ -387,8 +392,17 @@ export default function App() {
               </button>
               
               <button
-                onClick={() => setIsSharingScreen(!isSharingScreen)}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isSharingScreen ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400'
+                onClick={() => {
+                  if (jitsiApiRef.current) {
+                    jitsiApiRef.current.executeCommand('toggleShareScreen');
+                  }
+                }}
+                disabled={!jitsiApiRef.current}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${!jitsiApiRef.current
+                  ? 'bg-slate-900 text-slate-600 cursor-not-allowed opacity-50'
+                  : isSharingScreen
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-900 text-slate-400'
                   }`}
                 title={isSharingScreen ? 'Dejar de compartir pantalla' : 'Compartir pantalla'}
               >
@@ -441,16 +455,16 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex overflow-hidden">
         <main className={`flex-1 ${isInMeeting ? 'flex flex-col' : 'overflow-auto'}`}>
           {isInMeeting ? (
             <div className="flex-1 flex flex-col h-full">
-              <div className="flex-shrink-0 p-3 bg-white border-b border-slate-200">
+              <div className="flex-shrink-0 px-3 py-2 bg-white border-b border-slate-200">
                 <h2 className="text-lg font-semibold text-slate-900">Videoconferencia en curso</h2>
                 <p className="text-sm text-slate-600">Sala: {getMeetingRoomName()}</p>
               </div>
-              <div className="flex-1 p-2 min-h-0" style={{ height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
-                <div id="jitsi-visible-container" className="w-full h-full rounded-lg overflow-hidden" style={{ flex: '1 1 auto', minHeight: '700px' }}>
+              <div className="flex-1 min-h-0 overflow-hidden pb-2 flex items-center justify-center px-8">
+                <div id="jitsi-visible-container" className="w-full max-w-4xl h-full overflow-hidden">
                 </div>
               </div>
             </div>
@@ -782,11 +796,15 @@ export default function App() {
                 api.isVideoMuted()
                   .then((muted: boolean) => setIsCameraOn(!muted))
                   .catch(() => {});
+                api.isSharingScreen()
+                  .then((sharing: boolean) => setIsSharingScreen(sharing))
+                  .catch(() => {});
               }, 500);
             }
           }}
           onAudioMuteStatusChanged={handleAudioMuteChange}
           onVideoMuteStatusChanged={handleVideoMuteChange}
+          onScreenSharingStatusChanged={handleScreenSharingChange}
         />
       )}
     </div>

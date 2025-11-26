@@ -11,6 +11,7 @@ interface JitsiMeetingProps {
     onApiReady?: (api: any | null) => void;
     onAudioMuteStatusChanged?: (muted: boolean) => void;
     onVideoMuteStatusChanged?: (muted: boolean) => void;
+    onScreenSharingStatusChanged?: (sharing: boolean) => void;
 }
 
 declare global {
@@ -27,7 +28,8 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
     visibleContainerId,
     onApiReady,
     onAudioMuteStatusChanged,
-    onVideoMuteStatusChanged
+    onVideoMuteStatusChanged,
+    onScreenSharingStatusChanged
 }) => {
     const jitsiContainerRef = useRef<HTMLDivElement>(null);
     const jitsiApiRef = useRef<any>(null);
@@ -197,6 +199,12 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 api.addEventListener('videoMuteStatusChanged', (status: { muted: boolean }) => {
                     if (typeof onVideoMuteStatusChanged === 'function') {
                         onVideoMuteStatusChanged(status.muted);
+                    }
+                });
+
+                api.addEventListener('screenSharingStatusChanged', (status: { on: boolean }) => {
+                    if (typeof onScreenSharingStatusChanged === 'function') {
+                        onScreenSharingStatusChanged(status.on);
                     }
                 });
 
