@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
-import { set } from 'react-hook-form';
-import Chat from '../components/chat/Chat';
+import Chat from "../components/chat/Chat";
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
@@ -34,9 +33,8 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
-export default function App() {
-
-  const [currentUser, setCurrentUser] = useState<User>({
+const Home: React.FC = () => {
+  const [currentUser] = useState<User>({
     id: 'current-user',
     name: 'Tú',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current',
@@ -45,69 +43,99 @@ export default function App() {
     locationType: 'private'
   });
 
-  const [users, setUsers] = useState<User[]>([]);
-
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-
-  const [socket, setSocket] = useState<WebSocket|null>(null);
-
-  useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3001");
-    setSocket(ws);
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "init" || data.type === "update") {
-        setUsers(data.users);
-        setWorkspaces(data.workspaces);
-
-        // Mantener currentUser actualizado
-        const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
-        if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
-      }
-    };
-
-    
-  }, []);
-
-  const enterWorkSpace = (workspaceID: string) =>{
-    if(socket){
-      socket.send(JSON.stringify({
-        type: "enterWorkspace",
-        userId: currentUser.id,
-        workspaceId: workspaceID
-      }));
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      name: 'María González',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
+      status: 'online',
+      currentLocation: 'shared-1',
+      locationType: 'shared'
+    },
+    {
+      id: '2',
+      name: 'Carlos Ruiz',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
+      status: 'busy',
+      currentLocation: 'shared-1',
+      locationType: 'shared'
+    },
+    {
+      id: '3',
+      name: 'Ana Martínez',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana',
+      status: 'online',
+      currentLocation: 'shared-2',
+      locationType: 'shared'
+    },
+    {
+      id: '4',
+      name: 'Luis Pérez',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luis',
+      status: 'away',
+      currentLocation: 'private-4',
+      locationType: 'private'
     }
-  }
+  ]);
 
-  const lockWorkSpace = (workspaceID: string) =>{
-    if(socket){
-      socket.send(JSON.stringify({
-        type: "lockWorkspace",
-        workspaceId: workspaceID
-      }));
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([
+    {
+      id: 'shared-1',
+      name: 'Sala de Desarrollo',
+      type: 'shared',
+      isLocked: false,
+      maxUsers: 8
+    },
+    {
+      id: 'shared-2',
+      name: 'Sala de Diseño',
+      type: 'shared',
+      isLocked: false,
+      maxUsers: 6
+    },
+    {
+      id: 'shared-3',
+      name: 'Sala de Reuniones',
+      type: 'shared',
+      isLocked: true,
+      maxUsers: 4
+    },
+    {
+      id: 'private-current',
+      name: 'Mi Oficina',
+      type: 'private',
+      ownerId: 'current-user',
+      isLocked: false
+    },
+    {
+      id: 'private-1',
+      name: 'Oficina de María',
+      type: 'private',
+      ownerId: '1',
+      isLocked: false
+    },
+    {
+      id: 'private-2',
+      name: 'Oficina de Carlos',
+      type: 'private',
+      ownerId: '2',
+      isLocked: true
+    },
+    {
+      id: 'private-3',
+      name: 'Oficina de Ana',
+      type: 'private',
+      ownerId: '3',
+      isLocked: false
+    },
+    {
+      id: 'private-4',
+      name: 'Oficina de Luis',
+      type: 'private',
+      ownerId: '4',
+      isLocked: true
     }
-  }
-
-  const createWorkSpace = (workspaceMaxUSERS: string) =>{
-    if(socket){
-      socket.send(JSON.stringify({
-        type: "createWorkSpace",
-        workspaceMaxUsers: workspaceMaxUSERS
-      }));
-    }
-  }
-
-  const deleteWorkSpace = (workspaceID: string) =>{
-    if(socket){
-      socket.send(JSON.stringify({
-        type: "deleteWorkSpace",
-        userId: currentUser.id,
-        workspaceId: workspaceID
-      }));
-    }
-  }
+  ]);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -121,8 +149,87 @@ export default function App() {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
 
+  const handleCreateSharedWorkspace = () => {
+    const maxUsers = parseInt(newWorkspaceMaxUsers);
+    if (isNaN(maxUsers) || maxUsers < 1) return;
+
+    // Generar nombre automático
+    const sharedCount = sharedWorkspaces.length + 1;
+
+    const newWorkspace: Workspace = {
+      id: `shared-${Date.now()}`,
+      name: `Sala ${sharedCount}`,
+      type: 'shared',
+      isLocked: false,
+      maxUsers: maxUsers
+    };
+
+    setWorkspaces([...workspaces, newWorkspace]);
+    setNewWorkspaceMaxUsers('8');
+    setShowCreateWorkspace(false);
+  };
+
+  const handleDeleteSharedWorkspace = (workspaceId: string) => {
+    // No permitir eliminar si el usuario actual está en ese espacio
+    if (currentUser.currentLocation === workspaceId) return;
+
+    // Mover usuarios que estén en ese espacio a su oficina privada
+    const updatedUsers = users.map(user => {
+      if (user.currentLocation === workspaceId) {
+        const userPrivateOffice = workspaces.find(w => w.ownerId === user.id && w.type === 'private');
+        return {
+          ...user,
+          currentLocation: userPrivateOffice?.id || user.currentLocation,
+          locationType: 'private' as WorkspaceType
+        };
+      }
+      return user;
+    });
+
+    setUsers(updatedUsers);
+    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
+  };
+
+  const handleEnterWorkspace = (workspaceId: string) => {
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace) return;
+
+    // No permitir entrar a oficinas privadas bloqueadas de otros usuarios
+    if (workspace.type === 'private' && workspace.isLocked && workspace.ownerId !== currentUser.id) {
+      return;
+    }
+
+    // Para oficinas privadas: verificar si el owner está presente y no ocupado
+    if (workspace.type === 'private' && workspace.ownerId !== currentUser.id) {
+      const owner = allUsers.find(u => u.id === workspace.ownerId);
+      if (!owner) return;
+
+      // No permitir entrar si el owner no está en su oficina
+      if (owner.currentLocation !== workspaceId) {
+        return;
+      }
+
+      // No permitir entrar si el owner está ocupado
+      if (owner.status === 'busy') {
+        return;
+      }
+    }
+
+    currentUser.currentLocation = workspaceId;
+    currentUser.locationType = workspace.type;
+    setUsers([...users]);
+  };
+
+  const handleToggleLock = (workspaceId: string) => {
+    setWorkspaces(prev =>
+      prev.map(w =>
+        w.id === workspaceId ? { ...w, isLocked: !w.isLocked } : w
+      )
+    );
+  };
+
   const getUsersInLocation = (locationId: string): User[] => {
-    const usersInLocation = users.filter(u => u.currentLocation === locationId && u.id !== currentUser.id);
+    const usersInLocation = users.filter(u => u.currentLocation === locationId);
     if (currentUser.currentLocation === locationId) {
       return [currentUser, ...usersInLocation];
     }
@@ -131,7 +238,7 @@ export default function App() {
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-    
+
     const message: ChatMessage = {
       id: Date.now().toString(),
       senderId: currentUser.id,
@@ -141,12 +248,12 @@ export default function App() {
       type: chatTarget === 'general' ? 'general' : 'private',
       recipientId: chatTarget !== 'general' ? chatTarget : undefined
     };
-    
+
     setMessages([...messages, message]);
     setNewMessage('');
   };
 
-  const allUsers = users;
+  const allUsers = [currentUser, ...users];
   const privateWorkspaces = workspaces.filter(w => w.type === 'private');
   const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
 
@@ -174,7 +281,7 @@ export default function App() {
               >
                 {isCameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
               </button>
-              
+
               <button
                 onClick={() => setIsMicOn(!isMicOn)}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
@@ -184,7 +291,7 @@ export default function App() {
               >
                 {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
               </button>
-              
+
               <button
                 onClick={() => setIsSharingScreen(!isSharingScreen)}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
@@ -227,7 +334,7 @@ export default function App() {
                   <h2 className="text-slate-900">Oficinas Privadas</h2>
                 </div>
               </div>
-              
+
               <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                   {privateWorkspaces.map(workspace => {
@@ -238,19 +345,19 @@ export default function App() {
                     const isOccupied = usersInOffice.length > 0;
                     const isOwnerInSharedSpace = owner && owner.locationType === 'shared';
                     const isOwnerAway = owner && owner.status === 'away' && !isOwnerInSharedSpace;
-                    
+
                     // Verificar si la oficina está accesible para otros usuarios
                     const isOwnerInOffice = owner && owner.currentLocation === workspace.id;
                     const isOwnerBusy = owner && owner.status === 'busy';
                     const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !workspace.isLocked);
-                    
+
                     // Verificar si estoy visitando una oficina ajena
                     const isVisitingOthersOffice = isCurrentUserHere && !isOwner;
-                    
+
                     // Determinar los colores del borde y fondo
                     let borderColor = 'border-slate-200';
                     let bgColor = 'bg-slate-50';
-                    
+
                     if (isCurrentUserHere) {
                       // Estoy en esta oficina (sea mi oficina o visitando): amarillo fuerte + amarillo suave
                       borderColor = 'border-yellow-400';
@@ -276,7 +383,7 @@ export default function App() {
                     return (
                       <div
                         key={workspace.id}
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
+                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
                         className={`border-2 rounded-lg p-4 transition-all ${
                           canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                         } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-blue-500 hover:shadow-md'}`}
@@ -287,13 +394,13 @@ export default function App() {
                               Estás aquí
                             </div>
                           )}
-                          
+
                           <div className={isCurrentUserHere ? '' : 'ml-auto'}>
                             {isOwner && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  lockWorkSpace(workspace.id);
+                                  handleToggleLock(workspace.id);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
                                   workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
@@ -310,34 +417,34 @@ export default function App() {
                           <div className="flex justify-center mb-3 flex-wrap gap-2">
                             {usersInOffice.map(user => {
                               const isUserInSharedSpace = user.locationType === 'shared' && user.id === workspace.ownerId;
-                              
+
                               return (
                                 <div key={user.id} className="flex flex-col items-center gap-1">
                                   <div className="relative">
-                                    <img 
-                                      src={user.avatar} 
-                                      alt={user.name} 
+                                    <img
+                                      src={user.avatar}
+                                      alt={user.name}
                                       className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
                                         isUserInSharedSpace ? 'grayscale opacity-50' : ''
-                                      }`} 
+                                      }`}
                                     />
                                     <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
                                       isUserInSharedSpace ? 'bg-slate-400' :
-                                      user.status === 'online' ? 'bg-green-500' : 
-                                      user.status === 'busy' ? 'bg-red-500' : 
+                                      user.status === 'online' ? 'bg-green-500' :
+                                      user.status === 'busy' ? 'bg-red-500' :
                                       'bg-yellow-500'
                                     }`} />
                                   </div>
                                   <span className="text-xs text-slate-700 text-center">{user.name}</span>
                                   <span className={`text-xs ${
                                     isUserInSharedSpace ? 'text-slate-400' :
-                                    user.status === 'online' ? 'text-green-600' : 
-                                    user.status === 'busy' ? 'text-red-600' : 
+                                    user.status === 'online' ? 'text-green-600' :
+                                    user.status === 'busy' ? 'text-red-600' :
                                     'text-yellow-600'
                                   }`}>
                                     {isUserInSharedSpace ? 'Activo' :
-                                     user.status === 'online' ? 'Activo' : 
-                                     user.status === 'busy' ? 'Ocupado' : 
+                                     user.status === 'online' ? 'Activo' :
+                                     user.status === 'busy' ? 'Ocupado' :
                                      'Ausente'}
                                   </span>
                                 </div>
@@ -349,30 +456,30 @@ export default function App() {
                             <div className="flex justify-center mb-3">
                               <div className="flex flex-col items-center gap-1">
                                 <div className="relative">
-                                  <img 
-                                    src={owner.avatar} 
-                                    alt={owner.name} 
+                                  <img
+                                    src={owner.avatar}
+                                    alt={owner.name}
                                     className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
                                       isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
-                                    }`} 
+                                    }`}
                                   />
                                   <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
                                     isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'bg-slate-400' :
-                                    owner.status === 'online' ? 'bg-green-500' : 
-                                    owner.status === 'busy' ? 'bg-red-500' : 
+                                    owner.status === 'online' ? 'bg-green-500' :
+                                    owner.status === 'busy' ? 'bg-red-500' :
                                     'bg-yellow-500'
                                   }`} />
                                 </div>
                                 <span className="text-xs text-slate-700 text-center">{owner.name}</span>
                                 <span className={`text-xs ${
                                   isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
-                                  owner.status === 'online' ? 'text-green-600' : 
-                                  owner.status === 'busy' ? 'text-red-600' : 
+                                  owner.status === 'online' ? 'text-green-600' :
+                                  owner.status === 'busy' ? 'text-red-600' :
                                   'text-yellow-600'
                                 }`}>
                                   {isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'Activo' :
-                                   owner.status === 'online' ? 'Activo' : 
-                                   owner.status === 'busy' ? 'Ocupado' : 
+                                   owner.status === 'online' ? 'Activo' :
+                                   owner.status === 'busy' ? 'Ocupado' :
                                    'Ausente'}
                                 </span>
                               </div>
@@ -404,7 +511,7 @@ export default function App() {
                     Crear Espacio
                   </button>
                 </div>
-                
+
                 {showCreateWorkspace && (
                   <div className="mt-4 flex gap-2">
                     <input
@@ -412,12 +519,12 @@ export default function App() {
                       min="1"
                       value={newWorkspaceMaxUsers}
                       onChange={(e) => setNewWorkspaceMaxUsers(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && createWorkSpace(newWorkspaceMaxUsers)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleCreateSharedWorkspace()}
                       placeholder="Capacidad máxima..."
                       className="flex-1 text-sm h-10 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
-                      onClick={()=>createWorkSpace(newWorkspaceMaxUsers)}
+                      onClick={handleCreateSharedWorkspace}
                       disabled={!newWorkspaceMaxUsers.trim() || parseInt(newWorkspaceMaxUsers) < 1}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
@@ -435,7 +542,7 @@ export default function App() {
                   </div>
                 )}
               </div>
-              
+
               <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {sharedWorkspaces.map(workspace => {
@@ -443,12 +550,12 @@ export default function App() {
                     const isCurrentUserHere = currentUser.currentLocation === workspace.id;
 
                     return (
-                      <div 
-                        key={workspace.id} 
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
+                      <div
+                        key={workspace.id}
+                        onClick={() => !isCurrentUserHere && handleEnterWorkspace(workspace.id)}
                         className={`rounded-lg p-4 transition-all cursor-pointer ${
-                          workspace.isLocked 
-                            ? 'border-2 border-red-600 bg-red-50' 
+                          workspace.isLocked
+                            ? 'border-2 border-red-600 bg-red-50'
                             : 'border border-slate-200 bg-slate-50'
                         } ${!isCurrentUserHere && 'hover:border-blue-500 hover:shadow-md'}`}
                       >
@@ -463,23 +570,23 @@ export default function App() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteWorkSpace(workspace.id);
+                                handleDeleteSharedWorkspace(workspace.id);
                               }}
                               disabled={isCurrentUserHere}
                               className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
-                                isCurrentUserHere 
-                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                                isCurrentUserHere
+                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                                   : 'bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
                               }`}
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
-                            
+
                             {isCurrentUserHere && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  lockWorkSpace(workspace.id);
+                                  handleToggleLock(workspace.id);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
                                   workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
@@ -488,7 +595,7 @@ export default function App() {
                                 {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                               </button>
                             )}
-                            
+
                             {isCurrentUserHere && (
                               <div className="text-xs text-blue-700 px-2 py-1 bg-blue-100 rounded border border-blue-200">
                                 Estás aquí
@@ -501,10 +608,10 @@ export default function App() {
                           <div className="flex flex-wrap gap-3 justify-center">
                             {usersInSpace.map(user => (
                               <div key={user.id} className="group relative">
-                                <img 
-                                  src={user.avatar} 
-                                  alt={user.name} 
-                                  className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-blue-400 transition-colors cursor-pointer" 
+                                <img
+                                  src={user.avatar}
+                                  alt={user.name}
+                                  className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-blue-400 transition-colors cursor-pointer"
                                 />
                                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                                   {user.name}
@@ -535,4 +642,6 @@ export default function App() {
       </div>
     </div>
   );
-}
+};
+
+export default Home;
