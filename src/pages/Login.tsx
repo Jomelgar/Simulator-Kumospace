@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoImage from "../asset/logo.png";
-
+import './Login.css';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -19,68 +19,68 @@ const Login: React.FC = () => {
     navigate('/sign_in');
   };
   return (
-    <div className="flex h-screen">
+    <div className="login-container">
       {/* Left side - Logo */}
-      <div className="w-[44%] bg-[rgb(255,255,255)] flex items-center justify-center">
+      <div className="login-left-side">
         <img
           src={logoImage}
           alt="Rooms Hive Logo"
-          className="w-[1100px] h-auto"
+          className="login-logo"
         />
       </div>
 
       {/* Right side - Login form */}
-      <div className="w-[56%] !bg-black flex items-center justify-center">
-        <div className="w-full max-w-[500px] px-8">
+      <div className="login-right-side">
+        <div className="login-form-wrapper">
           {/* Title - "Login" with golden "o" */}
-          <h1 className="text-[64px] mb-10 text-center flex items-center justify-center" style={{ fontWeight: '400', letterSpacing: '0.02em' }}>
+          <h1 className="login-title">
             <span className="text-white">L</span>
-            <span className="text-[#f4b942]">o</span>
+            <span className="text-gold">o</span>
             <span className="text-white">gin</span>
           </h1>
 
           {/* Form */}
-          <form className="space-y-7">
+          <form className="login-form">
             {/* Username field */}
             <div>
-              <label className="text-white text-[24px] block mb-2" style={{ fontWeight: '300' }}>
+              <label className="login-label">
                 Username
               </label>
               <input
                 type="text"
                 placeholder="Example username"
-                className="w-full bg-transparent border border-white rounded-lg px-4 py-3 text-white placeholder-gray-500 text-[16px]"
-                style={{ outline: 'none' }}
+                className="login-input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
             {/* Password field */}
             <div>
-              <label className="text-white text-[24px] block mb-2" style={{ fontWeight: '300' }}>
+              <label className="login-label">
                 Password
               </label>
               <input
                 type="password"
                 placeholder="**********"
-                className="w-full bg-transparent border border-white rounded-lg px-4 py-3 text-white placeholder-gray-500 text-[16px]"
-                style={{ outline: 'none' }}
+                className="login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </form>
 
           {/* Bottom links */}
-          <div className="flex justify-between mt-20">
+          <div className="login-actions">
             <button
               onClick={onNavigateToSignUp}
-              className="text-[#f4b942] text-[24px] underline hover:opacity-80 bg-transparent border-none cursor-pointer"
-              style={{ textUnderlineOffset: '4px' }}
+              className="login-action-btn"
             >
               Sign up
             </button>
             <button
               onClick={handleLogin}
-              className="text-[#f4b942] text-[24px] underline hover:opacity-80 bg-transparent border-none cursor-pointer"
-              style={{ textUnderlineOffset: '4px' }}
+              className="login-action-btn"
             >
               Login
             </button>
