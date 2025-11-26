@@ -6,6 +6,11 @@ interface JitsiMeetingProps {
     roomName: string;
     displayName: string;
     onMeetingEnd: () => void;
+    isVisible?: boolean;
+    visibleContainerId?: string;
+    onApiReady?: (api: any | null) => void;
+    onAudioMuteStatusChanged?: (muted: boolean) => void;
+    onVideoMuteStatusChanged?: (muted: boolean) => void;
 }
 
 declare global {
@@ -14,13 +19,59 @@ declare global {
     }
 }
 
-const JitsiMeeting: React.FC<JitsiMeetingProps> = ({ roomName, displayName, onMeetingEnd }) => {
+const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
+    roomName,
+    displayName,
+    onMeetingEnd,
+    isVisible = true,
+    visibleContainerId,
+    onApiReady,
+    onAudioMuteStatusChanged,
+    onVideoMuteStatusChanged
+}) => {
     const jitsiContainerRef = useRef<HTMLDivElement>(null);
     const jitsiApiRef = useRef<any>(null);
+    const isInitializingRef = useRef<boolean>(false);
+    const onMeetingEndRef = useRef(onMeetingEnd);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [containerHeight, setContainerHeight] = useState<number>(600);
 
     useEffect(() => {
+        onMeetingEndRef.current = onMeetingEnd;
+    }, [onMeetingEnd]);
+
+    useEffect(() => {
+        const updateHeight = () => {
+            if (jitsiContainerRef.current) {
+                const rect = jitsiContainerRef.current.getBoundingClientRect();
+                const height = rect.height || window.innerHeight - 150;
+                if (height > 0) {
+                    setContainerHeight(height);
+                }
+            }
+        };
+
+        const timeoutId = setTimeout(updateHeight, 100);
+        window.addEventListener('resize', updateHeight);
+        
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('resize', updateHeight);
+        };
+    }, []);
+
+    // Ya no movemos el iframe entre contenedores externos: lo mantenemos siempre
+    // en el mismo div interno y solo mostramos/ocultamos por CSS usando isVisible.
+
+    useEffect(() => {
+        if (jitsiApiRef.current || isInitializingRef.current) {
+            return;
+        }
+
+        isInitializingRef.current = true;
+        let isMounted = true;
+
         const loadJitsiScript = () => {
             return new Promise<void>((resolve, reject) => {
                 if (window.JitsiMeetExternalAPI) {
@@ -41,14 +92,30 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({ roomName, displayName, onMe
             try {
                 await loadJitsiScript();
 
-                if (!jitsiContainerRef.current) return;
+                const container = jitsiContainerRef.current;
+                if (!container || !isMounted || jitsiApiRef.current) {
+                    isInitializingRef.current = false;
+                    return;
+                }
 
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                if (!jitsiContainerRef.current || !isMounted || jitsiApiRef.current) {
+                    isInitializingRef.current = false;
+                    return;
+                }
+
+                const rect = container.getBoundingClientRect();
+                const parentRect = container.parentElement?.getBoundingClientRect();
+                const calculatedHeight = rect.height || parentRect?.height || containerHeight || window.innerHeight - 200;
+                const finalHeight = Math.max(calculatedHeight, 700);
+                
                 const domain = JITSI_DOMAIN;
                 const options = {
                     roomName: `${JAAS_APP_ID}/${roomName}`,
                     width: '100%',
-                    height: '100%',
-                    parentNode: jitsiContainerRef.current,
+                    height: finalHeight,
+                    parentNode: container,
                     userInfo: {
                         displayName: displayName,
                     },
@@ -90,42 +157,94 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({ roomName, displayName, onMe
                     },
                 };
 
+                if (!isMounted || jitsiApiRef.current) {
+                    isInitializingRef.current = false;
+                    return;
+                }
+
+                if (jitsiApiRef.current) {
+                    try {
+                        jitsiApiRef.current.dispose();
+                    } catch (e) {
+                        console.error('Error al limpiar instancia anterior:', e);
+                    }
+                }
+
                 const api = new window.JitsiMeetExternalAPI(domain, options);
                 jitsiApiRef.current = api;
+                isInitializingRef.current = false;
+
+                if (onApiReady) {
+                    onApiReady(api);
+                }
 
                 api.executeCommand('displayName', displayName);
 
                 api.addEventListener('videoConferenceJoined', () => {
-                    console.log('Usuario se unió a la conferencia');
-                    setIsLoading(false);
+                    if (isMounted) {
+                        console.log('Usuario se unió a la conferencia');
+                        setIsLoading(false);
+                    }
+                });
+
+                // Sincronizar estado de mute con el exterior (header)
+                api.addEventListener('audioMuteStatusChanged', (status: { muted: boolean }) => {
+                    if (typeof onAudioMuteStatusChanged === 'function') {
+                        onAudioMuteStatusChanged(status.muted);
+                    }
+                });
+
+                api.addEventListener('videoMuteStatusChanged', (status: { muted: boolean }) => {
+                    if (typeof onVideoMuteStatusChanged === 'function') {
+                        onVideoMuteStatusChanged(status.muted);
+                    }
                 });
 
                 api.addEventListener('videoConferenceLeft', () => {
-                    console.log('Usuario salió de la conferencia');
-                    onMeetingEnd();
+                    if (isMounted) {
+                        console.log('Usuario salió de la conferencia');
+                        onMeetingEndRef.current();
+                    }
                 });
 
                 api.addEventListener('readyToClose', () => {
-                    console.log('Jitsi listo para cerrar');
-                    onMeetingEnd();
+                    if (isMounted) {
+                        console.log('Jitsi listo para cerrar');
+                        onMeetingEndRef.current();
+                    }
                 });
 
             } catch (err) {
                 console.error('Error al inicializar Jitsi:', err);
-                setError('No se pudo iniciar la videoconferencia. Verifica tu conexión.');
-                setIsLoading(false);
+                isInitializingRef.current = false;
+                if (isMounted) {
+                    setError('No se pudo iniciar la videoconferencia. Verifica tu conexión.');
+                    setIsLoading(false);
+                }
+                if (onApiReady) {
+                    onApiReady(null);
+                }
             }
         };
 
         initializeJitsi();
 
         return () => {
-            if (jitsiApiRef.current) {
-                jitsiApiRef.current.dispose();
+            isMounted = false;
+            if (jitsiApiRef.current && roomName) {
+                try {
+                    jitsiApiRef.current.dispose();
+                } catch (e) {
+                    console.error('Error al limpiar Jitsi:', e);
+                }
                 jitsiApiRef.current = null;
             }
+            isInitializingRef.current = false;
+            if (onApiReady) {
+                onApiReady(null);
+            }
         };
-    }, [roomName, displayName, onMeetingEnd]);
+    }, [roomName, displayName]);
 
     const handleClose = () => {
         if (jitsiApiRef.current) {
@@ -153,50 +272,34 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({ roomName, displayName, onMe
 
     return (
         <div
-            className="fixed inset-0 bg-black z-50"
+            className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700"
             style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: '100vw',
-                height: '100vh',
-                zIndex: 9999
+                height: '100%',
+                display: isVisible ? 'flex' : 'none',
+                flexDirection: 'column',
             }}
         >
-            {/* Botón de cerrar flotante */}
             <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 z-50 p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors shadow-lg"
+                className="absolute top-2 right-2 z-50 p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors shadow-lg"
                 title="Salir de la llamada"
             >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-4 h-4 text-white" />
             </button>
 
-            {/* Loading indicator */}
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-20">
                     <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-white text-sm">Conectando a la videoconferencia...</p>
+                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                        <p className="text-white text-sm">Conectando...</p>
                     </div>
                 </div>
             )}
 
-            {/* Contenedor de Jitsi - Pantalla completa */}
             <div
                 ref={jitsiContainerRef}
-                className="w-full h-full"
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0
-                }}
+                className="w-full flex-1"
+                style={{ height: '100%', flex: '1 1 auto', minHeight: '500px' }}
             />
         </div>
     );

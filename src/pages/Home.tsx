@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
 import Chat from "../components/chat/Chat";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
@@ -34,78 +34,119 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
-export default function App() {
+// Datos de respaldo mínimos para pruebas locales
+const FALLBACK_WORKSPACES: Workspace[] = [
+  {
+    id: 'private-current',
+    name: 'Mi Oficina',
+    type: 'private',
+    ownerId: 'current-user',
+    isLocked: false
+  },
+  {
+    id: 'shared-1',
+    name: 'Sala de Reuniones 1',
+    type: 'shared',
+    isLocked: false,
+    maxUsers: 8
+  }
+];
 
+const FALLBACK_USERS: User[] = [
+  {
+    id: 'user-1',
+    name: 'Usuario invitado',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+    status: 'online',
+    currentLocation: 'shared-1',
+    locationType: 'shared'
+  }
+];
+
+export default function App() {
   const [currentUser, setCurrentUser] = useState<User>({
     id: 'current-user',
-    name: 'Tú',
+    name: 'Hector',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current',
     status: 'online',
     currentLocation: 'private-current',
     locationType: 'private'
   });
 
-  const [users, setUsers] = useState<User[]>([]);
-
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-
+  const [users, setUsers] = useState<User[]>(FALLBACK_USERS);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(FALLBACK_WORKSPACES);
   const [socket, setSocket] = useState<WebSocket|null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3001");
-    setSocket(ws);
+    try {
+      const ws = new WebSocket("ws://localhost:3001");
+      setSocket(ws);
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "init" || data.type === "update") {
+          setUsers(data.users);
+          setWorkspaces(data.workspaces);
+          const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
+          if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
+        }
+      };
 
-      if (data.type === "init" || data.type === "update") {
-        setUsers(data.users);
-        setWorkspaces(data.workspaces);
-
-        // Mantener currentUser actualizado
-        const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
-        if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
-      }
-    };
-
-    
+      ws.onerror = () => {
+        console.log('WebSocket no disponible, usando datos locales de prueba');
+        setUsers(FALLBACK_USERS);
+        setWorkspaces(FALLBACK_WORKSPACES);
+      };
+    } catch (error) {
+      console.log('WebSocket no disponible, usando datos locales de prueba');
+      setUsers(FALLBACK_USERS);
+      setWorkspaces(FALLBACK_WORKSPACES);
+    }
   }, []);
 
-  const enterWorkSpace = (workspaceID: string) =>{
-    if(socket){
+  const enterWorkSpace = (workspaceID: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: "enterWorkspace",
         userId: currentUser.id,
         workspaceId: workspaceID
       }));
+    } else {
+      handleEnterWorkspace(workspaceID);
     }
   }
 
-  const lockWorkSpace = (workspaceID: string) =>{
-    if(socket){
+  const lockWorkSpace = (workspaceID: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: "lockWorkspace",
         workspaceId: workspaceID
       }));
+    } else {
+      handleToggleLock(workspaceID);
     }
   }
 
-  const createWorkSpace = (workspaceMaxUSERS: string) =>{
-    if(socket){
+  const createWorkSpace = (workspaceMaxUSERS: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: "createWorkSpace",
         workspaceMaxUsers: workspaceMaxUSERS
       }));
+    } else {
+      handleCreateSharedWorkspace();
     }
   }
 
-  const deleteWorkSpace = (workspaceID: string) =>{
-    if(socket){
+  const deleteWorkSpace = (workspaceID: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
         type: "deleteWorkSpace",
         userId: currentUser.id,
         workspaceId: workspaceID
       }));
+    } else {
+      handleDeleteSharedWorkspace(workspaceID);
     }
   }
 
@@ -116,21 +157,21 @@ export default function App() {
   const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState('001');
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
 
-  // Estados para controles de medios
-  const [isCameraOn, setIsCameraOn] = useState(false);
+  // Estados para controles de medios (alineados con config de Jitsi: video ON, audio OFF)
+  const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
 
   // Estado para videoconferencia con Jitsi
   const [isInMeeting, setIsInMeeting] = useState(false);
+  const [isJitsiActive, setIsJitsiActive] = useState(false);
+  const jitsiApiRef = useRef<any | null>(null);
 
   const handleCreateSharedWorkspace = () => {
     const maxUsers = parseInt(newWorkspaceMaxUsers);
     if (isNaN(maxUsers) || maxUsers < 1) return;
 
-    // Generar nombre automático
     const sharedCount = sharedWorkspaces.length + 1;
-
     const newWorkspace: Workspace = {
       id: `shared-${Date.now()}`,
       name: `Sala ${sharedCount}`,
@@ -145,10 +186,8 @@ export default function App() {
   };
 
   const handleDeleteSharedWorkspace = (workspaceId: string) => {
-    // No permitir eliminar si el usuario actual está en ese espacio
     if (currentUser.currentLocation === workspaceId) return;
 
-    // Mover usuarios que estén en ese espacio a su oficina privada
     const updatedUsers = users.map(user => {
       if (user.currentLocation === workspaceId) {
         const userPrivateOffice = workspaces.find(w => w.ownerId === user.id && w.type === 'private');
@@ -169,30 +208,32 @@ export default function App() {
     const workspace = workspaces.find(w => w.id === workspaceId);
     if (!workspace) return;
 
-    // No permitir entrar a oficinas privadas bloqueadas de otros usuarios
     if (workspace.type === 'private' && workspace.isLocked && workspace.ownerId !== currentUser.id) {
       return;
     }
 
-    // Para oficinas privadas: verificar si el owner está presente y no ocupado
     if (workspace.type === 'private' && workspace.ownerId !== currentUser.id) {
       const owner = allUsers.find(u => u.id === workspace.ownerId);
       if (!owner) return;
-
-      // No permitir entrar si el owner no está en su oficina
-      if (owner.currentLocation !== workspaceId) {
-        return;
-      }
-
-      // No permitir entrar si el owner está ocupado
-      if (owner.status === 'busy') {
-        return;
-      }
+      if (owner.currentLocation !== workspaceId) return;
+      if (owner.status === 'busy') return;
     }
 
-    currentUser.currentLocation = workspaceId;
-    currentUser.locationType = workspace.type;
-    setUsers([...users]);
+    const previousLocation = currentUser.currentLocation;
+    setCurrentUser({
+      ...currentUser,
+      currentLocation: workspaceId,
+      locationType: workspace.type
+    });
+
+    if (previousLocation !== workspaceId) {
+      setIsInMeeting(false);
+      if (shouldEnableVideoConference()) {
+        setIsJitsiActive(true);
+      } else {
+        setIsJitsiActive(false);
+      }
+    }
   };
 
   const handleToggleLock = (workspaceId: string) => {
@@ -238,11 +279,61 @@ export default function App() {
     return `workspace-${currentUser.currentLocation}`;
   };
 
-  const handleMeetingEnd = () => {
+  const handleMeetingEnd = useCallback(() => {
     setIsInMeeting(false);
-  };
+    setIsJitsiActive(false);
+    jitsiApiRef.current = null;
+  }, []);
 
-  const allUsers = [currentUser, ...users];
+  const handleAudioMuteChange = useCallback((muted: boolean) => {
+    console.log('Audio mute cambió:', muted, '-> isMicOn será:', !muted);
+    setIsMicOn(!muted);
+  }, []);
+
+  const handleVideoMuteChange = useCallback((muted: boolean) => {
+    console.log('Video mute cambió:', muted, '-> isCameraOn será:', !muted);
+    setIsCameraOn(!muted);
+  }, []);
+
+  // Sincroniza periódicamente el estado real de Jitsi con el header
+  useEffect(() => {
+    if (!isJitsiActive || !jitsiApiRef.current) return;
+
+    const syncState = async () => {
+      const api = jitsiApiRef.current;
+      if (!api) return;
+
+      try {
+        const audioMuted = await api.isAudioMuted();
+        const videoMuted = await api.isVideoMuted();
+        setIsMicOn(!audioMuted);
+        setIsCameraOn(!videoMuted);
+      } catch (error) {
+        console.error('Error al sincronizar estado:', error);
+      }
+    };
+
+    // timeout inicial más largo para dejar estabilizar Jitsi
+    const initialTimeout = setTimeout(syncState, 800);
+    const interval = setInterval(syncState, 1000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, [isJitsiActive, isInMeeting]);
+
+  useEffect(() => {
+    const canEnable = shouldEnableVideoConference();
+    if (canEnable && !isJitsiActive) {
+      setIsJitsiActive(true);
+    } else if (!canEnable && isJitsiActive) {
+      setIsJitsiActive(false);
+      setIsInMeeting(false);
+    }
+  }, [currentUser.currentLocation, users, isJitsiActive]);
+
+  const allUsers = [currentUser, ...users.filter(u => u.id !== currentUser.id)];
   const privateWorkspaces = workspaces.filter(w => w.type === 'private');
   const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
 
@@ -262,7 +353,15 @@ export default function App() {
             {/* Controles de medios */}
             <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
               <button
-                onClick={() => setIsCameraOn(!isCameraOn)}
+                onClick={() => {
+                  if (jitsiApiRef.current) {
+                    try {
+                      jitsiApiRef.current.executeCommand('toggleVideo');
+                    } catch (e) {
+                      console.error('Error al cambiar cámara en Jitsi', e);
+                    }
+                  }
+                }}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isCameraOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
                   }`}
                 title={isCameraOn ? 'Desactivar cámara' : 'Activar cámara'}
@@ -271,7 +370,15 @@ export default function App() {
               </button>
               
               <button
-                onClick={() => setIsMicOn(!isMicOn)}
+                onClick={() => {
+                  if (jitsiApiRef.current) {
+                    try {
+                      jitsiApiRef.current.executeCommand('toggleAudio');
+                    } catch (e) {
+                      console.error('Error al cambiar micrófono en Jitsi', e);
+                    }
+                  }
+                }}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isMicOn ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400'
                   }`}
                 title={isMicOn ? 'Desactivar micrófono' : 'Activar micrófono'}
@@ -290,7 +397,14 @@ export default function App() {
 
               {/* Botón de Videoconferencia */}
               <button
-                onClick={() => shouldEnableVideoConference() && setIsInMeeting(!isInMeeting)}
+                onClick={() => {
+                  if (shouldEnableVideoConference()) {
+                    if (!isJitsiActive) {
+                      setIsJitsiActive(true);
+                    }
+                    setIsInMeeting(!isInMeeting);
+                  }
+                }}
                 disabled={!shouldEnableVideoConference()}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${!shouldEnableVideoConference()
                   ? 'bg-slate-900 text-slate-600 cursor-not-allowed opacity-50'
@@ -302,8 +416,8 @@ export default function App() {
                   !shouldEnableVideoConference()
                     ? 'Necesitas 2+ personas para iniciar videoconferencia'
                     : isInMeeting
-                      ? 'Salir de videoconferencia'
-                      : 'Iniciar videoconferencia'
+                      ? 'Ocultar videoconferencia'
+                      : 'Mostrar videoconferencia'
                 }
               >
                 <Users className="w-4 h-4" />
@@ -328,8 +442,20 @@ export default function App() {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-[1800px] mx-auto p-8 space-y-6">
+        <main className={`flex-1 ${isInMeeting ? 'flex flex-col' : 'overflow-auto'}`}>
+          {isInMeeting ? (
+            <div className="flex-1 flex flex-col h-full">
+              <div className="flex-shrink-0 p-3 bg-white border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">Videoconferencia en curso</h2>
+                <p className="text-sm text-slate-600">Sala: {getMeetingRoomName()}</p>
+              </div>
+              <div className="flex-1 p-2 min-h-0" style={{ height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
+                <div id="jitsi-visible-container" className="w-full h-full rounded-lg overflow-hidden" style={{ flex: '1 1 auto', minHeight: '700px' }}>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-[1800px] mx-auto p-8 space-y-6">
             {/* Oficinas Privadas */}
             <div className="bg-white rounded-lg border border-slate-200">
               <div className="px-6 py-4 border-b border-slate-200">
@@ -625,7 +751,8 @@ export default function App() {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </main>
 
         {/* Chat Panel */}
@@ -636,12 +763,30 @@ export default function App() {
         )}
       </div>
 
-      {/* Jitsi Meeting Overlay */}
-      {isInMeeting && (
+      {/* Jitsi - siempre montado cuando está activo, solo cambia de posición */}
+      {isJitsiActive && shouldEnableVideoConference() && (
         <JitsiMeeting
           roomName={getMeetingRoomName()}
           displayName={currentUser.name}
           onMeetingEnd={handleMeetingEnd}
+          isVisible={isInMeeting}
+          visibleContainerId="jitsi-visible-container"
+          onApiReady={(api) => {
+            jitsiApiRef.current = api;
+            if (api) {
+              // Sincronizar INMEDIATAMENTE el estado inicial con un pequeño retraso
+              setTimeout(() => {
+                api.isAudioMuted()
+                  .then((muted: boolean) => setIsMicOn(!muted))
+                  .catch(() => {});
+                api.isVideoMuted()
+                  .then((muted: boolean) => setIsCameraOn(!muted))
+                  .catch(() => {});
+              }, 500);
+            }
+          }}
+          onAudioMuteStatusChanged={handleAudioMuteChange}
+          onVideoMuteStatusChanged={handleVideoMuteChange}
         />
       )}
     </div>
