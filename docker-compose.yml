@@ -3,7 +3,10 @@ version: '3.9'
 services:
   core_app:
     build: .
+    environment:
+      - VITE_CHAT_API_URL=http://service_python:8000
+      - VITE_CHAT_URL=http://rocketchat:3000
     container_name: core_app
     restart: unless-stopped
     ports:
-      - "3002:3002"   # Cambia si tu server usa otro puerto
+      - "3002:3002"
