@@ -773,7 +773,7 @@ export default function App() {
         {/* Chat Panel */}
         {isChatOpen && (
           <div className="w-80 bg-white border-l border-slate-200 flex">
-            <Chat username={"jomel"} password={"Josue2307"} tryEnter={true} />
+            <Chat username={"johnny-fake"} password={"josue2307"} tryEnter={true} />
           </div>
         )}
       </div>
