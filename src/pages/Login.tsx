@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logoImage from "../asset/logo.png";
-import './Login.css';
+import "./Login.css";
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí iría la lógica de autenticación
     // Por ahora, simplemente navegamos a la página principal
-    navigate('/inicio');
+    navigate("/inicio");
   };
 
   const onNavigateToSignUp = () => {
-    navigate('/sign_in');
+    navigate("/sign_in");
   };
+
   return (
     <div className="login-container">
       {/* Left side - Logo */}
       <div className="login-left-side">
-        <img
-          src={logoImage}
-          alt="Rooms Hive Logo"
-          className="login-logo"
-        />
+        <img src={logoImage} alt="Rooms Hive Logo" className="login-logo" />
       </div>
 
       {/* Right side - Login form */}
@@ -43,9 +40,7 @@ const Login: React.FC = () => {
           <form className="login-form">
             {/* Username field */}
             <div>
-              <label className="login-label">
-                Username
-              </label>
+              <label className="login-label">Username</label>
               <input
                 type="text"
                 placeholder="Example username"
@@ -57,9 +52,7 @@ const Login: React.FC = () => {
 
             {/* Password field */}
             <div>
-              <label className="login-label">
-                Password
-              </label>
+              <label className="login-label">Password</label>
               <input
                 type="password"
                 placeholder="**********"
@@ -70,17 +63,19 @@ const Login: React.FC = () => {
             </div>
           </form>
 
-          {/* Bottom links */}
+          {/* Bottom buttons */}
           <div className="login-actions">
             <button
+              type="button"
               onClick={onNavigateToSignUp}
-              className="login-action-btn"
+              className="login-button login-button-secondary"
             >
               Sign up
             </button>
             <button
+              type="button"
               onClick={handleLogin}
-              className="login-action-btn"
+              className="login-button login-button-primary"
             >
               Login
             </button>
