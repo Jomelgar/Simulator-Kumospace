@@ -1,80 +1,112 @@
-import React from "react";
+import React, { useState } from "react";
 import logoImage from "../asset/logo.png";
 import "./SignIn.css";
+import { useNavigate } from "react-router-dom";
 
 const SignIn: React.FC = () => {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+
+  const [error, setError] = useState("");
+
+  const handleCreateAccount = () => {
+    if (!name || !username || !password || !email) {
+      setError("All fields are required.");
+      return;
+    }
+
+    setError("");
+    alert("Account created successfully! (Aquí harías el POST real)");
+  };
+
   return (
     <div className="signin-container">
       {/* Left side - Logo */}
       <div className="signin-left-side">
-        <img
-          src={logoImage}
-          alt="Rooms Hive Logo"
-          className="signin-logo"
-        />
+        <img src={logoImage} alt="Rooms Hive Logo" className="signin-logo" />
       </div>
 
-      {/* Right side - Sign up form */}
+      {/* Right side */}
       <div className="signin-right-side">
         <div className="signin-form-wrapper">
-          {/* Title */}
-          <h1 className="signin-title">
-            Sign up
-          </h1>
+          {/* Professional Title */}
+          <h1 className="signin-title">Sign Up</h1>
 
           {/* Form */}
-          <form className="signin-form">
-            {/* Username field */}
+          <form className="signin-form" onSubmit={(e) => e.preventDefault()}>
+            {/* Name */}
             <div>
-              <label className="signin-label">
-                Username
-              </label>
+              <label className="signin-label">Name</label>
+              <input
+                type="text"
+                placeholder="Kenny Example"
+                className="signin-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="signin-label">Username</label>
               <input
                 type="text"
                 placeholder="Example username"
                 className="signin-input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
-            {/* Password field */}
+            {/* Password */}
             <div>
-              <label className="signin-label">
-                Password
-              </label>
+              <label className="signin-label">Password</label>
               <input
                 type="password"
                 placeholder="**********"
                 className="signin-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {/* Email field */}
+            {/* Email */}
             <div>
-              <label className="signin-label">
-                Email
-              </label>
+              <label className="signin-label">Email</label>
               <input
                 type="email"
                 placeholder="example@gmail.com"
                 className="signin-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </form>
 
-          {/* Bottom links */}
+          {/* Error Message */}
+          {error && <p className="signin-error">{error}</p>}
+
+          {/* Actions */}
           <div className="signin-actions">
-            <a
-              href="#"
-              className="signin-action-link"
+            <button
+              type="button"
+              className="signin-button signin-button-secondary"
+              onClick={() => navigate("/login")}
             >
               Login
-            </a>
-            <a
-              href="#"
-              className="signin-action-link"
+            </button>
+
+            <button
+              type="button"
+              className="signin-button signin-button-primary"
+              onClick={handleCreateAccount}
             >
               Create Account
-            </a>
+            </button>
           </div>
         </div>
       </div>
