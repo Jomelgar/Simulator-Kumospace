@@ -9,5 +9,3 @@ services:
       - "3001:3001"   # Cambia si tu server usa otro puerto
     environment:
       - NODE_ENV=production
-    volumes:
-      - ./:/app        # OPCIONAL: solo si quieres que el container use tu código local
