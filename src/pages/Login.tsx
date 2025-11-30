@@ -1,89 +1,115 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImage from "../asset/logo.png";
+import hexagonImage from "../asset/hexagon.png";
 import "./Login.css";
 
-const Login: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+export function LoginPage() {
   const navigate = useNavigate();
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica de autenticación
-    // Por ahora, simplemente navegamos a la página principal
-    navigate("/inicio");
-  };
-
-  const onNavigateToSignUp = () => {
-    navigate("/sign_in");
-  };
+  const [activeField, setActiveField] = useState<
+    "username" | "password" | null
+  >(null);
 
   return (
     <div className="login-container">
-      {/* Left side - Logo */}
-      <div className="login-left-side">
-        <img src={logoImage} alt="Rooms Hive Logo" className="login-logo" />
-      </div>
+      <div className="gradient-blur"></div>
 
-      {/* Right side - Login form */}
+      {/* LEFT SIDE */}
+      <div className="login-left-wrapper">
+        <img
+          src={logoImage}
+          alt="Rooms Hive Logo"
+          className="login-left-logo"
+        />
+      </div>
+      {/* RIGHT SIDE */}
       <div className="login-right-side">
         <div className="login-form-wrapper">
-          {/* Title - "Login" with golden "o" */}
-          <h1 className="login-title">
-            <span className="text-white">L</span>
-            <span className="text-gold">o</span>
-            <span className="text-white">gin</span>
-          </h1>
+          {/* ICON */}
+          <div className="hexagon-container">
+            <img src={hexagonImage} className="hexagon-icon" alt="Hexagon" />
+          </div>
 
-          {/* Form */}
+          {/* TITLE */}
+          <h1 className="login-title">Welcome Back</h1>
+          <p className="login-subtitle">Sign in to continue to your account</p>
+
+          {/* FORM */}
           <form className="login-form">
-            {/* Username field */}
-            <div>
-              <label className="login-label">Username</label>
+            {/* USERNAME */}
+            <div className="login-field-group">
+              <label
+                className={`login-label ${
+                  activeField === "username" ? "label-active" : ""
+                }`}
+              >
+                USERNAME
+              </label>
+
               <input
                 type="text"
-                placeholder="Example username"
-                className="login-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                onFocus={() => setActiveField("username")}
+                onBlur={() => setActiveField(null)}
+                className={`login-input ${
+                  activeField === "username" ? "input-active" : ""
+                }`}
               />
             </div>
 
-            {/* Password field */}
-            <div>
-              <label className="login-label">Password</label>
+            {/* PASSWORD */}
+            <div className="login-field-group">
+              <label
+                className={`login-label ${
+                  activeField === "password" ? "label-active" : ""
+                }`}
+              >
+                PASSWORD
+              </label>
+
               <input
                 type="password"
-                placeholder="**********"
-                className="login-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                onFocus={() => setActiveField("password")}
+                onBlur={() => setActiveField(null)}
+                className={`login-input ${
+                  activeField === "password" ? "input-active" : ""
+                }`}
               />
             </div>
+
+            {/* Forgot password */}
+            <div className="forgot-wrapper">
+              <button type="button" className="forgot-text">
+                Forgot password?
+              </button>
+            </div>
+
+            {/* BUTTON */}
+            <button type="submit" className="login-btn">
+              Sign In
+            </button>
           </form>
 
-          {/* Bottom buttons */}
-          <div className="login-actions">
+          {/* Divider */}
+          <div className="divider">
+            <span>or</span>
+          </div>
+
+          {/* SIGN UP */}
+          <div className="signup-wrapper">
+            <p className="signup-text">Don’t have an account? </p>
             <button
-              type="button"
-              onClick={onNavigateToSignUp}
-              className="login-button login-button-secondary"
+              onClick={() => navigate("/sign_in")}
+              className="signup-link"
             >
-              Sign up
-            </button>
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="login-button login-button-primary"
-            >
-              Login
+              Create Account
             </button>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default Login;
+export default LoginPage;
