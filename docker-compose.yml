@@ -23,14 +23,14 @@ services:
       - ./uploads:/app/uploads
     environment:
       - MONGO_URL=mongodb://mongodb:27017/rocketchat
-      - ROOT_URL=http://localhost:3000
       - PORT=3000
-  service:
-    container_name: rocketchat_service
+  rocket-service:
     build: .
+    container_name: service_python
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      - rocketchat 
+    environment:
+      - ROCKET_USERNAME=jomel
+      - ROCKET_PASSWORD=Josue2307
+      - ROCKET_URL=http://rocketchat:3000
+      - PORT=8000
