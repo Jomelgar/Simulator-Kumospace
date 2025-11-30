@@ -1,81 +1,116 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logoImage from "../asset/logo.png";
-import hexagonImage from "../asset/hexagon.png"; // ajustá el nombre según tu asset
+import hexagonImage from "../asset/hexagon.png";
 import "./Login.css";
 
-interface LoginProps {
-  onNavigateToSignUp: () => void;
-}
+export function LoginPage() {
+  const navigate = useNavigate();
+  const [activeField, setActiveField] = useState<
+    "username" | "password" | null
+  >(null);
 
-export function Login({ onNavigateToSignUp }: LoginProps) {
   return (
     <div className="login-container">
       {/* LEFT SIDE */}
-      <div className="login-left">
-        <img src={logoImage} alt="Rooms Hive Logo" className="login-logo" />
+      <div className="login-left-wrapper">
+        <div className="login-left-card">
+          <img
+            src={logoImage}
+            alt="Rooms Hive Logo"
+            className="login-left-logo"
+          />
+        </div>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="login-right">
-        <div className="login-card">
-          {/* Icono */}
-          <img src={hexagonImage} className="login-icon" />
+      <div className="login-right-side">
+        <div className="login-form-wrapper">
+          {/* ICON */}
+          <div className="hexagon-container">
+            <img src={hexagonImage} className="hexagon-icon" alt="Hexagon" />
+          </div>
 
-          {/* Título */}
+          {/* TITLE */}
           <h1 className="login-title">Welcome Back</h1>
           <p className="login-subtitle">Sign in to continue to your account</p>
 
           {/* FORM */}
           <form className="login-form">
             {/* USERNAME */}
-            <div className="form-group">
-              <label className="label">USERNAME</label>
+            <div className="login-field-group">
+              <label
+                className={`login-label ${
+                  activeField === "username" ? "label-active" : ""
+                }`}
+              >
+                USERNAME
+              </label>
+
               <input
                 type="text"
-                className="input"
                 placeholder="Enter your username"
+                onFocus={() => setActiveField("username")}
+                onBlur={() => setActiveField(null)}
+                className={`login-input ${
+                  activeField === "username" ? "input-active" : ""
+                }`}
               />
             </div>
 
             {/* PASSWORD */}
-            <div className="form-group">
-              <label className="label">PASSWORD</label>
+            <div className="login-field-group">
+              <label
+                className={`login-label ${
+                  activeField === "password" ? "label-active" : ""
+                }`}
+              >
+                PASSWORD
+              </label>
+
               <input
                 type="password"
-                className="input"
                 placeholder="Enter your password"
+                onFocus={() => setActiveField("password")}
+                onBlur={() => setActiveField(null)}
+                className={`login-input ${
+                  activeField === "password" ? "input-active" : ""
+                }`}
               />
             </div>
 
             {/* Forgot password */}
-            <div className="forgot-container">
-              <button className="forgot-btn" type="button">
+            <div className="forgot-wrapper">
+              <button type="button" className="forgot-text">
                 Forgot password?
               </button>
             </div>
 
-            {/* Sign In button */}
-            <button type="submit" className="signin-btn">
+            {/* BUTTON */}
+            <button type="submit" className="login-btn">
               Sign In
             </button>
           </form>
 
           {/* Divider */}
           <div className="divider">
-            <div className="line" />
             <span>or</span>
-            <div className="line" />
           </div>
 
-          {/* Sign up link */}
-          <p className="signup-text">
-            Don’t have an account?{" "}
-            <button className="signup-btn" onClick={onNavigateToSignUp}>
+          {/* SIGN UP */}
+          <div className="signup-wrapper">
+            <p className="signup-text">Don’t have an account? </p>
+            <button
+              onClick={() => navigate("/sign_in")}
+              className="signup-link"
+            >
               Create Account
             </button>
-          </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+export default LoginPage;

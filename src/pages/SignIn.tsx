@@ -1,117 +1,181 @@
 import React, { useState } from "react";
-import logoImage from "../asset/logo.png";
-import "./SignIn.css";
 import { useNavigate } from "react-router-dom";
+import logoImage from "../asset/logo.png";
+import hexagonImage from "../asset/hexagon.png";
+import "./SignIn.css";
 
-const SignIn: React.FC = () => {
+export function SignInPage() {
   const navigate = useNavigate();
-
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-
-  const [error, setError] = useState("");
-
-  const handleCreateAccount = () => {
-    if (!name || !username || !password || !email) {
-      setError("All fields are required.");
-      return;
-    }
-
-    setError("");
-    alert("Account created successfully! (Aquí harías el POST real)");
-  };
+  const [activeField, setActiveField] = useState<string | null>(null);
 
   return (
     <div className="signin-container">
-      {/* Left side - Logo */}
-      <div className="signin-left-side">
-        <img src={logoImage} alt="Rooms Hive Logo" className="signin-logo" />
+      {/* LEFT SIDE */}
+      <div className="signin-left-wrapper">
+        <div className="signin-left-card">
+          <img
+            src={logoImage}
+            alt="Rooms Hive Logo"
+            className="signin-left-logo"
+          />
+        </div>
       </div>
 
-      {/* Right side */}
+      {/* RIGHT SIDE */}
       <div className="signin-right-side">
         <div className="signin-form-wrapper">
-          {/* Professional Title */}
-          <h1 className="signin-title">Sign Up</h1>
+          {/* ICON */}
+          <div className="hexagon-container">
+            <img src={hexagonImage} className="hexagon-icon" alt="Hexagon" />
+          </div>
 
-          {/* Form */}
-          <form className="signin-form" onSubmit={(e) => e.preventDefault()}>
-            {/* Name */}
-            <div>
-              <label className="signin-label">Name</label>
+          {/* TITLE */}
+          <h1 className="signin-title">Create Account</h1>
+          <p className="signin-subtitle">
+            Join us and start your journey today
+          </p>
+
+          {/* FORM */}
+          <form className="signin-form">
+            {/* FIRST NAME */}
+            <div className="signin-field-group">
+              <label
+                className={`signin-label ${
+                  activeField === "first" ? "label-active" : ""
+                }`}
+              >
+                FIRST NAME
+              </label>
+
               <input
                 type="text"
-                placeholder="Kenny Example"
-                className="signin-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your first name"
+                onFocus={() => setActiveField("first")}
+                onBlur={() => setActiveField(null)}
+                className={`signin-input ${
+                  activeField === "first" ? "input-active" : ""
+                }`}
               />
             </div>
 
-            {/* Username */}
-            <div>
-              <label className="signin-label">Username</label>
+            {/* SECOND NAME */}
+            <div className="signin-field-group">
+              <label
+                className={`signin-label ${
+                  activeField === "second" ? "label-active" : ""
+                }`}
+              >
+                SECOND NAME
+              </label>
+
               <input
                 type="text"
-                placeholder="Example username"
-                className="signin-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your second name"
+                onFocus={() => setActiveField("second")}
+                onBlur={() => setActiveField(null)}
+                className={`signin-input ${
+                  activeField === "second" ? "input-active" : ""
+                }`}
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="signin-label">Password</label>
+            {/* USERNAME */}
+            <div className="signin-field-group">
+              <label
+                className={`signin-label ${
+                  activeField === "username" ? "label-active" : ""
+                }`}
+              >
+                USERNAME
+              </label>
+
               <input
-                type="password"
-                placeholder="**********"
-                className="signin-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="text"
+                placeholder="Choose a username"
+                onFocus={() => setActiveField("username")}
+                onBlur={() => setActiveField(null)}
+                className={`signin-input ${
+                  activeField === "username" ? "input-active" : ""
+                }`}
               />
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="signin-label">Email</label>
+            {/* EMAIL */}
+            <div className="signin-field-group">
+              <label
+                className={`signin-label ${
+                  activeField === "email" ? "label-active" : ""
+                }`}
+              >
+                EMAIL
+              </label>
+
               <input
                 type="email"
-                placeholder="example@gmail.com"
-                className="signin-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                onFocus={() => setActiveField("email")}
+                onBlur={() => setActiveField(null)}
+                className={`signin-input ${
+                  activeField === "email" ? "input-active" : ""
+                }`}
               />
             </div>
+
+            {/* PASSWORD */}
+            <div className="signin-field-group">
+              <label
+                className={`signin-label ${
+                  activeField === "password" ? "label-active" : ""
+                }`}
+              >
+                PASSWORD
+              </label>
+
+              <input
+                type="password"
+                placeholder="Create a password"
+                onFocus={() => setActiveField("password")}
+                onBlur={() => setActiveField(null)}
+                className={`signin-input ${
+                  activeField === "password" ? "input-active" : ""
+                }`}
+              />
+            </div>
+
+            {/* TERMS */}
+            <div className="terms-wrapper">
+              <input type="checkbox" className="terms-check" />
+              <p className="terms-text">
+                I agree to the <span>Terms of Service</span> and{" "}
+                <span>Privacy Policy</span>
+              </p>
+            </div>
+
+            {/* BUTTON */}
+            <button type="submit" className="signin-btn">
+              Create Account
+            </button>
           </form>
 
-          {/* Error Message */}
-          {error && <p className="signin-error">{error}</p>}
+          {/* Divider */}
+          <div className="divider">
+            <span>or</span>
+          </div>
 
-          {/* Actions */}
-          <div className="signin-actions">
+          {/* SIGN IN LINK */}
+          <div className="signin-login-wrapper">
+            <p className="signin-login-text">Already have an account?</p>
             <button
-              type="button"
-              className="signin-button signin-button-secondary"
               onClick={() => navigate("/login")}
+              className="signin-login-link"
             >
-              Login
-            </button>
-
-            <button
-              type="button"
-              className="signin-button signin-button-primary"
-              onClick={handleCreateAccount}
-            >
-              Create Account
+              Sign In
             </button>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default SignIn;
+export default SignInPage;
