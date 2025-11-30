@@ -10,15 +10,15 @@ export function SignInPage() {
 
   return (
     <div className="signin-container">
+      <div className="gradient-blur"></div>
+
       {/* LEFT SIDE */}
       <div className="signin-left-wrapper">
-        <div className="signin-left-card">
-          <img
-            src={logoImage}
-            alt="Rooms Hive Logo"
-            className="signin-left-logo"
-          />
-        </div>
+        <img
+          src={logoImage}
+          alt="Rooms Hive Logo"
+          className="signin-left-logo"
+        />
       </div>
 
       {/* RIGHT SIDE */}

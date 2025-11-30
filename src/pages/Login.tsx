@@ -12,17 +12,16 @@ export function LoginPage() {
 
   return (
     <div className="login-container">
+      <div className="gradient-blur"></div>
+
       {/* LEFT SIDE */}
       <div className="login-left-wrapper">
-        <div className="login-left-card">
-          <img
-            src={logoImage}
-            alt="Rooms Hive Logo"
-            className="login-left-logo"
-          />
-        </div>
+        <img
+          src={logoImage}
+          alt="Rooms Hive Logo"
+          className="login-left-logo"
+        />
       </div>
-
       {/* RIGHT SIDE */}
       <div className="login-right-side">
         <div className="login-form-wrapper">
