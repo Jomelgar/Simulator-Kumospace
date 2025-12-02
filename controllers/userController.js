@@ -30,6 +30,24 @@ exports.getUser = async( request, response) => {
     }
 }
 
+exports.getUser = async( request, response) => {
+    try{
+        const { id_user } = request.params;
+        if(!id_user){
+            return response.status(400).json({message: "id_user required."});
+        }
+
+        const user = await User.findByPk(id_user);
+        if(!user){
+            return response.status(404).json({message: "User not found."});
+        }
+
+        response.json(user);
+    }catch(error){
+        response.status(500).json({error: error.message});
+    }
+}
+
 exports.addUser = async( request, response) => {
     try{
         const { user_name, password, email, first_name, last_name }=request.body;
