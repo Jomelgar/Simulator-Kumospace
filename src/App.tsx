@@ -2,30 +2,9 @@ import { useState, useEffect } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
 import { set } from 'react-hook-form';
 
-export type UserStatus = 'online' | 'busy' | 'away';
-export type WorkspaceType = 'general' | 'shared' | 'private';
-
-export interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  status: UserStatus;
-  currentLocation: string;
-  locationType: WorkspaceType;
-}
-
-export interface Workspace {
-  id: string;
-  name: string;
-  type: WorkspaceType;
-  ownerId?: string;
-  isLocked: boolean;
-  maxUsers?: number;
-}
-
 export interface ChatMessage {
   id: string;
-  senderId: string;
+  senderId: number;
   senderName: string;
   content: string;
   timestamp: Date;
@@ -33,36 +12,72 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
+export interface User {
+  id_user: number;
+  user_name: string;
+  password: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  currentLocation: number | null;
+  avatar: string | undefined;
+  locationType: string | null;
+  status: string;
+}
+
+export interface Private_Room {
+  id_private_room: number;
+  id_user: number;
+  room_name: string;
+  is_locked: boolean;
+}
+
+export interface Work_Room {
+  id_room: number;
+  room_name: string;
+  max_users: number;
+  is_locked: boolean;
+}
+
 export default function App() {
 
-  const [currentUser, setCurrentUser] = useState<User>({
-    id: 'current-user',
-    name: 'Tú',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current',
-    status: 'online',
-    currentLocation: 'private-current',
-    locationType: 'private'
+  const [currentUser, setCurrentUser] = useState({
+    id_user: 1,
+    user_name: 'Tú',
+    currentLocation: 1,
+    locationType: 'private',
+    status: 'public',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current'
   });
 
   const [users, setUsers] = useState<User[]>([]);
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [private_rooms, setPrivateRooms] = useState<Private_Room[]>([]);
+  const [work_rooms, setWorkRooms] = useState<Work_Room[]>([]);
 
   const [socket, setSocket] = useState<WebSocket|null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3001");
+    const ws = new WebSocket("ws://localhost:3002");
     setSocket(ws);
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: "setHive",
+        id_hive: 2
+      }));
+    }
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       if (data.type === "init" || data.type === "update") {
         setUsers(data.users);
-        setWorkspaces(data.workspaces);
+        setPrivateRooms(data.private_rooms);
+        setWorkRooms(data.work_rooms);
 
         // Mantener currentUser actualizado
-        const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
+        const updatedCurrentUser = data.users.find((u: User) => u.id_user === currentUser.id_user);
         if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
       }
     };
@@ -70,17 +85,18 @@ export default function App() {
     return () => ws.close();
   }, []);
 
-  const enterWorkSpace = (workspaceID: string) =>{
+  const enterWorkSpace = (workspaceID: number, roomType: string) =>{
     if(socket){
       socket.send(JSON.stringify({
         type: "enterWorkspace",
-        userId: currentUser.id,
-        workspaceId: workspaceID
+        userId: currentUser.id_user,
+        workspaceId: workspaceID,
+        room: roomType
       }));
     }
   }
 
-  const lockWorkSpace = (workspaceID: string) =>{
+  const lockWorkSpace = (workspaceID: number) =>{
     if(socket){
       socket.send(JSON.stringify({
         type: "lockWorkspace",
@@ -98,11 +114,11 @@ export default function App() {
     }
   }
 
-  const deleteWorkSpace = (workspaceID: string) =>{
+  const deleteWorkSpace = (workspaceID: number) =>{
     if(socket){
       socket.send(JSON.stringify({
         type: "deleteWorkSpace",
-        userId: currentUser.id,
+        userId: currentUser.id_user,
         workspaceId: workspaceID
       }));
     }
@@ -120,12 +136,8 @@ export default function App() {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
 
-  const getUsersInLocation = (locationId: string): User[] => {
-    const usersInLocation = users.filter(u => u.currentLocation === locationId && u.id !== currentUser.id);
-    if (currentUser.currentLocation === locationId) {
-      return [currentUser, ...usersInLocation];
-    }
-    return usersInLocation;
+  const getUsersInLocation = (locationId: number) => {
+    return users.filter((u: User) => u.currentLocation === locationId);
   };
 
   const handleSendMessage = () => {
@@ -133,8 +145,8 @@ export default function App() {
     
     const message: ChatMessage = {
       id: Date.now().toString(),
-      senderId: currentUser.id,
-      senderName: currentUser.name,
+      senderId: currentUser.id_user,
+      senderName: currentUser.user_name,
       content: newMessage,
       timestamp: new Date(),
       type: chatTarget === 'general' ? 'general' : 'private',
@@ -146,8 +158,8 @@ export default function App() {
   };
 
   const allUsers = users;
-  const privateWorkspaces = workspaces.filter(w => w.type === 'private');
-  const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
+  const privateWorkspaces = private_rooms;
+  const sharedWorkspaces = work_rooms;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
@@ -196,8 +208,8 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 rounded-lg border border-slate-700">
-              <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-full" />
-              <span className="text-sm text-white">{currentUser.name}</span>
+              <img src={currentUser.avatar} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              <span className="text-sm text-white">{currentUser.user_name}</span>
             </div>
 
             <button
@@ -229,19 +241,19 @@ export default function App() {
               
               <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                  {privateWorkspaces.map(workspace => {
-                    const owner = allUsers.find(u => u.id === workspace.ownerId);
-                    const usersInOffice = getUsersInLocation(workspace.id);
-                    const isOwner = currentUser.id === workspace.ownerId;
-                    const isCurrentUserHere = currentUser.currentLocation === workspace.id;
+                  {privateWorkspaces.map(room => {
+                    const owner = allUsers.find(u => u.id_user === room.id_user);
+                    const usersInOffice = getUsersInLocation(room.id_private_room);
+                    const isOwner = currentUser.id_user === room.id_user;
+                    const isCurrentUserHere = currentUser.currentLocation === room.id_private_room;
                     const isOccupied = usersInOffice.length > 0;
                     const isOwnerInSharedSpace = owner && owner.locationType === 'shared';
                     const isOwnerAway = owner && owner.status === 'away' && !isOwnerInSharedSpace;
                     
                     // Verificar si la oficina está accesible para otros usuarios
-                    const isOwnerInOffice = owner && owner.currentLocation === workspace.id;
+                    const isOwnerInOffice = owner && owner.currentLocation === room.id_private_room;
                     const isOwnerBusy = owner && owner.status === 'busy';
-                    const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !workspace.isLocked);
+                    const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !room.is_locked);
                     
                     // Verificar si estoy visitando una oficina ajena
                     const isVisitingOthersOffice = isCurrentUserHere && !isOwner;
@@ -274,8 +286,8 @@ export default function App() {
 
                     return (
                       <div
-                        key={workspace.id}
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
+                        key={room.id_private_room}
+                        onClick={() => !isCurrentUserHere && enterWorkSpace(room.id_private_room, 'private')}
                         className={`border-2 rounded-lg p-4 transition-all ${
                           canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                         } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-blue-500 hover:shadow-md'}`}
@@ -292,13 +304,13 @@ export default function App() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  lockWorkSpace(workspace.id);
+                                  lockWorkSpace(room.id_private_room);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
-                                  workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                                 }`}
                               >
-                                {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
+                                {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                               </button>
                             )}
                           </div>
@@ -308,14 +320,14 @@ export default function App() {
                         {usersInOffice.length > 0 ? (
                           <div className="flex justify-center mb-3 flex-wrap gap-2">
                             {usersInOffice.map(user => {
-                              const isUserInSharedSpace = user.locationType === 'shared' && user.id === workspace.ownerId;
+                              const isUserInSharedSpace = user.locationType === 'shared' && user.id_user === room.id_private_room;
                               
                               return (
-                                <div key={user.id} className="flex flex-col items-center gap-1">
+                                <div key={user.id_user} className="flex flex-col items-center gap-1">
                                   <div className="relative">
                                     <img 
                                       src={user.avatar} 
-                                      alt={user.name} 
+                                      alt={user.user_name} 
                                       className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
                                         isUserInSharedSpace ? 'grayscale opacity-50' : ''
                                       }`} 
@@ -327,7 +339,7 @@ export default function App() {
                                       'bg-yellow-500'
                                     }`} />
                                   </div>
-                                  <span className="text-xs text-slate-700 text-center">{user.name}</span>
+                                  <span className="text-xs text-slate-700 text-center">{user.user_name}</span>
                                   <span className={`text-xs ${
                                     isUserInSharedSpace ? 'text-slate-400' :
                                     user.status === 'online' ? 'text-green-600' : 
@@ -350,7 +362,7 @@ export default function App() {
                                 <div className="relative">
                                   <img 
                                     src={owner.avatar} 
-                                    alt={owner.name} 
+                                    alt={owner.user_name} 
                                     className={`w-10 h-10 rounded-full border-2 border-slate-200 ${
                                       isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
                                     }`} 
@@ -362,7 +374,7 @@ export default function App() {
                                     'bg-yellow-500'
                                   }`} />
                                 </div>
-                                <span className="text-xs text-slate-700 text-center">{owner.name}</span>
+                                <span className="text-xs text-slate-700 text-center">{owner.user_name}</span>
                                 <span className={`text-xs ${
                                   isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
                                   owner.status === 'online' ? 'text-green-600' : 
@@ -437,16 +449,16 @@ export default function App() {
               
               <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  {sharedWorkspaces.map(workspace => {
-                    const usersInSpace = getUsersInLocation(workspace.id);
-                    const isCurrentUserHere = currentUser.currentLocation === workspace.id;
+                  {sharedWorkspaces.map(room => {
+                    const usersInSpace = getUsersInLocation(room.id_room);
+                    const isCurrentUserHere = currentUser.currentLocation === room.id_room;
 
                     return (
                       <div 
-                        key={workspace.id} 
-                        onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
+                        key={room.id_room} 
+                        onClick={() => !isCurrentUserHere && enterWorkSpace(room.id_room, 'shared')}
                         className={`rounded-lg p-4 transition-all cursor-pointer ${
-                          workspace.isLocked 
+                          room.is_locked 
                             ? 'border-2 border-red-600 bg-red-50' 
                             : 'border border-slate-200 bg-slate-50'
                         } ${!isCurrentUserHere && 'hover:border-blue-500 hover:shadow-md'}`}
@@ -455,14 +467,14 @@ export default function App() {
                           <div className="flex items-center gap-2 text-sm text-slate-600">
                             <Users className="w-4 h-4" />
                             <span>{usersInSpace.length}</span>
-                            {workspace.maxUsers && <span className="text-slate-400">/ {workspace.maxUsers}</span>}
+                            {room.max_users && <span className="text-slate-400">/ {room.max_users}</span>}
                           </div>
 
                           <div className="flex items-center gap-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteWorkSpace(workspace.id);
+                                deleteWorkSpace(room.id_room);
                               }}
                               disabled={isCurrentUserHere}
                               className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
@@ -478,13 +490,13 @@ export default function App() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  lockWorkSpace(workspace.id);
+                                  lockWorkSpace(room.id_room);
                                 }}
                                 className={`h-8 w-8 rounded flex items-center justify-center ${
-                                  workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                                 }`}
                               >
-                                {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
+                                {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                               </button>
                             )}
                             
@@ -499,14 +511,14 @@ export default function App() {
                         {usersInSpace.length > 0 ? (
                           <div className="flex flex-wrap gap-3 justify-center">
                             {usersInSpace.map(user => (
-                              <div key={user.id} className="group relative">
+                              <div key={user.id_user} className="group relative">
                                 <img 
                                   src={user.avatar} 
-                                  alt={user.name} 
+                                  alt={user.user_name} 
                                   className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-blue-400 transition-colors cursor-pointer" 
                                 />
                                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                  {user.name}
+                                  {user.user_name}
                                 </div>
                               </div>
                             ))}
@@ -545,8 +557,8 @@ export default function App() {
                 className="w-full bg-slate-800 border-slate-700 text-white text-sm h-9 rounded px-3 border"
               >
                 <option value="general">Chat General</option>
-                {allUsers.filter(u => u.id !== currentUser.id).map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
+                {allUsers.filter(u => u.id_user !== currentUser.id_user).map(user => (
+                  <option key={user.id_user} value={user.id_user}>{user.user_name}</option>
                 ))}
               </select>
             </div>
