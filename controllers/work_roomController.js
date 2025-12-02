@@ -18,8 +18,8 @@ exports.getWorkRooms = async(request, response) => {
 
 exports.addWorkRoom = async(request, response) => {
     try{
-        const { id_hive, max_users }=request.body;
-        const newRoom = await WorkRoom.create({ id_hive, max_users });
+        const { id_hive, room_name, max_users }=request.body;
+        const newRoom = await WorkRoom.create({ id_hive, room_name, max_users });
 
         response.json(newRoom);
     }catch(error){
@@ -39,6 +39,24 @@ exports.deleteWorkRoom = async(request, response) => {
         await deleteRoom.destroy();
 
         response.json("Work room deleted with success.");
+    }catch(error){
+        response.status(500).json({ error: error.message });
+    }
+}
+
+exports.updateWorkRoom = async(request, response) => {
+    try{
+        const { id_room }=request.params;
+        const { room_name, max_users, is_locked }=request.body;
+
+        const updateRoom = await WorkRoom.findByPk(id_room);
+        if(!updateRoom){
+            return response.status(404).json({message: "Room not found."});
+        }
+
+        await updateRoom.update({ room_name, max_users, is_locked });
+
+        response.json(updateRoom);
     }catch(error){
         response.status(500).json({ error: error.message });
     }

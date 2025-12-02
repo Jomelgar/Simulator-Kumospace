@@ -13,7 +13,7 @@ const User = sequelize.define("User",{
         unique: true
     },
     password: {
-        type: DataTypes.CHAR(10),
+        type: DataTypes.STRING,
         allowNull: false
     },
     email: {
@@ -28,7 +28,27 @@ const User = sequelize.define("User",{
     last_name: {
         type: DataTypes.STRING,
         allowNull: false
-    }
+    },
+    status : {
+        type: DataTypes.STRING,
+        defaultValue: 'online'
+    },
+    currentLocation: {
+        type: DataTypes.INTEGER
+    },
+    locationType: {
+        type: DataTypes.STRING
+    },
+    chatUserId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true
+    },
+    chatAuthToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true
+    },
 }, {
     tableName: "User",
     timestamps: false

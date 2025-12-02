@@ -1,11 +1,21 @@
-const { DataTypes }=require("sequelize");
-const sequelize=require("../config/database");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const Work_Room = sequelize.define("Work_Room", {
-    id_room: {
+const Private_Room = sequelize.define("Private_Room", {
+    id_private_room: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
+    },
+    id_user: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: "User",
+            key: "id_user"
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE"
     },
     id_hive: {
         type: DataTypes.INTEGER,
@@ -18,16 +28,12 @@ const Work_Room = sequelize.define("Work_Room", {
         onDelete: "CASCADE"
     },
     room_name: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(50),
         allowNull: false
-    },
-    max_users: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
     },
     is_locked: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false
+        defaultValue: true 
     },
     created_at: {
         type: DataTypes.DATE,
@@ -39,10 +45,10 @@ const Work_Room = sequelize.define("Work_Room", {
         onUpdate: DataTypes.NOW
     }
 }, {
-    tableName: "Work_Room",
+    tableName: "Private_Room",
     createdAt: "created_at",
     updatedAt: "updated_at",
     timestamps: true
 });
 
-module.exports = Work_Room;
+module.exports = Private_Room;  
