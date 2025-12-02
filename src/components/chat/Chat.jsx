@@ -28,6 +28,7 @@ export default function Chat({ username, password, tryEnter, exit }) {
   return (
     <iframe
       src={`${import.meta.env.VITE_CHAT_URL || "http://localhost:3000"}/home?resumeToken=${token}`}
+      allow="notifications"
       className="w-full h-full border-none"
     />
   );

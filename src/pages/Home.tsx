@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX } from 'lucide-react';
 import Chat from "../components/chat/Chat";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
+import { relative } from 'path';
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
@@ -78,7 +79,6 @@ export default function App() {
   const [socket, setSocket] = useState<WebSocket|null>(null);
 
   useEffect(() => {
-    console.log(import.meta.env.VITE_CHAT_API_URL);
     try {
       const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3001');
       setSocket(ws);
@@ -158,6 +158,40 @@ export default function App() {
   const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState('001');
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
 
+  //Inccrementador de div de chat
+  const [chatWidth, setChatWidth] = useState(window.innerWidth * 0.3);
+  const panelRef = useRef(null);
+  const isChatResizing = useRef(false);
+
+  useEffect(() => {
+    function handleMouseMove(e: MouseEvent) {
+      if (!isChatResizing.current) return;
+
+      const newWidth = window.innerWidth - e.clientX;
+      if(newWidth < window.innerWidth * 0.2 || newWidth > window.innerWidth * 0.5) return;
+        setChatWidth(newWidth);
+    }
+
+    function handleMouseUp() {
+      isChatResizing.current = false;
+      document.body.style.userSelect = "auto"; 
+      document.body.style.pointerEvents = 'auto';
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  function startResize() {
+    isChatResizing.current = true;
+    document.body.style.pointerEvents = 'none';
+    document.body.style.userSelect = "none"; 
+  }
   // Estados para controles de medios (alineados con config de Jitsi: video ON, audio OFF)
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(false);
@@ -355,7 +389,7 @@ export default function App() {
             <h1 className="text-white">Oficina Virtual</h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div ref={panelRef} className="flex items-center gap-4">
             {/* Controles de medios */}
             <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
               <button
@@ -445,7 +479,7 @@ export default function App() {
             </div>
 
             <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
+              onClick={() => {setIsChatOpen(!isChatOpen); (isChatOpen === true)? setChatWidth(window.innerWidth * 0.3): setChatWidth(0)}}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${isChatOpen ? 'bg-blue-600 text-white' : 'bg-white text-slate-900 border border-slate-300'
                 }`}
             >
@@ -470,7 +504,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="max-w-[1800px] mx-auto p-8 space-y-6">
+          <div className={`mx-auto p-8 space-y-6`}>
             {/* Oficinas Privadas */}
             <div className="bg-white rounded-lg border border-slate-200">
               <div className="px-6 py-4 border-b border-slate-200">
@@ -771,11 +805,23 @@ export default function App() {
         </main>
 
         {/* Chat Panel */}
-        {isChatOpen && (
-          <div className="w-80 bg-white border-l border-slate-200 flex">
-            <Chat username={"johnny-fake"} password={"josue2307"} tryEnter={true} />
-          </div>
-        )}
+        <div className={`bg-white  border-l border-slate-200 flex`} style={{ position: 'relative' ,width: `${chatWidth}px` }}
+        >
+          <Chat username={"johnny-fake"} password={"josue2307"} tryEnter={true} />
+          {/* Resizer: borde más ancho para arrastrar */}
+          <div  
+            onMouseDown={startResize}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0, // o right:0 si está al otro lado
+              width: '8px', // más ancho que el borde real
+              height: '100%',
+              cursor: 'ew-resize',
+              zIndex: 10,
+            }}
+          />
+        </div>
       </div>
 
       {/* Jitsi - siempre montado cuando está activo, solo cambia de posición */}

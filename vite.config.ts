@@ -54,6 +54,8 @@
       outDir: 'build',
     },
     server: {
+      host: true,
+      allowedHosts: ['hiveroom.org'],
       port: 3000,
       open: false,
     },
