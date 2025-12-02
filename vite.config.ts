@@ -55,7 +55,7 @@
     },
     server: {
       host: true,
-      allowedHosts: ['hiveroom.org'],
+      allowedHosts: ['app.hiveroom.org'],
       port: 3000,
       open: false,
     },
