@@ -51,4 +51,4 @@ const Private_Room = sequelize.define("Private_Room", {
     timestamps: true
 });
 
-module.exports = Private_Room;
+module.exports = Private_Room;  
