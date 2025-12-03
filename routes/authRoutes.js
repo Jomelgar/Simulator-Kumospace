@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Hive = require("../controllers/authController");
 
+//Rutas publicas
 router.post("/login", Hive.login);
 router.post("/decode-token", Hive.decodeToken);
 
