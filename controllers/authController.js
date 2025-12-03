@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
+require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
 exports.login = async (req, res) => {
@@ -15,14 +16,13 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    const token = jwt.sign({ user: user }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES,
-    });
+    const token = jwt.sign({ user: user }, process.env.JWT_SECRET);
 
     const cookieOption = {
-      expires: new Date(Date.now() + 3600000), //1hora
+      expires: new Date(Date.now() + 86400000), //1dia
       httpOnly: true,
       sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     };
     res.cookie("JWT", token, cookieOption);
 
@@ -35,7 +35,7 @@ exports.login = async (req, res) => {
 
 exports.decodeToken = (req, res) => {
   try {
-    const { token } = req.body;
+    const token = req.cookies["JWT"];
 
     if (!token) {
       return res.status(400).json({ message: "Token requerido." });
@@ -51,4 +51,13 @@ exports.decodeToken = (req, res) => {
     console.error("Error decoding token:", error);
     return res.status(401).json({ message: "Invalid token." });
   }
+};
+
+exports.logout = (req, res) => {
+  res.clearCookie("JWT", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
+  return res.status(200).json({ message: "Logged out" });
 };
