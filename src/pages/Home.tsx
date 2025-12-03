@@ -358,8 +358,8 @@ export default function App() {
   }, [currentUser.currentLocation, users, isJitsiActive]);
 
   const allUsers = [currentUser, ...users.filter(u => u.id !== currentUser.id)];
-  const privateWorkspaces = workspaces.filter(w => w.type === 'private');
-  const sharedWorkspaces = workspaces.filter(w => w.type === 'shared');
+  const privateWorkspaces = workspaces?.filter(w => w.type === 'private');
+  const sharedWorkspaces = workspaces?.filter(w => w.type === 'shared');
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
@@ -499,7 +499,7 @@ export default function App() {
 
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {privateWorkspaces.map(workspace => {
+                    {privateWorkspaces?.map(workspace => {
                       const owner = allUsers.find(u => u.id === workspace.ownerId);
                       const usersInOffice = getUsersInLocation(workspace.id);
                       const isOwner = currentUser.id === workspace.ownerId;
@@ -700,7 +700,7 @@ export default function App() {
 
                 <div className="p-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {sharedWorkspaces.map(workspace => {
+                    {sharedWorkspaces?.map(workspace => {
                       const usersInSpace = getUsersInLocation(workspace.id);
                       const isCurrentUserHere = currentUser.currentLocation === workspace.id;
 
