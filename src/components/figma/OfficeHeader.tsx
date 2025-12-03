@@ -1,5 +1,5 @@
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { 
   LayoutGrid, 
   Map, 
@@ -8,7 +8,7 @@ import {
   Search,
   User
 } from "lucide-react";
-import { Input } from "./ui/input";
+import { Input } from "../ui/input";
 
 interface OfficeHeaderProps {
   currentView: "grid" | "map";

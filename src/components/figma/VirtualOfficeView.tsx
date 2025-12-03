@@ -1,11 +1,15 @@
-import { Users, Video, Coffee, Presentation, MessageSquare, Lock, Plus } from "lucide-react";
+import { useState } from "react";
+import { Users, Video, Coffee, Presentation, MessageSquare, Plus } from "lucide-react";
 import { CreateRoomDialog } from "./CreateRoomDialog";
+import { VirtualOffice } from "./VirtualOffice";
 
 export interface User {
   id: string;
   name: string;
   avatar: string;
-  status: "available" | "busy" | "away";
+  status: 'online' | 'busy' | 'away';
+  currentRoom: string | null;
+  role?: 'Hive Queen' | 'Bee';
 }
 
 export interface Room {
@@ -15,6 +19,7 @@ export interface Room {
   capacity: number;
   users: User[];
   isLocked?: boolean;
+  description?: string;
 }
 
 interface VirtualOfficeViewProps {
@@ -22,14 +27,14 @@ interface VirtualOfficeViewProps {
   spaceId: string | null;
 }
 
-// Mock data
+// Mock users
 const mockUsers: User[] = [
-  { id: "1", name: "Ana García", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400", status: "available" },
-  { id: "2", name: "Carlos Ruiz", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", status: "busy" },
-  { id: "3", name: "María López", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400", status: "available" },
-  { id: "4", name: "Jorge Martínez", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", status: "available" },
-  { id: "5", name: "Laura Sánchez", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400", status: "away" },
-  { id: "6", name: "Diego Torres", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400", status: "busy" },
+  { id: "1", name: "Ana García", avatar: "...", status: "online", currentRoom: null },
+  { id: "2", name: "Carlos Ruiz", avatar: "...", status: "busy", currentRoom: null },
+  { id: "3", name: "María López", avatar: "...", status: "online", currentRoom: null },
+  { id: "4", name: "Jorge Martínez", avatar: "...", status: "online", currentRoom: null },
+  { id: "5", name: "Laura Sánchez", avatar: "...", status: "away", currentRoom: null },
+  { id: "6", name: "Diego Torres", avatar: "...", status: "busy", currentRoom: null },
 ];
 
 const mockRooms: Room[] = [
@@ -38,11 +43,12 @@ const mockRooms: Room[] = [
     name: "Sala de Reuniones Principal",
     type: "conference",
     capacity: 20,
+    description: "Sala para reuniones grandes",
     users: [mockUsers[0], mockUsers[1], mockUsers[2]],
   },
   {
     id: "2",
-    name: "Oficina - Equipo Marketing",
+    name: "Oficina - Marketing",
     type: "office",
     capacity: 8,
     users: [mockUsers[3], mockUsers[4]],
@@ -61,129 +67,81 @@ const mockRooms: Room[] = [
     capacity: 10,
     users: [mockUsers[5]],
   },
-  {
-    id: "5",
-    name: "Oficina - Desarrollo",
-    type: "office",
-    capacity: 12,
-    users: [mockUsers[0], mockUsers[2], mockUsers[3]],
-  },
-  {
-    id: "6",
-    name: "Sala Privada - Dirección",
-    type: "meeting",
-    capacity: 6,
-    users: [],
-    isLocked: true,
-  },
 ];
 
-export function VirtualOfficeView({ onBackToProfile, spaceId }: VirtualOfficeViewProps) {
+export function VirtualOfficeView({ onBackToProfile }: VirtualOfficeViewProps) {
   const [rooms, setRooms] = useState<Room[]>(mockRooms);
-  const [selectedView, setSelectedView] = useState<"grid" | "map">("grid");
-  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const handleJoinRoom = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
     if (room && !room.isLocked) {
-      setCurrentRoom(roomId);
+      setCurrentRoom(room);
     }
   };
 
-  const handleLeaveRoom = () => {
-    setCurrentRoom(null);
-  };
+  const handleLeaveRoom = () => setCurrentRoom(null);
 
-  const handleMoveToRoom = (roomId: string) => {
-    setCurrentRoom(roomId);
-  };
-
-  const handleCreateRoom = (roomData: { name: string; type: Room["type"]; capacity: number; isLocked: boolean }) => {
+  const handleCreateRoom = (data: { name: string; type: Room["type"]; capacity: number; isLocked: boolean }) => {
     const newRoom: Room = {
-      id: String(rooms.length + 1),
-      name: roomData.name,
-      type: roomData.type,
-      capacity: roomData.capacity,
+      id: crypto.randomUUID(),
+      name: data.name,
+      type: data.type,
+      capacity: data.capacity,
       users: [],
-      isLocked: roomData.isLocked,
+      isLocked: data.isLocked,
     };
-    setRooms([...rooms, newRoom]);
+
+    setRooms(r => [...r, newRoom]);
     setIsCreateDialogOpen(false);
   };
 
-  const getRoomIcon = (type: Room["type"]) => {
-    switch (type) {
-      case "conference":
-        return Presentation;
-      case "meeting":
-        return Video;
-      case "office":
-        return Users;
-      case "lounge":
-        return Coffee;
-      default:
-        return MessageSquare;
-    }
-  };
-
-  // Si estamos en una sala, mostrar el interior
   if (currentRoom) {
-    const room = rooms.find(r => r.id === currentRoom);
-    if (room) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-          <OfficeHeader 
-            currentView={selectedView}
-            onViewChange={setSelectedView}
-            onProfileClick={onBackToProfile}
-          />
-          <RoomInterior 
-            room={room}
-            allRooms={rooms}
-            onLeave={handleLeaveRoom}
-            onMoveToRoom={handleMoveToRoom}
-          />
-        </div>
-      );
-    }
+    return (
+      <VirtualOffice
+        room={currentRoom}
+        users={currentRoom.users}
+        onLeave={handleLeaveRoom}
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <OfficeHeader 
-        currentView={selectedView}
-        onViewChange={setSelectedView}
-        onProfileClick={onBackToProfile}
-      />
-      
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-slate-900 mb-2">Oficina Virtual</h1>
-            <p className="text-slate-600">
-              Haz click en un espacio para unirte
-            </p>
-          </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Crear Oficina
-          </Button>
-        </div>
+    <div className="p-6 space-y-4">
+      <h1 className="text-xl font-bold">Oficina Virtual</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rooms.map((room) => (
-            <RoomCard
+      <button
+        className="px-3 py-2 bg-slate-800 text-white rounded flex items-center gap-2"
+        onClick={() => setIsCreateDialogOpen(true)}
+      >
+        <Plus /> Crear Oficina
+      </button>
+
+      <div className="grid grid-cols-3 gap-4">
+        {rooms.map((room) => {
+          const Icon = {
+            conference: Presentation,
+            meeting: Video,
+            office: Users,
+            lounge: Coffee
+          }[room.type] || MessageSquare;
+
+          return (
+            <div
               key={room.id}
-              room={room}
-              icon={getRoomIcon(room.type)}
-              onJoin={handleJoinRoom}
-            />
-          ))}
-        </div>
-      </main>
+              className="p-4 border rounded cursor-pointer hover:shadow"
+              onClick={() => handleJoinRoom(room.id)}
+            >
+              <Icon className="w-5 h-5" />
+              <p>{room.name}</p>
+              <p>{room.users.length}/{room.capacity}</p>
+            </div>
+          );
+        })}
+      </div>
 
-      <CreateRoomDialog 
+      <CreateRoomDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onCreateRoom={handleCreateRoom}

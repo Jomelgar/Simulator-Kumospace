@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX, Hexagon, Crown } from 'lucide-react';
 import Chat from "../components/chat/Chat";
-//import JitsiMeeting from "../components/jitsi/JitsiMeeting";
+
+import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { relative } from 'path';
 
 export type UserStatus = 'online' | 'busy' | 'away';
