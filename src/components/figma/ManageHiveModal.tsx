@@ -1,6 +1,6 @@
-import { X, Users, Shield, Settings } from 'lucide-react';
-import { useState } from 'react';
-import type { Room } from '../../pages/Dashboard';
+import { X, Users, Shield, Settings } from "lucide-react";
+import { useState } from "react";
+import type { Room } from "../../pages/Dashboard.tsx";
 
 interface ManageHiveModalProps {
   isOpen: boolean;
@@ -9,7 +9,12 @@ interface ManageHiveModalProps {
   onUpdateRoom: (roomId: string, maxUsers: number) => void;
 }
 
-export function ManageHiveModal({ isOpen, onClose, room, onUpdateRoom }: ManageHiveModalProps) {
+export function ManageHiveModal({
+  isOpen,
+  onClose,
+  room,
+  onUpdateRoom,
+}: ManageHiveModalProps) {
   const [maxUsers, setMaxUsers] = useState(room.capacity);
 
   if (!isOpen) return null;
@@ -21,11 +26,31 @@ export function ManageHiveModal({ isOpen, onClose, room, onUpdateRoom }: ManageH
   };
 
   const hiveSizes = [
-    { value: 4, label: 'Small (4 members)', description: 'Ideal for small teams' },
-    { value: 8, label: 'Medium (8 members)', description: 'Perfect for mid-size groups' },
-    { value: 15, label: 'Large (15 members)', description: 'Great for larger teams' },
-    { value: 20, label: 'Extra Large (20 members)', description: 'For big organizations' },
-    { value: 25, label: 'Enterprise (25 members)', description: 'Maximum capacity' },
+    {
+      value: 4,
+      label: "Small (4 members)",
+      description: "Ideal for small teams",
+    },
+    {
+      value: 8,
+      label: "Medium (8 members)",
+      description: "Perfect for mid-size groups",
+    },
+    {
+      value: 15,
+      label: "Large (15 members)",
+      description: "Great for larger teams",
+    },
+    {
+      value: 20,
+      label: "Extra Large (20 members)",
+      description: "For big organizations",
+    },
+    {
+      value: 25,
+      label: "Enterprise (25 members)",
+      description: "Maximum capacity",
+    },
   ];
 
   return (
@@ -82,9 +107,10 @@ export function ManageHiveModal({ isOpen, onClose, room, onUpdateRoom }: ManageH
                   key={size.value}
                   className={`
                     flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all
-                    ${maxUsers === size.value 
-                      ? 'border-zinc-900 bg-zinc-50' 
-                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                    ${
+                      maxUsers === size.value
+                        ? "border-zinc-900 bg-zinc-50"
+                        : "border-zinc-200 hover:border-zinc-300 bg-white"
                     }
                   `}
                 >
@@ -99,7 +125,9 @@ export function ManageHiveModal({ isOpen, onClose, room, onUpdateRoom }: ManageH
                     />
                     <div>
                       <p className="text-zinc-900">{size.label}</p>
-                      <p className="text-sm text-zinc-500">{size.description}</p>
+                      <p className="text-sm text-zinc-500">
+                        {size.description}
+                      </p>
                     </div>
                   </div>
                   {maxUsers === size.value && (
@@ -110,7 +138,8 @@ export function ManageHiveModal({ isOpen, onClose, room, onUpdateRoom }: ManageH
             </div>
             {maxUsers < room.users.length && (
               <p className="mt-3 text-sm text-red-600 flex items-center gap-2">
-                ⚠️ Warning: Current occupancy ({room.users.length}) exceeds the selected capacity
+                ⚠️ Warning: Current occupancy ({room.users.length}) exceeds the
+                selected capacity
               </p>
             )}
           </div>
