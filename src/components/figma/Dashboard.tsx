@@ -74,20 +74,29 @@ export function Dashboard({
         </div>
 
         {/* Hives Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rooms.map((room) => (
-            <RoomCardDB
-              key={room.id}
-              room={room}
-              icon={MessageSquare}
-              // RoomCard calls onJoin(roomId: string) — map id -> Room and call onJoinRoom
-              onJoin={(roomId: string) => {
-                const target = rooms.find((r) => r.id === roomId);
-                if (target) onJoinRoom(target);
-              }}
-            />
-          ))}
-        </div>
+        {rooms.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
+            {rooms.map((room) => (
+                <RoomCardDB
+                  key={room.id}
+                  room={room}
+                  icon={MessageSquare}
+                  onJoin={(roomId: string) => {
+                    const target = rooms.find((r) => r.id === roomId);
+                    if (target) onJoinRoom(target);
+                  }}
+                  onUpdateRoom={onUpdateRoom}
+                />
+                
+            ))}
+            </div>
+          ) : (
+            <div className="flex gap-6 border-b w-full">
+              <div className=" text-zinc-500 mt-4 mb-4 col-span-full text-lg">
+                No hay Hives disponibles. Crea uno o únete a un Hive existente.
+              </div>
+            </div>
+        )}
       </div>
 
       {/* Join by URL Modal */}

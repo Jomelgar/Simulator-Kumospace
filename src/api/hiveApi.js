@@ -49,3 +49,13 @@ return response;
     return null;
 }
 }
+
+export const updateHive = async(id_hive,image,description) => {
+    try{
+        const response = await api.put(`hive/updateHive/${id_hive}`,{image,description},{withCredentials:true});
+    }catch(error)
+    {
+        console.error("Error al obtener hive: ",error);
+        return null;
+    }
+}

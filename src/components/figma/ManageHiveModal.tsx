@@ -1,12 +1,13 @@
-import { X, Users, Shield, Settings } from "lucide-react";
+import { X, ImageIcon } from "lucide-react";
 import { useState } from "react";
+import {updateHive} from "../../api/hiveApi";
 import type { Room } from "../../pages/Dashboard.tsx";
 
 interface ManageHiveModalProps {
   isOpen: boolean;
   onClose: () => void;
   room: Room;
-  onUpdateRoom: (roomId: string, maxUsers: number) => void;
+  onUpdate: (roomId: string, description: string, image?: File) => void;
 }
 
 export function ManageHiveModal({
@@ -15,58 +16,24 @@ export function ManageHiveModal({
   room,
   onUpdateRoom,
 }: ManageHiveModalProps) {
-  const [maxUsers, setMaxUsers] = useState(room.capacity);
+  const [description, setDescription] = useState(room.description || "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateRoom(room.id, maxUsers);
+    await updateHive(room.id,imageFile,description);
+    onUpdateRoom();
     onClose();
   };
 
-  const hiveSizes = [
-    {
-      value: 4,
-      label: "Small (4 members)",
-      description: "Ideal for small teams",
-    },
-    {
-      value: 8,
-      label: "Medium (8 members)",
-      description: "Perfect for mid-size groups",
-    },
-    {
-      value: 15,
-      label: "Large (15 members)",
-      description: "Great for larger teams",
-    },
-    {
-      value: 20,
-      label: "Extra Large (20 members)",
-      description: "For big organizations",
-    },
-    {
-      value: 25,
-      label: "Enterprise (25 members)",
-      description: "Maximum capacity",
-    },
-  ];
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-[50%] max-w-xl overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 border-b border-zinc-200 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl text-zinc-900">Manage Hive</h2>
-              <p className="text-sm text-zinc-500">{room.name}</p>
-            </div>
-          </div>
+          <h2 className="text-xl text-zinc-900">Edit Hive</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg hover:bg-zinc-100 flex items-center justify-center transition-colors"
@@ -76,72 +43,44 @@ export function ManageHiveModal({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6">
-          {/* Current Status */}
-          <div className="bg-zinc-50 rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-zinc-600" />
-                <div>
-                  <p className="text-sm text-zinc-600">Current Occupancy</p>
-                  <p className="text-zinc-900">
-                    {room.users.length} / {room.capacity} members
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-yellow-600" />
-                <span className="text-sm text-zinc-600">Administrator</span>
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Description */}
+          <div>
+            <label className="block text-sm text-zinc-700 mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full border border-zinc-300 rounded-lg p-3 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+              placeholder="Enter a description for your Hive"
+            />
           </div>
 
-          {/* Hive Size Selection */}
-          <div className="mb-6">
-            <label className="block text-sm text-zinc-700 mb-3">
-              Hive Capacity
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm text-zinc-700 mb-2">
+              Hive Image
             </label>
-            <div className="space-y-2">
-              {hiveSizes.map((size) => (
-                <label
-                  key={size.value}
-                  className={`
-                    flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all
-                    ${
-                      maxUsers === size.value
-                        ? "border-zinc-900 bg-zinc-50"
-                        : "border-zinc-200 hover:border-zinc-300 bg-white"
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 px-4 py-2 bg-zinc-100 rounded-lg cursor-pointer hover:bg-zinc-200 transition-colors">
+                <ImageIcon className="w-5 h-5 text-zinc-600" />
+                <span className="text-sm text-zinc-700">
+                  {imageFile ? imageFile.name : "Choose an image"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImageFile(e.target.files[0]);
                     }
-                  `}
-                >
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="radio"
-                      name="maxUsers"
-                      value={size.value}
-                      checked={maxUsers === size.value}
-                      onChange={(e) => setMaxUsers(Number(e.target.value))}
-                      className="w-4 h-4 text-zinc-900 focus:ring-zinc-900"
-                    />
-                    <div>
-                      <p className="text-zinc-900">{size.label}</p>
-                      <p className="text-sm text-zinc-500">
-                        {size.description}
-                      </p>
-                    </div>
-                  </div>
-                  {maxUsers === size.value && (
-                    <div className="w-2 h-2 rounded-full bg-zinc-900" />
-                  )}
-                </label>
-              ))}
+                  }}
+                />
+              </label>
             </div>
-            {maxUsers < room.users.length && (
-              <p className="mt-3 text-sm text-red-600 flex items-center gap-2">
-                ⚠️ Warning: Current occupancy ({room.users.length}) exceeds the
-                selected capacity
-              </p>
-            )}
           </div>
 
           {/* Actions */}
