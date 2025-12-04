@@ -70,6 +70,22 @@ exports.createHive = async( request, response ) => {
     }
 }
 
+exports.updateHive = async( request, response) => {
+    try{
+        const {image, description} = request.body;
+        const {id_hive} = request.params;
+        if(!id_hive) return response.status(200).json({error: "No id_hive send"})
+
+        const hive = await Hive.findByPk(id_hive);
+        hive.update({description});
+
+        response.status(200).json({sucess: "Hive Updated"})
+    }catch(error)
+    {
+        response.status(500).json({error: error.message})
+    }
+}
+
 exports.invitedToHive = async( request, response ) => {
     try{
         const { id_user, id_hive, room_name } = request.body;

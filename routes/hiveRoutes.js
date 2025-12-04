@@ -7,6 +7,7 @@ const { VerifyToken } = require("../middleware/verifyToken");
 router.use(VerifyToken);
 router.get("/getHives/", Hive.getHives);
 router.post("/createHive", Hive.createHive);
+router.put("/updateHive/:id_hive", Hive.updateHive);
 router.post("/invitedToHive", Hive.invitedToHive);
 router.get("/getPrivateRooms/:id_hive", Hive.getPrivateRooms);
 router.put("/updatePrivateRoom/:id_private_room", Hive.updatePrivateRoom);
