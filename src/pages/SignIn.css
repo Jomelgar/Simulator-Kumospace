@@ -219,3 +219,8 @@
   cursor: pointer;
   font-weight: 500;
 }
+
+.input-error{
+  color: rgb(239, 98, 98);
+
+}

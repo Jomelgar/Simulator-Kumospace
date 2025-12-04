@@ -15,7 +15,7 @@ export default function App({ page = 'inicio' }: AppProps) {
     );
   }
 
-  if (page === 'sign_in') {
+  if (page === 'signin') {
     return <SignIn />;
   }
   if (page === 'dashboard') {

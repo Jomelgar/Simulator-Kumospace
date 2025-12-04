@@ -100,7 +100,7 @@ export function LoginPage() {
           <div className="signup-wrapper">
             <p className="signup-text">Don’t have an account? </p>
             <button
-              onClick={() => navigate("/sign_in")}
+              onClick={() => navigate("/signin")}
               className="signup-link"
             >
               Create Account
