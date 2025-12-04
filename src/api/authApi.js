@@ -18,3 +18,14 @@ export const checkRequest = async () =>
     throw error;
   }
 }
+
+export const logoutRequest = async () => 
+{
+  try{
+    const response = await api.post("auth/logout",{},{withCredentials: true});
+    return true;
+  }catch(error)
+  {
+    throw error;
+  }
+}

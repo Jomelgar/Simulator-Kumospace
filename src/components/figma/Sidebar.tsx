@@ -1,6 +1,6 @@
 //import image_b5f349cba521d3f5fa0b9c2e7af4f0d01762039d from 'figma:asset/b5f349cba521d3f5fa0b9c2e7af4f0d01762039d.png';
 //import image_457a7d0109f496c4b9228e329ab7c74dc308af9c from '../../asset/logo.ng';
-import { LayoutDashboard, User } from "lucide-react";
+import { LayoutDashboard, User, LogOutIcon } from "lucide-react";
 import logo from "../../asset/logo2.png";
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "profile", icon: User, label: "Profile" },
+    { id: "LogOut", icon: LogOutIcon, label: "Cerrar Sesión"}
   ];
 
   return (

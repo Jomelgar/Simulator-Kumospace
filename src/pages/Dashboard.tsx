@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "../components/figma/Sidebar";
 import { Dashboard } from "../components/figma/Dashboard";
 import { VirtualOfficeDB } from "../components/figma/VirtualOfficeDB";
-import { getHive} from "../api/hiveApi"
+import { getHive} from "../api/hiveApi";
+import {logoutRequest} from "../api/authApi";
+import { useNavigate } from "react-router-dom";
 import { ProfileView } from "../components/figma/ProfileView";
 import "./Dashboard.css";
 export type UserRole = "Hive Queen" | "Bee";
@@ -50,6 +52,7 @@ function App() {
   >("dashboard");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [activeNavItem, setActiveNavItem] = useState("dashboard");
+  const navigate = useNavigate();
 
   // Mock data
   const hiveData: Hive = {
@@ -135,7 +138,10 @@ function App() {
     {
       setRooms(response.data.map((d) => ({
         id: d.id_hive,
-        name: d.hive_name
+        name: d.hive_name,
+        description: d.description || "Enter to the Hive",
+        userRole: d.user_role === true? "Hive Queen" : "User",
+        maxUsers: d.max_count,
       })));
     }
   }
@@ -156,12 +162,15 @@ function App() {
     setCurrentView("dashboard");
   };
 
-  const handleNavigation = (item: string) => {
+  const handleNavigation = async (item: string) => {
     setActiveNavItem(item);
     if (item === "dashboard") {
       setCurrentView("dashboard");
     } else if (item === "profile") {
       setCurrentView("profile");
+    }else if (item === "LogOut") {
+      await logoutRequest();
+      navigate("/login");
     }
   };
 
