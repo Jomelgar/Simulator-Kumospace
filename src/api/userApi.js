@@ -29,7 +29,7 @@ return response;
 
 export const getUser = async(id) =>{
 try{
-const response = await api.get(`/api/user/getUser/${id}`,{withCredentials:true});
+const response = await api.get(`/user/getUser/${id}`,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);
