@@ -25,7 +25,22 @@ exports.getHives = async( request, response ) => {
             where: { id_hive: {[Op.in]: hiveids} }
         })
 
-        response.json(hives);
+        const processed = await Promise.all(
+        hives.map(async (h) => {
+            const count = await Private_Room.count({
+            where: { id_hive: h.id_hive }
+            });
+            return {
+            id_hive: h.id_hive,
+            hive_name: h.hive_name,
+            description: h.description || `${payload.user_name}'s Hive`,
+            user_role: payload.id_user === h.id_owner,
+            max_count: count
+            };
+        })
+        );
+
+        response.json(processed);
     }catch(error){
         response.status(500).json({error: error.message})
     }
