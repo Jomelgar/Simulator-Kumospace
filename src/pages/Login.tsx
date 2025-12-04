@@ -39,12 +39,37 @@ export function LoginPage() {
       const response = await loginRequest(username, password);
 
       if (response?.status === 200) {
+
+        // Get userId from direct response
+        let userId = response.data?.id_user;
+
+        // If not found, decode JWT token to extract userId
+        if (!userId && response.data?.token) {
+          try {
+            const token = response.data.token;
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            const decoded = JSON.parse(jsonPayload);
+            userId = decoded?.user?.id_user;
+          } catch (err) {
+            console.error("Error decoding JWT:", err);
+          }
+        }
+
+        if (userId) {
+          localStorage.setItem("userId", String(userId));
+        }
+
         navigate("/dashboard");
       } else {
         setErrors({ general: response?.data?.message || "Login failed" });
       }
     } catch (err) {
-      console.error(err);
+      console.error("Login error:", err);
       setErrors({ general: "Server error, please try again later" });
     } finally {
       setLoading(false);
@@ -71,7 +96,7 @@ export function LoginPage() {
           <p className="login-subtitle">Sign in to continue to your account</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
-            
+
 
             {/* USERNAME */}
             <div className="login-field-group">

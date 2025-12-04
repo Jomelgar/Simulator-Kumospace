@@ -1,5 +1,7 @@
 import { Mail, Phone, MapPin, Crown, Calendar, Edit, Save, X, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { checkRequest } from '../../api/authApi';
+import { getUser, updateUser } from '../../api/userApi';
 import type { Hive } from '../../pages/Dashboard';
 
 interface ProfileViewProps {
@@ -20,14 +22,79 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
   const [tempSkills, setTempSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Aquí puedes agregar lógica para guardar en el backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const rawUserId = localStorage.getItem("userId");
+      const userId = rawUserId && rawUserId !== "null" && rawUserId !== "undefined" ? rawUserId : null;
+
+      let actualUserId = userId;
+      if (!actualUserId) {
+        try {
+          const checkResp = await checkRequest();
+          actualUserId = checkResp?.data?.id_user;
+          if (actualUserId) {
+            localStorage.setItem("userId", String(actualUserId));
+          }
+        } catch (err) {
+          console.error("Error fetching session user:", err);
+        }
+      }
+
+      if (actualUserId) {
+        try {
+          const response = await getUser(actualUserId);
+
+          if (response && response.data) {
+            const userData = response.data;
+
+            if (userData.first_name || userData.last_name) {
+              const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim();
+              setName(fullName);
+            } else if (userData.user_name) {
+              setName(userData.user_name);
+            }
+
+            if (userData.email) setEmail(userData.email);
+            if (userData.phone) setPhone(userData.phone);
+            if (userData.location) setLocation(userData.location);
+            if (userData.title) setTitle(userData.title);
+            if (userData.about) setAbout(userData.about);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleSave = async () => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+
+    try {
+      const nameParts = name.trim().split(' ');
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+
+      const userData = {
+        first_name,
+        last_name,
+        email,
+        phone,
+        location,
+        title
+      };
+
+      await updateUser(userId, userData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Restaurar valores originales si es necesario
   };
 
   const handleEditAbout = () => {
@@ -36,10 +103,22 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
     setIsEditingAbout(true);
   };
 
-  const handleSaveAbout = () => {
-    setAbout(tempAbout);
-    setSkills([...tempSkills]);
-    setIsEditingAbout(false);
+  const handleSaveAbout = async () => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+
+    try {
+      const userData = {
+        about: tempAbout
+      };
+
+      await updateUser(userId, userData);
+      setAbout(tempAbout);
+      setSkills([...tempSkills]);
+      setIsEditingAbout(false);
+    } catch (error) {
+      console.error("Error saving about:", error);
+    }
   };
 
   const handleCancelAbout = () => {
@@ -75,8 +154,8 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             {/* Avatar */}
             <div className="relative">
               <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-yellow-100">
-                <img 
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400" 
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -152,7 +231,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                     )}
                   </div>
                   <p className="text-zinc-600 mb-4">{title}</p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="flex items-center gap-2 text-sm text-zinc-600">
                       <Mail className="w-4 h-4 text-yellow-600" />
@@ -178,14 +257,14 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             {/* Edit/Save Buttons */}
             {isEditing ? (
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={handleCancel}
                   className="px-4 py-2 bg-white border border-zinc-300 text-zinc-700 rounded-lg hover:bg-zinc-50 transition-all flex items-center gap-2"
                 >
                   <X className="w-4 h-4" />
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleSave}
                   className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all flex items-center gap-2"
                 >
@@ -194,7 +273,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={() => setIsEditing(true)}
                 className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all flex items-center gap-2"
               >
@@ -211,14 +290,14 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             <h3 className="text-xl text-zinc-900">About</h3>
             {isEditingAbout ? (
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={handleCancelAbout}
                   className="px-3 py-1.5 bg-white border border-zinc-300 text-zinc-700 rounded-lg hover:bg-zinc-50 transition-all flex items-center gap-2 text-sm"
                 >
                   <X className="w-3 h-3" />
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleSaveAbout}
                   className="px-3 py-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all flex items-center gap-2 text-sm"
                 >
@@ -227,7 +306,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={handleEditAbout}
                 className="px-3 py-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all flex items-center gap-2 text-sm"
               >
@@ -236,7 +315,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
               </button>
             )}
           </div>
-          
+
           {isEditingAbout ? (
             <div className="mb-4">
               <textarea
@@ -249,18 +328,18 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
           ) : (
             <p className="text-zinc-600 mb-4">{about}</p>
           )}
-          
+
           <div className="mb-3">
             <h4 className="text-sm text-zinc-700 mb-2">Skills</h4>
             <div className="flex flex-wrap gap-2">
               {(isEditingAbout ? tempSkills : skills).map((skill) => (
-                <span 
-                  key={skill} 
+                <span
+                  key={skill}
                   className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg text-sm border border-yellow-200 flex items-center gap-2"
                 >
                   {skill}
                   {isEditingAbout && (
-                    <button 
+                    <button
                       onClick={() => handleRemoveSkill(skill)}
                       className="hover:text-yellow-900"
                     >
@@ -271,7 +350,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
               ))}
             </div>
           </div>
-          
+
           {isEditingAbout && (
             <div className="flex gap-2">
               <input
@@ -282,7 +361,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                 placeholder="Add a skill"
                 className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-zinc-900 text-sm"
               />
-              <button 
+              <button
                 onClick={handleAddSkill}
                 className="px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all flex items-center gap-1 text-sm"
               >
