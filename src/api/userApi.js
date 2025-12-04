@@ -49,7 +49,7 @@ return response;
 
 export const updateUser = async(id, userData) =>{
 try{
-const response = await api.put(/api/user/updateUser/${id}, userData, {withCredentials:true});
+const response = await api.put(`/api/user/updateUser/${id}`, userData, {withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al actualizar el usuario: ",error);
