@@ -1,16 +1,19 @@
 const Hive = require("../models/hive");
 const Private_Room = require("../models/private_room");
+const Work_Room = require("../models/work_room");
 const { Op } = require("sequelize");
+const {decodeToken} = require("../middleware/decodeToken");
 
 
 exports.getHives = async( request, response ) => {
     try{
-        const { id_user } = request.params;
-        if(!id_user){
+        const token = request.cookies?.JWT;
+        const payload = decodeToken(token);
+        if(!payload){
             return response.status(400).json({message: "id_user required."});
         }
         const users_hives = await Private_Room.findAll({
-            where: { id_user }
+            where: { id_user: payload.id_user }
         })
 
         const hiveids=users_hives.map(uh => uh.id_hive);
@@ -30,12 +33,23 @@ exports.getHives = async( request, response ) => {
 
 exports.createHive = async( request, response ) => {
     try{
-        const { hive_name, id_owner, owners_room_name } = request.body;
-        const newHive = await Hive.create({ hive_name, id_owner });
+        const { hive_name,size} = request.body;
+        let new_size = size || 1;
+        const token = request.cookies["JWT"];
+        const payload = decodeToken(token);
+        if(!payload)
+        {
+            return response.status(500).json({error: "No token here"});
+        }
+        const newHive = await Hive.create({ hive_name, id_owner: payload.id_user });
 
-        await Private_Room.create({ id_user: newHive.id_owner, id_hive: newHive.id_hive, room_name: owners_room_name });
-
-        response.json(newHive);
+        await Private_Room.create({ id_user: newHive.id_owner, id_hive: newHive.id_hive, room_name: payload.user_name });
+        
+        for(let i = 1; i <= new_size; i++)
+        {
+            await Work_Room.create({id_hive: newHive.id_hive, room_name: `Work Room ${i}`,max_users: 4});
+        }
+        response.status(200).json(newHive);
     }catch(error){
         response.status(500).json({error: error.message})
     }

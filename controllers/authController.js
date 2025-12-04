@@ -61,3 +61,7 @@ exports.logout = (req, res) => {
   });
   return res.status(200).json({ message: "Logged out" });
 };
+
+exports.check = (req,res) => {
+  res.status(200).json()
+}

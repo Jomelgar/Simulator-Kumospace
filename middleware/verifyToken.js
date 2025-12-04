@@ -2,16 +2,14 @@ const jswToken = require("jsonwebtoken");
 require("dotenv").config();
 
 const VerifyToken = (req, res, next) => {
-  const token = req.cookies["JWT"];
-
+  const token = req.cookies?.JWT;
   if (!token) {
     return res
       .status(401)
       .json({ status: "No token provided", message: "No puedes acceder" });
   }
-
   try {
-    const decoded = jswToken.verify(token, process.env.SECRET_KEY);
+    const decoded = jswToken.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {

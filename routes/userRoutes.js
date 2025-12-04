@@ -12,5 +12,6 @@ router.use(VerifyToken);
 router.get("/inviteUser/:email", User.inviteUser);
 router.get("/getUsers", User.getUsers);
 router.get("/getUser/:id_user", User.getUser);
+router.put("/updateUser/:id",User.updateUser);
 
 module.exports = router;

@@ -88,3 +88,21 @@ exports.inviteUser = async( request, response) => {
         response.status(500).json({error: error.message});
     }
 }
+
+exports.updateUser = async( request, response) => {
+    try{
+        const { id_user } = request.params;
+        const { status, description, currentLocation, locationType } = request.body;
+        
+        const updateUser=await User.findByPk(id_user);
+        if(!updateUser){
+            return response.status(404).json({ message: "User not found."});
+        }
+
+        await updateUser.update({ status, description, currentLocation, locationType });
+
+        response.json(updateUser);
+    }catch(error){
+        response.status(500).json({error: error.message});
+    }
+}

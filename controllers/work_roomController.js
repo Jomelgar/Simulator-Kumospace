@@ -6,7 +6,7 @@ exports.getWorkRooms = async(request, response) => {
         if(!id_hive){
             return response.status(400).json({message: "id_hive required."});
         }
-        const work_rooms=await WorkRoom.findAll({
+        const work_rooms= await WorkRoom.findAll({
             where: { id_hive }
         });
 

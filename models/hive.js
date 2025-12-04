@@ -14,6 +14,10 @@ const Hive=sequelize.define("Hive", {
     id_owner: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    description: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     tableName: "Hive",

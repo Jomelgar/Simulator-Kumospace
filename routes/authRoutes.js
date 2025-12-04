@@ -6,6 +6,7 @@ const Hive = require("../controllers/authController");
 //Rutas publicas
 router.post("/login", Hive.login);
 router.use(VerifyToken);
+router.get("/check", Hive.check);
 router.post("/logout", Hive.logout);
 router.post("/decode-token", Hive.decodeToken);
 

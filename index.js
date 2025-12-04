@@ -12,7 +12,7 @@ const morgan = require("morgan");
 
 app.use(morgan("dev"));
 //configuración de CORS para permitir solicitudes desde el frontend
-app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true}));
+app.use(cors({ origin: process.env.CORE_URL, credentials: true}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
