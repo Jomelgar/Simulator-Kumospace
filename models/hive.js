@@ -15,6 +15,10 @@ const Hive=sequelize.define("Hive", {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    imageURL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     description: {
         type: DataTypes.STRING,
         allowNull: true

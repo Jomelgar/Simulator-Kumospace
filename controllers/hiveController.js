@@ -2,6 +2,8 @@ const Hive = require("../models/hive");
 const Private_Room = require("../models/private_room");
 const Work_Room = require("../models/work_room");
 const { Op } = require("sequelize");
+const fs = require("fs");
+const path = require("path");
 const {decodeToken} = require("../middleware/decodeToken");
 
 
@@ -35,7 +37,8 @@ exports.getHives = async( request, response ) => {
             hive_name: h.hive_name,
             description: h.description || `${payload.user_name}'s Hive`,
             user_role: payload.id_user === h.id_owner,
-            max_count: count
+            max_count: count,
+            imageURL: h.imageURL
             };
         })
         );
@@ -70,21 +73,49 @@ exports.createHive = async( request, response ) => {
     }
 }
 
-exports.updateHive = async( request, response) => {
-    try{
-        const {image, description} = request.body;
-        const {id_hive} = request.params;
-        if(!id_hive) return response.status(200).json({error: "No id_hive send"})
 
-        const hive = await Hive.findByPk(id_hive);
-        hive.update({description});
 
-        response.status(200).json({sucess: "Hive Updated"})
-    }catch(error)
-    {
-        response.status(500).json({error: error.message})
+exports.updateHive = async (req, res) => {
+  try {
+    const { description } = req.body;
+    const { id_hive } = req.params;
+    if (!id_hive) return res.status(400).json({ error: "No id_hive sent" });
+
+    const hive = await Hive.findByPk(id_hive);
+    if (!hive) return res.status(404).json({ error: "Hive not found" });
+
+    let newImageUrl = hive.imageURL;
+    if (req.file) {
+      newImageUrl = `/uploads/Hives/${req.file.filename}`;
+      if (hive.imageURL) {
+        const oldPath = path.join(__dirname, "..", hive.imageURL);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
     }
-}
+
+    await hive.update({
+      description,
+      imageURL: newImageUrl,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Hive updated",
+      hive: {
+        id: hive.id,
+        description: hive.description,
+        image: newImageUrl,
+      },
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 
 exports.invitedToHive = async( request, response ) => {
     try{

@@ -29,6 +29,10 @@ const User = sequelize.define("User",{
         type: DataTypes.STRING,
         allowNull: false
     },
+    imageURL:{
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     status : {
         type: DataTypes.STRING,
         defaultValue: 'online'

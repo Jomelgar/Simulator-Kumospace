@@ -20,6 +20,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/hive", hiveRoutes);
 app.use("/api/work_room", work_roomRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/uploads", express.static("uploads"));
+
 
 app.get("/", (req, res) => {
   res.send("The API is running.");
