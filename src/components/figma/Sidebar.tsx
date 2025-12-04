@@ -1,7 +1,7 @@
 //import image_b5f349cba521d3f5fa0b9c2e7af4f0d01762039d from 'figma:asset/b5f349cba521d3f5fa0b9c2e7af4f0d01762039d.png';
 //import image_457a7d0109f496c4b9228e329ab7c74dc308af9c from '../../asset/logo.ng';
-import { LayoutDashboard, User } from 'lucide-react';
-import logo from '../../asset/logo.png';
+import { LayoutDashboard, User } from "lucide-react";
+import logo from "../../asset/logo2.png";
 
 interface SidebarProps {
   activeItem: string;
@@ -10,8 +10,8 @@ interface SidebarProps {
 
 export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
   const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'profile', icon: User, label: 'Profile' },
+    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { id: "profile", icon: User, label: "Profile" },
   ];
 
   return (
@@ -19,7 +19,11 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
       {/* Logo */}
       <div className="mb-8 relative group cursor-pointer">
         <div className="w-12 h-12 flex items-center justify-center">
-          <img src={logo} alt="Rooms Hive" className="w-full h-full object-contain rounded-xl" />
+          <img
+            src={logo}
+            alt="Rooms Hive"
+            className="w-full h-full object-contain rounded-xl"
+          />
         </div>
       </div>
 
@@ -28,16 +32,17 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeItem === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => onItemClick(item.id)}
               className={`
                 w-14 h-14 rounded-xl flex items-center justify-center relative group transition-all
-                ${isActive 
-                  ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30' 
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                ${
+                  isActive
+                    ? "bg-yellow-500 text-black shadow-lg shadow-yellow-500/30"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }
               `}
               title={item.label}
@@ -47,10 +52,12 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
                 <div className="absolute inset-0 bg-yellow-400/20 rounded-xl blur-lg" />
               )}
               {/* Tooltip */}
-              <div className={`
+              <div
+                className={`
                 absolute left-full ml-2 px-3 py-1.5 bg-zinc-800 text-white text-sm rounded-lg whitespace-nowrap
                 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50
-              `}>
+              `}
+              >
                 {item.label}
               </div>
             </button>
@@ -59,8 +66,7 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
       </nav>
 
       {/* User Avatar */}
-      <div className="mt-auto">
-      </div>
+      <div className="mt-auto"></div>
     </div>
   );
 }
