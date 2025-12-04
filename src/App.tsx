@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 
-type TabType = 'inicio' | 'login' | 'sign_in' | 'dashboard';
+type TabType = 'inicio' | 'login' | 'signin' | 'dashboard';
 
 interface AppProps {
   page?: TabType;
@@ -39,7 +39,6 @@ export default function App({ page = 'inicio' }: AppProps) {
 
     validateCookie();
   }, [navigate, page]);
-
   // Renderiza según la página solicitada
   if (page === 'login') return <Login />;
   if (page === 'signin') return <SignIn />;

@@ -29,7 +29,7 @@ return response;
 
 export const getUser = async(id) =>{
 try{
-const response = await api.get(`/getUser/${id}`,{withCredentials:true});
+const response = await api.get(`/api/user/getUser/${id}`,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);
@@ -43,6 +43,16 @@ const response = await api.post(`/inviteUser/${values.email}`,values,{withCreden
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);
+    return null;
+}
+}
+
+export const updateUser = async(id, userData) =>{
+try{
+const response = await api.put(/api/user/updateUser/${id}, userData, {withCredentials:true});
+return response;
+}catch(error){
+    console.error("Error al actualizar el usuario: ",error);
     return null;
 }
 }
