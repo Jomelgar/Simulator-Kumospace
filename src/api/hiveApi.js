@@ -1,8 +1,8 @@
 import api from "./axiosClient"
 
-export const getHive = async(id) =>{
+export const getHive = async() =>{
 try{
-const response = await api.get(`/getHives/${id}`,{withCredentials:true});
+const response = await api.get(`hive/getHives/`,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener hive: ",error);
@@ -10,9 +10,9 @@ return response;
 }
 }
 
-export const createHive = async(id) =>{
+export const createHive = async(hive_name,size) =>{
 try{
-const response = await api.post(`/createHive/${id}`,{withCredentials:true});
+const response = await api.post(`hive/createHive/`,{hive_name,size},{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener hive: ",error);

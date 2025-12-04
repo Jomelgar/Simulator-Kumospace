@@ -1,10 +1,12 @@
 import { Crown, Link2, Plus, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import {createHive} from "../../api/hiveApi";
 import type { Hive, Room, User } from "../../pages/Dashboard";
 import { RoomCardDB } from "./RoomCardDB";
 import { ImageWithFallback } from "./ImageWithFallback";
 import { JoinByURLModal } from "./JoinByURLModal";
 import { CreateHiveModal } from "./CreateHiveModal";
+import { create } from "domain";
 
 interface DashboardProps {
   hiveData: Hive;
@@ -29,9 +31,17 @@ export function Dashboard({
     // Aquí puedes implementar la lógica para unirse por URL
   };
 
-  const handleCreateHive = (name: string, size: number, url: string) => {
-    console.log("Creating hive:", { name, size, url });
-    // Aquí puedes implementar la lógica para crear el hive
+  const handleCreateHive = async (name: string, size: number, url: string) => {
+    const response = await createHive(name,size);
+    if(response?.status === 200)
+    {
+      alert("Hive created");
+      onUpdateRoom();
+    }else 
+    {
+      alert("Error creating Hive. Please try again.");
+    }
+
   };
 
   return (

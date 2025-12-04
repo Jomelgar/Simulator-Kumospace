@@ -8,3 +8,13 @@ export const loginRequest = async (user_name,password) => {
     throw error;
   }
 };
+
+export const checkRequest = async () =>
+{
+    try {
+    const response = await api.get("auth/check",{withCredentials: true});
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}

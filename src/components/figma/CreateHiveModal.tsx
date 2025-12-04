@@ -8,27 +8,50 @@ interface CreateHiveModalProps {
 }
 
 const HIVE_SIZES = [
-  { label: '2-5 members', value: 5 },
-  { label: '6-10 members', value: 10 },
-  { label: '11-15 members', value: 15 },
-  { label: '16-20 members', value: 20 },
-  { label: '21-25 members', value: 25 },
+  { label: '1 Work Room', value: 1 },
+  { label: '2 Work Rooms', value: 2 },
+  { label: '3 Work Rooms', value: 3 },
+  { label: '4 Work Rooms', value: 4 },
+  { label: '6 Work Rooms', value: 6 },
 ];
 
 export function CreateHiveModal({ isOpen, onClose, onCreate }: CreateHiveModalProps) {
   const [hiveName, setHiveName] = useState('');
-  const [selectedSize, setSelectedSize] = useState<number>(10);
+  const [selectedSize, setSelectedSize] = useState<number>(1);
   const [customURL, setCustomURL] = useState('');
+  const [errors, setErrors] = useState<{ name?: string; url?: string }>({});
 
   if (!isOpen) return null;
 
+  const validateFields = () => {
+    const newErrors: { name?: string; url?: string } = {};
+    if (!hiveName.trim()) {
+      newErrors.name = 'Hive name is required';
+    } else if (hiveName.length < 3) {
+      newErrors.name = 'Hive name must be at least 3 characters';
+    }
+    /*
+    if (customURL) {
+      const regex = /^[a-z0-9-]+$/;
+      if (!regex.test(customURL)) {
+        newErrors.url = 'URL can only contain lowercase letters, numbers and hyphens';
+      }
+      if (customURL.length < 3) {
+        newErrors.url = 'URL must be at least 3 characters';
+      }
+    }
+    */
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleCreate = () => {
-    if (hiveName.trim()) {
-      onCreate(hiveName, selectedSize, customURL);
-      // Reset form
+    if (validateFields()) {
+      onCreate(hiveName.trim(), selectedSize, customURL.trim());
       setHiveName('');
-      setSelectedSize(10);
+      setSelectedSize(1);
       setCustomURL('');
+      setErrors({});
       onClose();
     }
   };
@@ -64,14 +87,16 @@ export function CreateHiveModal({ isOpen, onClose, onCreate }: CreateHiveModalPr
               value={hiveName}
               onChange={(e) => setHiveName(e.target.value)}
               placeholder="Enter hive name"
-              className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-zinc-900 placeholder-zinc-400"
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-zinc-900 placeholder-zinc-400
+                ${errors.name ? 'border-red-500' : 'border-zinc-300'}`}
             />
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
 
           {/* Size Selection */}
           <div>
             <label className="block text-sm text-zinc-700 mb-3">
-              Hive Size
+              Hive Work Rooms (With 4 as Max Users as Default)
             </label>
             <div className="grid grid-cols-2 gap-2">
               {HIVE_SIZES.map((option) => (
@@ -92,12 +117,12 @@ export function CreateHiveModal({ isOpen, onClose, onCreate }: CreateHiveModalPr
             </div>
           </div>
 
-          {/* Custom URL */}
+          {/*{ Custom URL }
           <div>
             <label className="block text-sm text-zinc-700 mb-2">
               Custom URL <span className="text-zinc-400">(optional)</span>
             </label>
-            <div className="flex items-center border border-zinc-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-yellow-500 focus-within:border-transparent">
+            <div className="flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-yellow-500 focus-within:border-transparent">
               <span className="px-4 py-3 bg-zinc-50 text-zinc-500 text-sm border-r border-zinc-300">
                 roomshive.com/
               </span>
@@ -106,10 +131,12 @@ export function CreateHiveModal({ isOpen, onClose, onCreate }: CreateHiveModalPr
                 value={customURL}
                 onChange={(e) => setCustomURL(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 placeholder="your-hive-url"
-                className="flex-1 px-4 py-3 focus:outline-none text-zinc-900 placeholder-zinc-400"
+                className={`flex-1 px-4 py-3 focus:outline-none text-zinc-900 placeholder-zinc-400 ${errors.url ? 'border-red-500' : ''}`}
               />
             </div>
+              {errors.url && <p className="text-red-500 text-sm mt-1">{errors.url}</p>}
           </div>
+            */}
         </div>
 
         {/* Footer */}
@@ -122,10 +149,10 @@ export function CreateHiveModal({ isOpen, onClose, onCreate }: CreateHiveModalPr
           </button>
           <button
             onClick={handleCreate}
-            disabled={!hiveName.trim()}
+            disabled={!hiveName.trim() || Object.keys(errors).length > 0}
             className={`
               flex-1 px-4 py-3 rounded-lg transition-colors
-              ${hiveName.trim()
+              ${hiveName.trim() && Object.keys(errors).length === 0
                 ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
               }

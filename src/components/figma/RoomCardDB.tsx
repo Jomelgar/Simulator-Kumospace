@@ -21,9 +21,9 @@ const roomImages: Record<string, string> = {
 
 export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-  const isPrivate = room.type === "private";
-  const isFull = room.usersInside >= room.maxUsers;
-  const isAdministrator = room.userRole === "Hive Queen";
+  const isPrivate = room?.type === "private";
+  const isFull = room?.usersInside >= room?.maxUsers;
+  const isAdministrator = room?.userRole === "Hive Queen";
 
   return (
     <>
@@ -42,7 +42,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
             <div className="flex items-center gap-2 text-white/90 text-sm mb-1">
               <Users className="w-4 h-4" />
               <span>
-                {room.usersInside} / {room.maxUsers} members
+                {room?.usersInside || 0} / {room?.maxUsers || 0} members
               </span>
             </div>
           </div>
@@ -71,13 +71,13 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
 
           {/* Tags */}
           <div className="flex items-center gap-2 mb-4">
-            {room.userRole === "Hive Queen" && (
+            {room?.userRole === "Hive Queen" && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-md text-xs">
                 <Crown className="w-3 h-3" fill="currentColor" />
                 Hive Queen
               </span>
             )}
-            {room.userRole === "Bee" && (
+            {room?.userRole === "Bee" && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 rounded-md text-xs">
                 <UserCheck className="w-3 h-3" />
                 Bee

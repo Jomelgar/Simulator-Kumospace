@@ -1,11 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "../components/figma/Sidebar";
 import { Dashboard } from "../components/figma/Dashboard";
 import { VirtualOfficeDB } from "../components/figma/VirtualOfficeDB";
+import { getHive} from "../api/hiveApi"
 import { ProfileView } from "../components/figma/ProfileView";
 import "./Dashboard.css";
 export type UserRole = "Hive Queen" | "Bee";
-
+/*
+{
+      id: "1",
+      name: "Strategy Room",
+      type: "conference",
+      capacity: 8,
+      users: users.filter((u) => u.currentRoom === "Strategy Room"),
+      description: "Executive planning and strategy",
+      userRole: "Bee",
+    },
+*/
 export interface Room {
   id: string;
   name: string;
@@ -116,63 +127,21 @@ function App() {
     },
   ];
 
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: "1",
-      name: "Strategy Room",
-      type: "conference",
-      capacity: 8,
-      users: users.filter((u) => u.currentRoom === "Strategy Room"),
-      description: "Executive planning and strategy",
-      userRole: "Bee",
-    },
-    {
-      id: "2",
-      name: "Design Studio",
-      type: "lounge",
-      capacity: 6,
-      users: users.filter((u) => u.currentRoom === "Design Studio"),
-      description: "Creative design workspace",
-      userRole: "Hive Queen",
-    },
-    {
-      id: "3",
-      name: "Main Office",
-      type: "office",
-      capacity: 20,
-      users: users.filter((u) => u.currentRoom === "Main Office"),
-      description: "General workspace",
-      userRole: "Bee",
-    },
-    {
-      id: "4",
-      name: "Development Lab",
-      type: "office",
-      capacity: 15,
-      users: users.filter((u) => u.currentRoom === "Development Lab"),
-      description: "Code and development",
-      userRole: "Bee",
-    },
-    {
-      id: "5",
-      name: "Meeting Room A",
-      type: "meeting",
-      capacity: 10,
-      users: users.filter((u) => u.currentRoom === "Meeting Room A"),
-      description: "Team meetings and presentations",
-      userRole: "Bee",
-    },
-    {
-      id: "6",
-      name: "Focus Zone",
-      type: "lounge",
-      capacity: 4,
-      users: users.filter((u) => u.currentRoom === "Focus Zone"),
-      description: "Deep work only",
-      userRole: "Hive Queen",
-    },
-  ]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
+  const fetchRooms = async()=>{
+    const response = await getHive();
+    if(response?.status === 200)
+    {
+      setRooms(response.data.map((d) => ({
+        id: d.id_hive,
+        name: d.hive_name
+      })));
+    }
+  }
+  useEffect(()=>{
+    fetchRooms();
+  },[]);
   const handleJoinRoom = (room: Room) => {
     const roomWithUsers = {
       ...room,
@@ -197,11 +166,7 @@ function App() {
   };
 
   const handleUpdateRoom = (roomId: string, capacity: number) => {
-    setRooms((prevRooms) =>
-      prevRooms.map((room) =>
-        room.id === roomId ? { ...room, capacity } : room
-      )
-    );
+    fetchRooms();
   };
 
   return (

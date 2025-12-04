@@ -79,7 +79,7 @@ export function SignInPage() {
     
     setErrors({});
     const response = await addUser(form.username,form.firstName,form.lastName,form.email,form.password);
-    if(response.status===200 || response.status===201){
+    if(response?.status===200 || response?.status===201){
       setLoading(false);
       navigate("/login");
     }else{

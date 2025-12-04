@@ -9,10 +9,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<App page ="inicio"/>} />
         <Route path="/login" element={<App page="login" />} />
         <Route path="/signin" element={<App page="signin" />} />
-        <Route path="/inicio" element={<Home />} />
+        <Route path="/inicio" element={<App page ="inicio"/>} />
         <Route path="/dashboard" element={<App page="dashboard" />} />
       </Routes>
     </Router>
