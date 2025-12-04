@@ -13,7 +13,7 @@ return response;
 
 export const getAllUsers = async() =>{
 try{
-const response = await api.get(`/getUsers`);
+const response = await api.get(`/getUsers`,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);
@@ -23,7 +23,7 @@ return response;
 
 export const getUser = async(id) =>{
 try{
-const response = await api.get(`/getUser/${id}`);
+const response = await api.get(`/getUser/${id}`,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);
@@ -33,7 +33,7 @@ return response;
 
 export const inviteUser = async(values) =>{
 try{
-const response = await api.post(`/inviteUser/${values.email}`,values);
+const response = await api.post(`/inviteUser/${values.email}`,values,{withCredentials:true});
 return response;
 }catch(error){
     console.error("Error al obtener los usuarios: ",error);

@@ -6,6 +6,7 @@ services:
       - VITE_CHAT_URL=http://rocketchat:3000
       - VITE_JAAS_APP_ID=vpaas-magic-cookie-92874d750b0740faaa36f91286e4d7b2
       - VITE_WS_URL=ws://localhost:3001
+      - VITE_API_BASE_URL=http://localhost:3001
     container_name: core_app
     restart: unless-stopped
     ports:
