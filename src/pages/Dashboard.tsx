@@ -136,13 +136,21 @@ function App() {
     const response = await getHive();
     if(response?.status === 200)
     {
+      let baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+      if (baseUrl.endsWith("/api")) {
+        baseUrl = baseUrl.slice(0, -4);
+      }
+      console.log(response.data);
       setRooms(response.data.map((d) => ({
         id: d.id_hive,
         name: d.hive_name,
         description: d.description || "Enter to the Hive",
         userRole: d.user_role === true? "Hive Queen" : "User",
         maxUsers: d.max_count,
+        imageURL: d.imageURL === null ? undefined : baseUrl + d.imageURL,
       })));
+      console.log(rooms);
     }
   }
   useEffect(()=>{

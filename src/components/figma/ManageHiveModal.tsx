@@ -24,6 +24,7 @@ export function ManageHiveModal({
   const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
     await updateHive(room.id,imageFile,description);
+    setImageFile(null);
     onUpdateRoom();
     onClose();
   };
@@ -69,15 +70,9 @@ export function ManageHiveModal({
                 <span className="text-sm text-zinc-700">
                   {imageFile ? imageFile.name : "Choose an image"}
                 </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setImageFile(e.target.files[0]);
-                    }
-                  }}
+                <input type="file" onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) setImageFile(file);}} 
                 />
               </label>
             </div>

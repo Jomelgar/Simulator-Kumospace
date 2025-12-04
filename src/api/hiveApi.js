@@ -52,7 +52,13 @@ return response;
 
 export const updateHive = async(id_hive,image,description) => {
     try{
-        const response = await api.put(`hive/updateHive/${id_hive}`,{image,description},{withCredentials:true});
+        const formData = new FormData();
+        formData.append("image", image);
+        formData.append("description", description);
+        const response = await api.post(`hive/updateHive/${id_hive}`,formData,
+            {withCredentials:true,
+                headers: { "Content-Type": "multipart/form-data" },
+        });
     }catch(error)
     {
         console.error("Error al obtener hive: ",error);

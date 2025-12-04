@@ -32,7 +32,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
         {/* Image */}
         <div className="relative h-48 bg-zinc-100 overflow-hidden">
           <ImageWithFallback
-            src={roomImages[room.id] || roomImages["3"]}
+            src={room?.imageURL || roomImages[room.id % 6]}
             alt={room.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
