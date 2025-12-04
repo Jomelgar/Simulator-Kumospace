@@ -1,8 +1,14 @@
 import api from "./axiosClient"
 
-export const addUser = async(values) =>{
+export const addUser = async(user_name,first_name,last_name,email,password) =>{
 try{
-const response = await api.post(`/addUser`,values);
+const response = await api.post(`/user/addUser`,{
+        user_name:user_name,
+        first_name: first_name,
+        last_name: last_name,
+        email: email,
+        password: password
+    });
 return response;
 }catch(error){
     console.error("Error al crear el usuario: ",error);

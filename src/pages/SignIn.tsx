@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {addUser} from "../api/userApi";
 import logoImage from "../asset/logo.png";
 import hexagonImage from "../asset/hexagon.png";
 import "./SignIn.css";
@@ -7,8 +8,7 @@ import "./SignIn.css";
 export function SignInPage() {
   const navigate = useNavigate();
   const [activeField, setActiveField] = useState<string | null>(null);
-
-  // 🔹 Estados del formulario
+  const [loading, setLoading] = useState<boolean | undefined>(false);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -18,10 +18,8 @@ export function SignInPage() {
     terms: false,
   });
 
-  // 🔹 Estados de errores
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 🔹 Manejo general de inputs
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -32,7 +30,6 @@ export function SignInPage() {
     });
   };
 
-  // 🔹 Validación
   const validateRegisterForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -69,17 +66,26 @@ export function SignInPage() {
     return newErrors;
   };
 
-  // 🔹 Envío del formulario
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
     const validation = validateRegisterForm();
 
     if (Object.keys(validation).length > 0) {
       setErrors(validation);
+      setLoading(false);
       return;
     }
     
+    setErrors({});
+    const response = await addUser(form.username,form.firstName,form.lastName,form.email,form.password);
+    if(response.status===200 || response.status===201){
+      setLoading(false);
+      navigate("/login");
+    }else{
+      setLoading(false);
+      alert("Error creating account. Please try again.");
+    }
   };
 
   return (
@@ -260,8 +266,12 @@ export function SignInPage() {
             )}
 
             {/* BUTTON */}
-            <button type="submit" className="signin-btn">
-              Create Account
+            <button type="submit" className="signin-btn" disabled={loading}>
+              {loading ? (
+                <div className="loader"></div>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 
