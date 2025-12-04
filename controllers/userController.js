@@ -55,10 +55,16 @@ exports.addUser = async( request, response) => {
         const cryptedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({ user_name, password: cryptedPassword, email, first_name, last_name });
         
-        //Guardar usuario en el servicio de chat
-        const isCreated = await register(user_name, email, password, `${first_name} ${last_name}`);
-        if(isCreated === false) {return response.status(201).json({chatCreated: isCreated});}
-        const {token , userId } = await login(user_name,password);
+        try{
+            //Guardar usuario en el servicio de chat
+            const isCreated = await register(user_name, email, password, `${first_name} ${last_name}`);
+            if(isCreated === false) {return response.status(201).json({chatCreated: isCreated});}
+            const {token , userId } = await login(user_name,password);
+        }catch(error){
+            console.error("Error al registrar el usuario en el servicio de chat: ", error);
+            return response.status(201).json({chatCreated: false});
+        }
+        
         await User.update({chatUserId: userId, chatAuthToken: token}, { where: { id_user: newUser.id_user } });
         
         response.status(200).json({chatCreated: isCreated});

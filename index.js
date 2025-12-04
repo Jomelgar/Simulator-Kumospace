@@ -11,13 +11,11 @@ const cors = require("cors");
 const morgan = require("morgan");
 
 app.use(morgan("dev"));
-
 //configuración de CORS para permitir solicitudes desde el frontend
-
+app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 app.use("/api/user", userRoutes);
 app.use("/api/hive", hiveRoutes);
 app.use("/api/work_room", work_roomRoutes);
@@ -46,6 +44,8 @@ sequelize
     console.log("Modelos vinculados");
   })
   .catch((err) => console.error("DB error:", err));
+
 app.listen(process.env.PORT || 3001, () =>
   console.log("Listening to port 3001")
 );
+
