@@ -22,16 +22,16 @@ export default function App({ page = 'inicio' }: AppProps) {
         if (response?.status >= 200 && response?.status < 300) {
           // Cookie válida → redirigir a Dashboard o Home
           if (page === 'login' || page === 'signin') {
-            navigate('/dashboard', { replace: true });
+            navigate('/', { replace: true });
           }
         } else {
           // Cookie inválida → redirigir a login o sign_in según page
-          if (page === 'dashboard' || page === 'inicio') {
+          if (page === 'inicio' || page === 'office') {
             navigate('/login', { replace: true });
           }
         }
       } catch (error) {
-        if (page === 'dashboard' || page === 'inicio') {
+        if (page === 'office' || page === 'inicio') {
           navigate('/login', { replace: true });
         }
       }
@@ -42,8 +42,8 @@ export default function App({ page = 'inicio' }: AppProps) {
   // Renderiza según la página solicitada
   if (page === 'login') return <Login />;
   if (page === 'signin') return <SignIn />;
-  if (page === 'dashboard') return <Dashboard />;
-  if (page === 'inicio') return <Home />;
+  if (page === 'office') return <Home />;
+  if (page === 'inicio') return <Dashboard />;
 
   return <Login />; // fallback
 }

@@ -1,5 +1,6 @@
 import { Users, Lock, Crown, Settings, Shield, UserCheck } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Room } from "../../pages/Dashboard.tsx";
 import { ImageWithFallback } from "./ImageWithFallback.tsx";
 import { ManageHiveModal } from "./ManageHiveModal.tsx";
@@ -24,7 +25,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
   const isPrivate = room?.type === "private";
   const isFull = room?.usersInside >= room?.maxUsers;
   const isAdministrator = room?.userRole === "Hive Queen";
-
+  const navigate = useNavigate();
   return (
     <>
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zinc-900/5 transition-all group">
@@ -102,16 +103,16 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
               </button>
             )}
             <button
-              onClick={() => !isFull && onJoin(room)}
+              onClick={() => navigate("/office")}
               disabled={isFull}
               className={`
                 ${
                   isAdministrator ? "flex-1" : "w-full"
-                } py-3 px-4 rounded-lg transition-all
+                } py-3 px-4 rounded-lg transition-all hover:scale-105
                 ${
                   isFull
-                    ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
-                    : "bg-zinc-900 text-white hover:bg-zinc-800"
+                    ? "bg-zinc-100 text-zinc-400 cursor-not-allowed hover:scale-105"
+                    : "bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105"
                 }
               `}
             >

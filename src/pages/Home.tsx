@@ -4,6 +4,7 @@ import Chat from "../components/chat/Chat";
 
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { relative } from 'path';
+import { useNavigate } from 'react-router-dom';
 
 export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
@@ -151,7 +152,7 @@ export default function App() {
       handleDeleteSharedWorkspace(workspaceID);
     }
   }
-
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -366,10 +367,10 @@ export default function App() {
       {/* Header */}
       <header className="bg-black border-b border-neutral-800 px-6 py-4">
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex items-center gap-2 bg-neutral-900 px-3 py-2 rounded-lg border border-neutral-800">
               <Hexagon className="w-6 h-6 text-yellow-500" />
-              <span className="text-yellow-500 tracking-wider">ROOMS HIVE</span>
+              <span className="text-yellow-500 tracking-wider">HIVEROOMS</span>
             </div>
           </div>
 

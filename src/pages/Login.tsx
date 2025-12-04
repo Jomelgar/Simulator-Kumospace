@@ -64,7 +64,7 @@ export function LoginPage() {
           localStorage.setItem("userId", String(userId));
         }
 
-        navigate("/dashboard");
+        navigate("/");
       } else {
         setErrors({ general: response?.data?.message || "Login failed" });
       }
