@@ -8,6 +8,7 @@ services:
     volumes:
       - ./data/db:/data/db
       - ./data/dump:/dump
+    command: --replSet rs0 --bind_ip_all
     environment:
       - MONGO_INITDB_DATABASE=rocketchat
 
@@ -22,7 +23,8 @@ services:
     volumes:
       - ./uploads:/app/uploads
     environment:
-      - MONGO_URL=mongodb://mongodb:27017/rocketchat
+      - MONGO_URL=mongodb://mongodb:27017/rocketchat?replicaSet=rs0
+      - MONGO_OPLOG_URL=mongodb://mongo:27017/local?replicaSet=rs0
       - PORT=3000
   rocket-service:
     build: .
@@ -34,3 +36,16 @@ services:
       - ROCKET_PASSWORD=Josue2307
       - ROCKET_URL=http://rocketchat:3000
       - PORT=8000
+
+# Comando para que funcione mongodb con replicaset:
+# docker exec -it <contenedor_de mongo> mongosh
+# rs.initiate({
+#   _id: "rs0",
+#   members: [{ _id: 0, host: "localhost:27017" }]
+# })
+# rs.status()
+# cfg = rs.conf()
+# cfg.members[0].host = "mongodb:27017"
+# rs.reconfig(cfg, {force: true})
+#
+#Ya con eso funciona gente, solo recuerden quitar el TOTP

@@ -54,3 +54,17 @@ PORT=8000
 └── requirements.txt
 ```
 
+### Comando para que funcione mongodb con replicaset:
+```bash
+docker exec -it <contenedor_de mongo> mongosh
+rs.initiate({
+  _id: "rs0",
+  members: [{ _id: 0, host: "localhost:27017" }]
+})
+rs.status()
+cfg = rs.conf()
+cfg.members[0].host = "mongodb:27017"
+rs.reconfig(cfg, {force: true})
+
+```
+Ya con eso funciona gente

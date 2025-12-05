@@ -50,3 +50,70 @@ def register():
 
     return jsonify({"message": f"Usuario '{username}' creado correctamente."}), 201
     
+@logs_bp.route('/change-email', methods=['POST'])
+def change_email():
+    try:
+        data = request.get_json()
+        user_id = data["userId"]
+        new_email = data["newEmail"]
+
+        if not user_id or not new_email:
+            return jsonify({"error": "userId y newEmail son requeridos"}), 400
+        
+        resp = rocket.users_update(
+            user_id=user_id,
+            email= new_email
+        ).json()
+
+        if resp.get("success"):
+            return jsonify({"message": "Email actualizado correctamente", "data": resp}), 200
+        else:
+            return jsonify({"error": "Rocket.Chat no pudo actualizar el email", "details": resp}), 500
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": "Error interno", "details": str(e)}), 500
+
+@logs_bp.route('/change-password', methods=['POST'])
+def change_password():
+    try:
+        data = request.get_json()
+        user_id = data["userId"]
+        username = data["username"]
+        new_password = data["newPassword"]
+
+        if not user_id or not new_password or not username:
+            return jsonify({"error": "userId, username y newPassword son requeridos"}), 400
+
+        resp = rocket.users_update(
+            user_id=user_id,
+            password= new_password
+        ).json()
+
+        if not resp.get("success"):
+            return jsonify({
+                "error": "Rocket.Chat no pudo cambiar la contraseña",
+                "details": resp
+            }), 500
+
+        rocket_user = RocketChat(username,password=new_password,server_url=os.getenv('ROCKET_URL'))
+        login_resp = rocket_user.me().json()
+        if login_resp.get("status") != "success":
+            return jsonify({
+                "error": "La contraseña se actualizó, pero no fue posible generar un nuevo token",
+                "details": login_resp
+            }), 500
+
+        new_token = login_resp["data"]["authToken"]
+        new_user_id = login_resp["data"]["userId"]
+
+        # 3. Respuesta final
+        return jsonify({
+            "message": "Contraseña actualizada correctamente",
+            "authToken": new_token,
+            "userId": new_user_id
+        }), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": "Error interno", "details": str(e)}), 500
