@@ -4,6 +4,7 @@ services:
     build: ./
     restart: unless-stopped
     environment:
+      CHAT_API_URL: http://service_python:8000
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespass
       POSTGRES_DB: postgres
@@ -12,9 +13,12 @@ services:
       JWT_SECRET: hiveroomsecretkey
       JWT_EXPIRES: 1d
       PORT: 3001
+      CORE_URL: http://localhost:3005
+      NODE_ENV: production
     ports:
       - "3001:3001"
       - "3002:3002"
+      - "3003:3003"
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,3 +38,4 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  

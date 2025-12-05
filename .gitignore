@@ -2,3 +2,4 @@
 node_modules
 /uploads/Hives/*.png
 /uploads/Users/*.png
+data

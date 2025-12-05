@@ -40,9 +40,20 @@ async function createChannel(name, creatorId, creatorToken) {
   return null;
 }
 
+async function sendDMWebhook(payload) {
+  try {
+    const response = await api.post("messages/dm-webhook", payload);
+    return response.data;
+  } catch (err) {
+    console.error("Error enviando DM al backend Python:", err);
+    return null;
+  }
+}
+
 module.exports = {
   login,
   register,
   createChannel,
+  sendDMWebhook,
   api
 };

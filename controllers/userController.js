@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const {register,login} = require("../externals/chatservice");
 const bcrypt = require("bcryptjs");
+const {decodeToken} = require("../middleware/decodeToken");
 require("dotenv").config();
 
 exports.getUsers = async( request, response) => {
@@ -60,14 +61,14 @@ exports.addUser = async( request, response) => {
             const isCreated = await register(user_name, email, password, `${first_name} ${last_name}`);
             if(isCreated === false) {return response.status(201).json({chatCreated: isCreated});}
             const {token , userId } = await login(user_name,password);
+            await newUser.update({chatUserId: userId, chatAuthToken: token});
         }catch(error){
             console.error("Error al registrar el usuario en el servicio de chat: ", error);
             return response.status(201).json({chatCreated: false});
         }
         
-        await User.update({chatUserId: userId, chatAuthToken: token}, { where: { id_user: newUser.id_user } });
         
-        response.status(200).json({chatCreated: isCreated});
+        response.status(200).json({chatCreated: true});
     }catch(error){
         response.status(500).json({error: error.message});
     }
@@ -105,4 +106,21 @@ exports.updateUser = async( request, response) => {
     }catch(error){
         response.status(500).json({error: error.message});
     }
+}
+
+exports.getChat = async (req,res) => {
+    const token = req.cookies?.JWT;
+    if (!token) {
+    return res
+      .status(401)
+      .json({ status: "No token provided", message: "No puedes acceder" });
+    }
+    
+    const decode = decodeToken(token);
+    console.log(decode);
+    if(!decode) return res
+      .status(401)
+      .json({ status: "Invalid token", message: "No puedes acceder" });
+    
+    return res.status(200).json({authToken: decode.chatAuthToken , userId: decode.chatUserId})
 }

@@ -4,8 +4,8 @@
   "description": "Backend index for RoomsHive using Express",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"node index.js\" \"node server.js\"",
-    "dev": "concurrently \"nodemon index.js\" \"nodemon server.js\""
+    "start": "concurrently \"node index.js\" \"node server.js\" \" node notifications.js \"",
+    "dev": "concurrently \"nodemon index.js\" \"nodemon server.js\" \" nodemon notifications.js \""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
