@@ -360,8 +360,8 @@ export default function App() {
   }, [currentUser.currentLocation, users, isJitsiActive]);
 
   const allUsers = [currentUser, ...users.filter(u => u.id !== currentUser.id)];
-  const privateWorkspaces = workspaces?.filter(w => w.type === 'private');
-  const sharedWorkspaces = workspaces?.filter(w => w.type === 'shared');
+  const privateWorkspaces = workspaces?.filter(w => w.type === 'private') || [];
+  const sharedWorkspaces = workspaces?.filter(w => w.type === 'shared') || [];
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
