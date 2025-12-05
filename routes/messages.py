@@ -61,3 +61,76 @@ def sendChannels():
         return jsonify({"error": res}), 400
 
     return jsonify({"message": f"Message sent to {channel}", "res": res})
+
+@messages_bp.route('/dm-webhook', methods=['POST'])
+def rocket_dm_webhook():
+    data = request.get_json()
+
+    print("Webhook recibido:", data)
+
+    room_id = data.get("channel_id")
+    message_id = data.get("message_id")
+    sender_id = data.get("user_id")
+
+    if not room_id or not message_id or not sender_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # -----------------------------
+    # 2) Obtener los miembros del IM
+    # -----------------------------
+    members_res = rocket.call_api_get(
+        "im.members",
+        roomId=room_id
+    ).json()
+
+    if not members_res.get("success"):
+        return jsonify({"error": "Failed members", "detail": members_res}), 400
+
+    members = members_res.get("members", [])
+
+    if len(members) != 2:
+        return jsonify({"error": "This is not a DM"}), 400
+
+    # -----------------------------
+    # 3) El receptor es el que no envía
+    # -----------------------------
+    receiver = next((u for u in members if u["_id"] != sender_id), None)
+
+    if not receiver:
+        return jsonify({"error": "Receiver not found"}), 400
+
+    receiver_id = receiver["_id"]
+
+    # -----------------------------
+    # 4) Obtener mensaje completo
+    # -----------------------------
+    msg_res = rocket.call_api_get(
+        "chat.getMessage",
+        msgId=message_id
+    ).json()
+
+    if not msg_res.get("success"):
+        return jsonify({"error": "Failed to get message", "detail": msg_res}), 400
+
+    full_msg = msg_res.get("message")
+
+    # -----------------------------
+    # 5) Preparar payload para WS
+    # -----------------------------
+    payload = {
+        "type": "dm_message",
+        "sender": sender_id,
+        "receiver": receiver_id,
+        "room_id": room_id,
+        "message": full_msg
+    }
+
+    # -----------------------------
+    # 6) Enviar por WebSocket
+    # -----------------------------
+    # ❗ Aquí llamas tu WS real
+    # ws_send(receiver_id, payload)
+    print("Enviar por WS a:", receiver_id)
+    print(payload)
+
+    return jsonify({"success": True, "sentTo": receiver_id})
