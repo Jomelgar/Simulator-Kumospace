@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX, Hexagon, Crown } from 'lucide-react';
 import Chat from "../components/chat/Chat";
+import { MessageNotifications } from '../components/chat/notification';
 
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { relative } from 'path';
@@ -790,7 +791,7 @@ export default function App() {
         {/* Chat Panel */}
         <div className={`bg-white  border-l border-slate-200 flex`} style={{ position: 'relative', width: `${chatWidth}px` }}
         >
-          <Chat username={"johnny-fake"} password={"josue2307"} tryEnter={true} />
+          <Chat tryEnter={true} />
           {/* Resizer: borde más ancho para arrastrar */}
           <div
             onMouseDown={startResize}
@@ -837,6 +838,7 @@ export default function App() {
           onScreenSharingStatusChanged={handleScreenSharingChange}
         />
       )}
+      <MessageNotifications/>
     </div>
   );
 }

@@ -295,6 +295,7 @@ export function UserProfile({ onJoinSpace }: UserProfileProps) {
               <Input
                 id="email"
                 type="email"
+                disabled
                 value={editedEmail}
                 onChange={(e) => setEditedEmail(e.target.value)}
               />

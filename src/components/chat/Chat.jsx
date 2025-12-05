@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
 import { BarLoader } from "react-spinners";
+import {getChatRequest} from "../../api/userApi";
 import { login } from "./axios";
 
-export default function Chat({ username, password, tryEnter, exit }) {
+export default function Chat({ tryEnter, exit }) {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await login(username, password);
-        setToken(res.token);
-      } catch {
-        exit && exit();
-      }
+    const fetchData = async () => {
+      const response = await getChatRequest();
+      if (response?.status === 200) setToken(response.data.authToken);
     };
-    if (tryEnter) fetch();
+    fetchData();
   }, [tryEnter]);
 
   if (!token) {

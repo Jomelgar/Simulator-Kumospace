@@ -1,6 +1,7 @@
 import { Users, Crown, Settings, UserCheck } from "lucide-react";
 import { useState } from "react";
 import type { Room } from "../../pages/Dashboard.tsx";
+import { useNavigate } from "react-router-dom";
 import { ImageWithFallback } from "./ImageWithFallback.tsx";
 import { ManageHiveModal } from "./ManageHiveModal.tsx";
 
@@ -22,6 +23,7 @@ const roomImages: Record<string, string> = {
 export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const isPrivate = room?.type === "private";
+  const navigate = useNavigate();
   const isFull = (room?.usersInside || 0) >= (room?.maxUsers || 0);
   const isAdministrator = room?.userRole === "Hive Queen";
 
@@ -105,7 +107,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
               </button>
             )}
             <button
-              onClick={() => onJoin(room)}
+              onClick={() => navigate("/office")}
               disabled={isFull}
               className={`
                 ${isAdministrator ? "flex-1" : "w-full"

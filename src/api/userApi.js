@@ -60,3 +60,13 @@ export const updateUser = async (id, userData) => {
         return null;
     }
 }
+
+export const getChatRequest = async() => {
+     try {
+        const response = await api.post(`user/getChat`, {},{ withCredentials: true });
+        return response;
+    } catch (error) {
+        console.error("Error al obtener los usuarios: ", error);
+        return null;
+    }
+}

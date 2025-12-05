@@ -3,7 +3,9 @@ import { Sidebar } from "../components/figma/Sidebar";
 import { Dashboard } from "../components/figma/Dashboard";
 import { VirtualOfficeDB } from "../components/figma/VirtualOfficeDB";
 import { getHive} from "../api/hiveApi";
+import Chat from "../components/chat/Chat";
 import {logoutRequest} from "../api/authApi";
+import { MessageNotifications } from '../components/chat/notification';
 import { useNavigate } from "react-router-dom";
 import { ProfileView } from "../components/figma/ProfileView";
 import "./Dashboard.css";
@@ -48,7 +50,7 @@ export interface Hive {
 
 function App() {
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "profile" | "virtual-office"
+    "dashboard" | "profile" | "virtual-office" | "chat"
   >("dashboard");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [activeNavItem, setActiveNavItem] = useState("dashboard");
@@ -179,6 +181,8 @@ function App() {
     }else if (item === "LogOut") {
       await logoutRequest();
       navigate("/login");
+    } else if (item === "chat") {
+      setCurrentView("chat");
     }
   };
 
@@ -208,7 +212,9 @@ function App() {
             onLeave={handleLeaveRoom}
           />
         )}
+        {currentView === "chat" && <Chat tryEnter={true} />}
       </div>
+      <MessageNotifications/>
     </div>
   );
 }
