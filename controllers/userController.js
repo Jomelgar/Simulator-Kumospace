@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const { register, login } = require("../externals/chatservice");
 const bcrypt = require("bcryptjs");
-// const { decodeToken } = require("../middleware/decodeToken"); // Not needed if using VerifyToken middleware
+const { decodeToken } = require("../middleware/decodeToken"); 
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -111,20 +111,18 @@ exports.updateUser = async (request, response) => {
     }
 }
 
-exports.getChat = async (req, res) => {
-    try {
-        // Use req.user from VerifyToken middleware for security and reliability
-        // This avoids manually decoding the token again and ensures we have the verified user ID
-        const { id_user } = req.user.user;
-        const user = await User.findByPk(id_user);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        // Return the format expected by the frontend
-        return res.status(200).json({
-            authToken: user.chatAuthToken,
-            userId: user.chatUserId
-        });
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
+exports.getChat = async (req,res) => {
+    const token = req.cookies?.JWT;
+    if (!token) {
+    return res
+      .status(401)
+      .json({ status: "No token provided", message: "No puedes acceder" });
     }
-};
+    
+    const decode = decodeToken(token);
+    if(!decode) return res
+      .status(401)
+      .json({ status: "Invalid token", message: "No puedes acceder" });
+    
+    return res.status(200).json({authToken: decode.chatAuthToken , userId: decode.chatUserId})
+}
