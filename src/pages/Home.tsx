@@ -481,7 +481,7 @@ export default function App() {
                 <p className="text-sm text-neutral-600">Sala: {getMeetingRoomName()}</p>
               </div>
               <div className="flex-1 min-h-0 overflow-hidden pb-2 flex items-center justify-center px-8">
-                <div id="jitsi-visible-container" className="w-full max-w-4xl h-full overflow-hidden">
+                <div id="jitsi-visible-container" className="w-full max-w-4xl h-full overflow-hidden" style={{ marginTop: '-60px', height: 'calc(100% + 60px)' }}>
                 </div>
               </div>
             </div>

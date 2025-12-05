@@ -56,7 +56,7 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
 
         const timeoutId = setTimeout(updateHeight, 100);
         window.addEventListener('resize', updateHeight);
-        
+
         return () => {
             clearTimeout(timeoutId);
             window.removeEventListener('resize', updateHeight);
@@ -101,7 +101,7 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 }
 
                 await new Promise(resolve => setTimeout(resolve, 300));
-                
+
                 if (!jitsiContainerRef.current || !isMounted || jitsiApiRef.current) {
                     isInitializingRef.current = false;
                     return;
@@ -111,7 +111,7 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 const parentRect = container.parentElement?.getBoundingClientRect();
                 const calculatedHeight = rect.height || parentRect?.height || containerHeight || window.innerHeight - 200;
                 const finalHeight = Math.max(calculatedHeight, 700);
-                
+
                 const domain = JITSI_DOMAIN;
                 const options = {
                     roomName: `${JAAS_APP_ID}/${roomName}`,
@@ -280,20 +280,16 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
 
     return (
         <div
-            className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700"
+            className="relative w-full h-full bg-slate-900 rounded-lg border border-slate-700"
             style={{
-                height: '100%',
+                minHeight: 'calc(100vh + 150px)',
                 display: isVisible ? 'flex' : 'none',
                 flexDirection: 'column',
+                overflow: 'visible', // ← AGREGAR ESTO
             }}
         >
-            <button
-                onClick={handleClose}
-                className="absolute top-2 right-2 z-50 p-2 bg-red-600 hover:bg-red-700 rounded-full transition-colors shadow-lg"
-                title="Salir de la llamada"
-            >
-                <X className="w-4 h-4 text-white" />
-            </button>
+
+
 
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-20">
@@ -307,7 +303,11 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
             <div
                 ref={jitsiContainerRef}
                 className="w-full flex-1"
-                style={{ height: '100%', flex: '1 1 auto', minHeight: '500px' }}
+                style={{
+                    transform: 'translateY(-62px)',
+                    flex: '1 1 auto',
+                    minHeight: '500px',
+                }}
             />
         </div>
     );
