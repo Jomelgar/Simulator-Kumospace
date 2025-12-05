@@ -7,7 +7,9 @@ import "./Login.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [activeField, setActiveField] = useState<"username" | "password" | null>(null);
+  const [activeField, setActiveField] = useState<
+    "username" | "password" | null
+  >(null);
   const [form, setForm] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,6 @@ export function LoginPage() {
       const response = await loginRequest(username, password);
 
       if (response?.status === 200) {
-
         // Get userId from direct response
         let userId = response.data?.id_user;
 
@@ -47,11 +48,16 @@ export function LoginPage() {
         if (!userId && response.data?.token) {
           try {
             const token = response.data.token;
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
+            const base64Url = token.split(".")[1];
+            const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+            const jsonPayload = decodeURIComponent(
+              atob(base64)
+                .split("")
+                .map(function (c) {
+                  return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+                })
+                .join("")
+            );
 
             const decoded = JSON.parse(jsonPayload);
             userId = decoded?.user?.id_user;
@@ -82,7 +88,11 @@ export function LoginPage() {
 
       {/* LEFT SIDE */}
       <div className="login-left-wrapper">
-        <img src={logoImage} alt="Rooms Hive Logo" className="login-left-logo" />
+        <img
+          src={logoImage}
+          alt="Rooms Hive Logo"
+          className="login-left-logo"
+        />
       </div>
 
       {/* RIGHT SIDE */}
@@ -96,11 +106,13 @@ export function LoginPage() {
           <p className="login-subtitle">Sign in to continue to your account</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
-
-
             {/* USERNAME */}
             <div className="login-field-group">
-              <label className={`login-label ${activeField === "username" ? "label-active" : ""}`}>
+              <label
+                className={`login-label ${
+                  activeField === "username" ? "label-active" : ""
+                }`}
+              >
                 USERNAME
               </label>
               <input
@@ -111,15 +123,23 @@ export function LoginPage() {
                 onChange={handleChange}
                 onFocus={() => setActiveField("username")}
                 onBlur={() => setActiveField(null)}
-                className={`login-input ${activeField === "username" ? "input-active" : ""}`}
+                className={`login-input ${
+                  activeField === "username" ? "input-active" : ""
+                }`}
                 disabled={loading}
               />
-              {errors.username && <p className="input-error">{errors.username}</p>}
+              {errors.username && (
+                <p className="input-error">{errors.username}</p>
+              )}
             </div>
 
             {/* PASSWORD */}
             <div className="login-field-group">
-              <label className={`login-label ${activeField === "password" ? "label-active" : ""}`}>
+              <label
+                className={`login-label ${
+                  activeField === "password" ? "label-active" : ""
+                }`}
+              >
                 PASSWORD
               </label>
               <input
@@ -130,19 +150,28 @@ export function LoginPage() {
                 onChange={handleChange}
                 onFocus={() => setActiveField("password")}
                 onBlur={() => setActiveField(null)}
-                className={`login-input ${activeField === "password" ? "input-active" : ""}`}
+                className={`login-input ${
+                  activeField === "password" ? "input-active" : ""
+                }`}
                 disabled={loading}
               />
-              {errors.password && <p className="input-error">{errors.password}</p>}
+              {errors.password && (
+                <p className="input-error">{errors.password}</p>
+              )}
             </div>
 
             {/* General error */}
-            {errors.general && <p className="general-error">{errors.general}</p>}
+            {errors.general && (
+              <p className="general-error">{errors.general}</p>
+            )}
 
-            {/* Forgot password */}
-            <div className="forgot-wrapper">
-              <button type="button" className="forgot-text" disabled={loading}>Forgot password?</button>
-            </div>
+            <button
+              type="button"
+              className="forgot-text"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot password?
+            </button>
 
             {/* BUTTON */}
             <button type="submit" className="login-btn" disabled={loading}>
@@ -150,11 +179,17 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="divider"><span>or</span></div>
+          <div className="divider">
+            <span>or</span>
+          </div>
 
           <div className="signup-wrapper">
             <p className="signup-text">Don’t have an account? </p>
-            <button onClick={() => navigate("/signin")} className="signup-link" disabled={loading}>
+            <button
+              onClick={() => navigate("/signin")}
+              className="signup-link"
+              disabled={loading}
+            >
               Create Account
             </button>
           </div>
