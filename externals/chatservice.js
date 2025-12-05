@@ -50,10 +50,35 @@ async function sendDMWebhook(payload) {
   }
 }
 
+async function change_email(userId,newEmail) 
+{
+  try{
+    const response = await api.post("/change-email",{userId,newEmail});
+    if(response?.status === 200) return true;
+    return false;
+  }catch(err){
+    console.error("Error de cambio de email en chat:",err)
+    return false;
+  }
+}
+
+async function change_password(userId,newEmail) 
+{
+  try{
+    const response = await api.post("/change-email",{userId,newEmail});
+    if(response?.status === 200) return {authToken: response.data?.authToken, userId: response.data?.userId};
+    return null;
+  }catch(err){
+    console.error("Error de cambio de email en chat:",err)
+    return null;
+  }
+}
+
 module.exports = {
   login,
   register,
   createChannel,
   sendDMWebhook,
+  change_email,
   api
 };
