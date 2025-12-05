@@ -9,10 +9,11 @@ const work_roomRoutes = require("./routes/work_roomRoutes");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const morgan = require("morgan");
+const seedUsers = require("./seeders/User_Seed");
 
 app.use(morgan("dev"));
 //configuración de CORS para permitir solicitudes desde el frontend
-app.use(cors({ origin: process.env.CORE_URL, credentials: true}));
+app.use(cors({ origin: process.env.CORE_URL, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -21,7 +22,6 @@ app.use("/api/hive", hiveRoutes);
 app.use("/api/work_room", work_roomRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads"));
-
 
 app.get("/", (req, res) => {
   res.send("The API is running.");
@@ -44,10 +44,10 @@ sequelize
 
   .then(() => {
     console.log("Modelos vinculados");
+    //seedUsers();
   })
   .catch((err) => console.error("DB error:", err));
 
 app.listen(process.env.PORT || 3001, () =>
   console.log("Listening to port 3001")
 );
-
