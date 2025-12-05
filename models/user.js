@@ -56,6 +56,22 @@ const User = sequelize.define("User",{
     description : {
         type: DataTypes.STRING
     },
+    phone: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    location: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    title: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    about: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
     joined_at : {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
