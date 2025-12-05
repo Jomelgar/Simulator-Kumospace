@@ -1,5 +1,5 @@
 import { Mail, Phone, MapPin, Crown, Calendar, Edit, Save, X, Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { checkRequest } from '../../api/authApi';
 import { getUser, updateUser } from '../../api/userApi';
 import type { Hive } from '../../pages/Dashboard';
@@ -23,6 +23,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
   const [newSkill, setNewSkill] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [originalImagePreview, setOriginalImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -67,7 +68,9 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
               if (baseURL.endsWith("/api")) {
                 baseURL = baseURL.slice(0, -4);
               }
-              setImagePreview(`${baseURL}${userData.imageURL}`);
+              const fullUrl = `${baseURL}${userData.imageURL}`;
+              setImagePreview(fullUrl);
+              setOriginalImagePreview(fullUrl);
             }
           }
         } catch (error) {
@@ -107,7 +110,9 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
         formData.append('image', imageFile);
       }
 
+      console.log ("Saving profile")
       await updateUser(userId, formData);
+      setOriginalImagePreview(imagePreview);
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -117,6 +122,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
   const handleCancel = () => {
     setIsEditing(false);
     setImageFile(null);
+    setImagePreview(originalImagePreview);
   };
 
   const handleEditAbout = () => {
