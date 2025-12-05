@@ -28,7 +28,6 @@ wss.on('connection', (ws, req) => {
       userId: rocketUserId
     }));
   }
-  console.log(users);
   ws.on('close', () => {
     users.delete(rocketUserId);
     console.log(`Usuario desconectado: ${rocketUserId}`);
