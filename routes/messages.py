@@ -71,25 +71,28 @@ def rocket_dm_webhook():
     room_id = data.get("channel_id")
     message_id = data.get("message_id")
     sender_id = data.get("user_id")
+    auth_token = data['auth_token']
+
 
     if not room_id or not message_id or not sender_id:
         return jsonify({"error": "Missing required fields"}), 400
 
+    rocket_client = getRocketUser(sender_id,auth_token)
     # -----------------------------
     # 2) Obtener los miembros del IM
     # -----------------------------
-    members_res = rocket.call_api_get(
+    members_res = rocket_client.call_api_get(
         "im.members",
         roomId=room_id
     ).json()
 
     if not members_res.get("success"):
-        return jsonify({"error": "Failed members", "detail": members_res}), 400
+        return jsonify({"error": "Failed members", "detail": members_res}), 401
 
     members = members_res.get("members", [])
 
     if len(members) != 2:
-        return jsonify({"error": "This is not a DM"}), 400
+        return jsonify({"error": "This is not a DM"}), 402
 
     # -----------------------------
     # 3) El receptor es el que no envía
@@ -97,20 +100,20 @@ def rocket_dm_webhook():
     receiver = next((u for u in members if u["_id"] != sender_id), None)
 
     if not receiver:
-        return jsonify({"error": "Receiver not found"}), 400
+        return jsonify({"error": "Receiver not found"}), 403
 
     receiver_id = receiver["_id"]
 
     # -----------------------------
     # 4) Obtener mensaje completo
     # -----------------------------
-    msg_res = rocket.call_api_get(
+    msg_res = rocket_client.call_api_get(
         "chat.getMessage",
         msgId=message_id
     ).json()
 
     if not msg_res.get("success"):
-        return jsonify({"error": "Failed to get message", "detail": msg_res}), 400
+        return jsonify({"error": "Failed to get message", "detail": msg_res}), 404
 
     full_msg = msg_res.get("message")
 
