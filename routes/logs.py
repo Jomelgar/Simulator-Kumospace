@@ -62,7 +62,7 @@ def change_email():
         
         resp = rocket.users_update(
             user_id=user_id,
-            email= new_email
+            email = new_email
         ).json()
 
         if resp.get("success"):
@@ -98,14 +98,14 @@ def change_password():
 
         rocket_user = RocketChat(username,password=new_password,server_url=os.getenv('ROCKET_URL'))
         login_resp = rocket_user.me().json()
-        if login_resp.get("status") != "success":
+        if not login_resp.get("success", True):
             return jsonify({
                 "error": "La contraseña se actualizó, pero no fue posible generar un nuevo token",
                 "details": login_resp
             }), 500
 
-        new_token = login_resp["data"]["authToken"]
-        new_user_id = login_resp["data"]["userId"]
+        new_token = rocket_user.headers["X-Auth-Token"]
+        new_user_id = login_resp["_id"]
 
         # 3. Respuesta final
         return jsonify({

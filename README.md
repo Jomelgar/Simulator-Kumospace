@@ -68,3 +68,22 @@ rs.reconfig(cfg, {force: true})
 
 ```
 Ya con eso funciona gente
+
+### Config dentro de RocketChat:
+- Como admin vas a espacio de trabajo -> configuracion -> general en Restringir acceso dentro de cualquier iframe lo para el iframe del core
+-  Como admin vas a espacio de trabajo -> configuracion -> cuenta -> Autenticación de dos factores en Habilitar la autenticación de dos factores lo deshabilitas
+- Como admin vas a espacio de trabajo -> configuracion -> diseño -> css personalizado y pones el .css de aca
+- Como admin vas a espacio de trabajo -> integraciones -> creas un webhook saliente
+  nombre: cualquiera
+  channel: all_direct_messages
+  url: url_websocket_de_notificaciones/rocketchat-webhook
+  publicar como: el admin
+  script habilitado: si
+  puse dentro de script: 
+  {
+    text: message.msg,
+    fromUserName: user.username,
+    fromUserId: user._id,
+    targetUserId: message.u._id 
+  } 
+  pero creo que no es necesario
