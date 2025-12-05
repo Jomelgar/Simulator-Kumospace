@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 
-type TabType = 'inicio' | 'login' | 'signin' | 'dashboard';
+type TabType = 'inicio' | 'login' | 'signin' | 'office';
 
 interface AppProps {
   page?: TabType;

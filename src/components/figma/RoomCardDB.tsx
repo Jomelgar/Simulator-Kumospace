@@ -1,6 +1,5 @@
-import { Users, Lock, Crown, Settings, Shield, UserCheck } from "lucide-react";
+import { Users, Crown, Settings, UserCheck } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import type { Room } from "../../pages/Dashboard.tsx";
 import { ImageWithFallback } from "./ImageWithFallback.tsx";
 import { ManageHiveModal } from "./ManageHiveModal.tsx";
@@ -23,16 +22,19 @@ const roomImages: Record<string, string> = {
 export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const isPrivate = room?.type === "private";
-  const isFull = room?.usersInside >= room?.maxUsers;
+  const isFull = (room?.usersInside || 0) >= (room?.maxUsers || 0);
   const isAdministrator = room?.userRole === "Hive Queen";
-  const navigate = useNavigate();
+
+  const imageIndex = ((Number(room.id) - 1) % 6) + 1;
+  const fallbackImage = roomImages[imageIndex.toString()] || roomImages["1"];
+
   return (
     <>
       <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zinc-900/5 transition-all group">
         {/* Image */}
         <div className="relative h-48 bg-zinc-100 overflow-hidden">
           <ImageWithFallback
-            src={room?.imageURL || roomImages[room.id % 6]}
+            src={room?.imageURL || fallbackImage}
             alt={room.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -103,16 +105,14 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
               </button>
             )}
             <button
-              onClick={() => navigate("/office")}
+              onClick={() => onJoin(room)}
               disabled={isFull}
               className={`
-                ${
-                  isAdministrator ? "flex-1" : "w-full"
+                ${isAdministrator ? "flex-1" : "w-full"
                 } py-3 px-4 rounded-lg transition-all hover:scale-105
-                ${
-                  isFull
-                    ? "bg-zinc-100 text-zinc-400 cursor-not-allowed hover:scale-105"
-                    : "bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105"
+                ${isFull
+                  ? "bg-zinc-100 text-zinc-400 cursor-not-allowed hover:scale-105"
+                  : "bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105"
                 }
               `}
             >

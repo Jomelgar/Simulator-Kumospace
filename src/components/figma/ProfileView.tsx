@@ -21,6 +21,8 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
   const [skills, setSkills] = useState(['UI/UX Design', 'Product Strategy', 'Team Leadership', 'Figma']);
   const [tempSkills, setTempSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -59,6 +61,14 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             if (userData.location) setLocation(userData.location);
             if (userData.title) setTitle(userData.title);
             if (userData.about) setAbout(userData.about);
+
+            if (userData.imageURL) {
+              let baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+              if (baseURL.endsWith("/api")) {
+                baseURL = baseURL.slice(0, -4);
+              }
+              setImagePreview(`${baseURL}${userData.imageURL}`);
+            }
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -67,6 +77,14 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
     };
     fetchUserData();
   }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSave = async () => {
     const userId = localStorage.getItem("userId");
@@ -77,16 +95,19 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
       const first_name = nameParts[0] || '';
       const last_name = nameParts.slice(1).join(' ') || '';
 
-      const userData = {
-        first_name,
-        last_name,
-        email,
-        phone,
-        location,
-        title
-      };
+      const formData = new FormData();
+      formData.append('first_name', first_name);
+      formData.append('last_name', last_name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('location', location);
+      formData.append('title', title);
 
-      await updateUser(userId, userData);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      await updateUser(userId, formData);
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -95,6 +116,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setImageFile(null);
   };
 
   const handleEditAbout = () => {
@@ -155,15 +177,27 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             <div className="relative">
               <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-yellow-100">
                 <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
+                  src={imagePreview || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
               </div>
               {isEditing && (
-                <button className="absolute bottom-2 right-2 w-10 h-10 bg-yellow-500 text-white rounded-lg flex items-center justify-center hover:bg-yellow-600 transition-all shadow-lg">
-                  <Edit className="w-4 h-4" />
-                </button>
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="profile-image-upload"
+                    onChange={handleImageChange}
+                  />
+                  <label
+                    htmlFor="profile-image-upload"
+                    className="absolute bottom-2 right-2 w-10 h-10 bg-yellow-500 text-white rounded-lg flex items-center justify-center hover:bg-yellow-600 transition-all shadow-lg cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </label>
+                </>
               )}
             </div>
 
