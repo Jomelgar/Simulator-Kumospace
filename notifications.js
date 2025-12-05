@@ -16,9 +16,10 @@ const users = new Map();
 wss.on('connection', (ws, req) => {
   const params = new URLSearchParams(req.url.replace('/?', ''));
   const rocketUserId = params.get('userId'); 
+  const rocketAuthToken = params.get('authToken');
 
   if (rocketUserId) {
-    users.set(rocketUserId, ws);
+    users.set(rocketUserId, {ws, userId: rocketUserId, authToken: rocketAuthToken,});
 
     // 🔹 Enviar mensaje de conexión exitosa
     ws.send(JSON.stringify({
@@ -27,7 +28,7 @@ wss.on('connection', (ws, req) => {
       userId: rocketUserId
     }));
   }
-
+  console.log(users);
   ws.on('close', () => {
     users.delete(rocketUserId);
     console.log(`Usuario desconectado: ${rocketUserId}`);
@@ -36,25 +37,33 @@ wss.on('connection', (ws, req) => {
 
 app.post('/rocketchat-webhook', async (req, res) => {
   try {
-
-    const dmData = await sendDMWebhook(req.body);
+    const token = users.get(req.body?.user_id)?.authToken;
+    const dmData = await sendDMWebhook(
+      {
+        channel_id: req.body?.channel_id,
+        message_id: req.body?.message_id,
+        user_id: req.body?.user_id,
+        auth_token: token 
+      }
+    );
 
     if (!dmData || !dmData.sentTo) {
       return res.status(500).json({ error: "No se pudo procesar el DM" });
     }
 
-    const ws = users.get(dmData.sentTo); 
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
+    const client = users.get(dmData.sentTo);
+    if (client && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify({
         type: "message",
-        message: `${req.body?.text}`,
-        userId: dmData?.sentTO,
+        message: req.body?.text,
+        userId: dmData?.sentTo,
         username: req.body?.user_name
       }));
       console.log(`Mensaje enviado por WS a ${dmData.sentTo}`);
     } else {
       console.log(`Usuario ${dmData.sentTo} no conectado`);
     }
+
 
     res.sendStatus(200);
 
