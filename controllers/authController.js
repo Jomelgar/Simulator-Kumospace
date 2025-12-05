@@ -34,6 +34,7 @@ exports.login = async (req, res) => {
 };
 
 exports.decodeToken = (req, res) => {
+  // Verifica el token
   try {
     const token = req.cookies["JWT"];
 
@@ -62,6 +63,43 @@ exports.logout = (req, res) => {
   return res.status(200).json({ message: "Logged out" });
 };
 
-exports.check = (req,res) => {
-  res.status(200).json()
-}
+exports.UserThenToken = async (req, res) => {
+  try {
+    const id_user = req.params.id;
+    console.log("ID de usuario recibido:", req.params);
+    if (!id_user) {
+      // 400 si no se proporciona el ID
+      return res.status(400).json({ message: "ID de usuario requerido." });
+    }
+
+    const user = await User.findOne({
+      where: { id_user: id_user },
+      attributes: [
+        "id_user",
+        "user_name",
+        "imageURL",
+        "status",
+        "currentLocation",
+        "locationType",
+      ],
+    });
+
+    if (!user) {
+      // 404 si el ID existe en el token, pero no en la base de datos (raro, pero posible)
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    // 3. Respuesta exitosa (200 OK)
+    return res.status(200).json({
+      message: "Usuario encontrado y autenticado.",
+      user: user,
+    });
+  } catch (error) {
+    console.error("Error al buscar usuario:", error);
+    return res.status(500).json({ message: "Error interno del servidor." });
+  }
+};
+
+exports.check = (req, res) => {
+  res.status(200).json();
+};
