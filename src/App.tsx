@@ -5,6 +5,8 @@ import SignIn from './pages/SignIn';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
+import { ErrorBoundary } from "./components/errors/ErrorBoundary";
+import { ErrorPage } from "./components/errors/ErrorPage";
 
 type TabType = 'inicio' | 'login' | 'signin' | 'office';
 
@@ -40,10 +42,17 @@ export default function App({ page = 'inicio' }: AppProps) {
     validateCookie();
   }, [navigate, page]);
   // Renderiza según la página solicitada
-  if (page === 'login') return <Login />;
-  if (page === 'signin') return <SignIn />;
-  if (page === 'office') return <Home />;
-  if (page === 'inicio') return <Dashboard />;
+  return (
+    <ErrorBoundary>
+      {page === 'login' && <Login />}
+      {page === 'signin' && <SignIn />}
+      {page === 'office' && <Home />}
+      {page === 'inicio' && <Dashboard />}
 
-  return <Login />; // fallback
+      {/* fallback si page no coincide */}
+      {!['login', 'signin', 'office', 'inicio'].includes(page) && (
+        <Login />
+      )}
+    </ErrorBoundary>
+  ); // fallback
 }

@@ -8,6 +8,7 @@ import VerifyCode from "./pages/VerifyCode";
 import ResetPassword from "./pages/ResetPassword";
 
 import "./index.css";
+import ErrorTest from "./pages/ErrorTest.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -21,6 +22,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/test-error" element={<ErrorTest />} />
+
       </Routes>
     </Router>
   </React.StrictMode>
