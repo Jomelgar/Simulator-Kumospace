@@ -22,7 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/test-error" element={<ErrorTest />} />
+        <Route path="*" element={<ErrorTest />} />
 
       </Routes>
     </Router>
