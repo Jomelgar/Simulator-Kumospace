@@ -1,9 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import App from './App.tsx'
-import Home from './pages/Home.tsx'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import App from "./App.tsx";
+import Home from "./pages/Home.tsx";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyCode from "./pages/VerifyCode";
+import ResetPassword from "./pages/ResetPassword";
+
+import "./index.css";
+import ErrorTest from "./pages/ErrorTest.tsx";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -14,6 +19,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/signin" element={<App page="signin" />} />
         <Route path="/inicio" element={<App page ="inicio"/>} />
         <Route path="/office" element={<App page="office" />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-code" element={<VerifyCode />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/test-error" element={<ErrorTest />} />
+
       </Routes>
     </Router>
   </React.StrictMode>,
