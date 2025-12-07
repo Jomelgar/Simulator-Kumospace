@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX, Hexagon, Crown } from 'lucide-react';
-import Chat from "../components/chat/Chat";
 import { MessageNotifications } from '../components/chat/notification';
+import axios from "axios";
 
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { relative } from 'path';
@@ -11,21 +11,30 @@ export type UserStatus = 'online' | 'busy' | 'away';
 export type WorkspaceType = 'general' | 'shared' | 'private';
 
 export interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  status: UserStatus;
-  currentLocation: string;
-  locationType: WorkspaceType;
+  id_user: number;
+  user_name: string;
+  password: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  currentLocation: number | null;
+  imageURL: string | undefined;
+  locationType: string | null;
+  status: string;
 }
 
-export interface Workspace {
-  id: string;
-  name: string;
-  type: WorkspaceType;
-  ownerId?: string;
-  isLocked: boolean;
-  maxUsers?: number;
+export interface Private_Room {
+  id_private_room: number;
+  id_user: number;
+  room_name: string;
+  is_locked: boolean;
+}
+
+export interface Work_Room {
+  id_room: number;
+  room_name: string;
+  max_users: number;
+  is_locked: boolean;
 }
 
 export interface ChatMessage {
@@ -38,122 +47,120 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
-// Datos de respaldo mínimos para pruebas locales
-const FALLBACK_WORKSPACES: Workspace[] = [
-  {
-    id: 'private-current',
-    name: 'Mi Oficina',
-    type: 'private',
-    ownerId: 'current-user',
-    isLocked: false
-  },
-  {
-    id: 'shared-1',
-    name: 'Sala de Reuniones 1',
-    type: 'shared',
-    isLocked: false,
-    maxUsers: 8
-  }
-];
-
-const FALLBACK_USERS: User[] = [
-  {
-    id: 'user-1',
-    name: 'Usuario invitado',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
-    status: 'online',
-    currentLocation: 'shared-1',
-    locationType: 'shared'
-  }
-];
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User>({
-    id: 'current-user',
-    name: 'Hector',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current',
+    id_user: 1,
+    user_name: 'Tú',
+    password: '',
+    email: '',
+    first_name: '',
+    last_name: '',
+    currentLocation: 1,
+    locationType: 'private',
     status: 'online',
-    currentLocation: 'private-current',
-    locationType: 'private'
+    imageURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current'
   });
 
-  const [users, setUsers] = useState<User[]>(FALLBACK_USERS);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(FALLBACK_WORKSPACES);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [private_rooms, setPrivateRooms] = useState<Private_Room[]>([]);
+  const [work_rooms, setWorkRooms] = useState<Work_Room[]>([]);
+  const [socket, setSocket] = useState<WebSocket|null>(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
+  const init = async () => {
     try {
-      const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3001');
+      const tokenRes = await axios.post(
+        `http://localhost:3001/api/auth/login`,
+        { user_name: "bryan123", password: "123" },
+        { withCredentials: true }
+      );
+      const authToken = tokenRes.data.token;
+      setToken(authToken);
+
+      const userRes = await axios.get(`http://localhost:3001/api/auth/decode-user/1`, {
+        withCredentials: true,
+      });
+      const user = userRes.data;
+      setCurrentUser(user);
+
+      const ws = new WebSocket("ws://localhost:3002");
       setSocket(ws);
+
+      ws.onopen = () => {
+        ws.send(
+          JSON.stringify({
+            type: "setHive",
+            id_hive: 1,
+            id_user: user.id_user,
+            token: authToken,
+          })
+        );
+      };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
         if (data.type === "init" || data.type === "update") {
           setUsers(data.users);
-          setWorkspaces(data.workspaces);
-          const updatedCurrentUser = data.users.find((u: User) => u.id === currentUser.id);
+          setPrivateRooms(data.private_rooms);
+          setWorkRooms(data.work_rooms);
+
+          const updatedCurrentUser = data.users.find(
+            (u: User) => u.id_user === user.id_user
+          );
           if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
         }
       };
 
-      ws.onerror = () => {
-        console.log('WebSocket no disponible, usando datos locales de prueba');
-        setUsers(FALLBACK_USERS);
-        setWorkspaces(FALLBACK_WORKSPACES);
-      };
+      ws.onclose = () => console.log("WebSocket disconnected");
     } catch (error) {
-      console.log('WebSocket no disponible, usando datos locales de prueba');
-      setUsers(FALLBACK_USERS);
-      setWorkspaces(FALLBACK_WORKSPACES);
+      console.error(error);
     }
-  }, []);
+  };
 
-  const enterWorkSpace = (workspaceID: string) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+  init();
+}, []);
+
+  const enterWorkSpace = (workspaceID: number, roomType: WorkspaceType) =>{
+    if(socket){
       socket.send(JSON.stringify({
         type: "enterWorkspace",
-        userId: currentUser.id,
-        workspaceId: workspaceID
+        userId: currentUser.id_user,
+        workspaceId: workspaceID,
+        room: roomType
       }));
-    } else {
-      handleEnterWorkspace(workspaceID);
     }
   }
 
-  const lockWorkSpace = (workspaceID: string) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+  const lockWorkSpace = (workspaceID: number) =>{
+    if(socket){
       socket.send(JSON.stringify({
         type: "lockWorkspace",
         workspaceId: workspaceID
       }));
-    } else {
-      handleToggleLock(workspaceID);
     }
   }
 
-  const createWorkSpace = (workspaceMaxUSERS: string) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+  const createWorkSpace = (workspaceMaxUSERS: string) =>{
+    if(socket){
       socket.send(JSON.stringify({
         type: "createWorkSpace",
         workspaceMaxUsers: workspaceMaxUSERS
       }));
-    } else {
-      handleCreateSharedWorkspace();
     }
   }
 
-  const deleteWorkSpace = (workspaceID: string) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+  const deleteWorkSpace = (workspaceID: number) =>{
+    if(socket){
       socket.send(JSON.stringify({
         type: "deleteWorkSpace",
-        userId: currentUser.id,
+        userId: currentUser.id_user,
         workspaceId: workspaceID
       }));
-    } else {
-      handleDeleteSharedWorkspace(workspaceID);
     }
   }
-  const navigate = useNavigate();
+
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -205,98 +212,19 @@ export default function App() {
   const [isJitsiActive, setIsJitsiActive] = useState(false);
   const jitsiApiRef = useRef<any | null>(null);
 
-  const handleCreateSharedWorkspace = () => {
-    const maxUsers = parseInt(newWorkspaceMaxUsers);
-    if (isNaN(maxUsers) || maxUsers < 1) return;
-
-    const sharedCount = sharedWorkspaces.length + 1;
-    const newWorkspace: Workspace = {
-      id: `shared-${Date.now()}`,
-      name: `Sala ${sharedCount}`,
-      type: 'shared',
-      isLocked: false,
-      maxUsers: maxUsers
-    };
-
-    setWorkspaces([...workspaces, newWorkspace]);
-    setNewWorkspaceMaxUsers('8');
-    setShowCreateWorkspace(false);
-  };
-
-  const handleDeleteSharedWorkspace = (workspaceId: string) => {
-    if (currentUser.currentLocation === workspaceId) return;
-
-    const updatedUsers = users.map(user => {
-      if (user.currentLocation === workspaceId) {
-        const userPrivateOffice = workspaces.find(w => w.ownerId === user.id && w.type === 'private');
-        return {
-          ...user,
-          currentLocation: userPrivateOffice?.id || user.currentLocation,
-          locationType: 'private' as WorkspaceType
-        };
-      }
-      return user;
-    });
-
-    setUsers(updatedUsers);
-    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-  };
-
-  const handleEnterWorkspace = (workspaceId: string) => {
-    const workspace = workspaces.find(w => w.id === workspaceId);
-    if (!workspace) return;
-
-    if (workspace.type === 'private' && workspace.isLocked && workspace.ownerId !== currentUser.id) {
-      return;
-    }
-
-    if (workspace.type === 'private' && workspace.ownerId !== currentUser.id) {
-      const owner = allUsers.find(u => u.id === workspace.ownerId);
-      if (!owner) return;
-      if (owner.currentLocation !== workspaceId) return;
-      if (owner.status === 'busy') return;
-    }
-
-    const previousLocation = currentUser.currentLocation;
-    setCurrentUser({
-      ...currentUser,
-      currentLocation: workspaceId,
-      locationType: workspace.type
-    });
-
-    if (previousLocation !== workspaceId) {
-      setIsInMeeting(false);
-      if (shouldEnableVideoConference()) {
-        setIsJitsiActive(true);
-      } else {
-        setIsJitsiActive(false);
-      }
-    }
-  };
-
-  const handleToggleLock = (workspaceId: string) => {
-    setWorkspaces(prev =>
-      prev.map(w =>
-        w.id === workspaceId ? { ...w, isLocked: !w.isLocked } : w
-      )
-    );
-  };
-
-  const getUsersInLocation = (locationId: string): User[] => {
-    const usersInLocation = users.filter(u => u.currentLocation === locationId && u.id !== currentUser.id);
-    if (currentUser.currentLocation === locationId) {
-      return [currentUser, ...usersInLocation];
-    }
-    return usersInLocation;
+  const getUsersInLocation = (locationId: number, type: WorkspaceType) => {
+    return users.filter((u: User) => u.currentLocation === locationId && u.locationType === type);
   };
 
   // Funciones para videoconferencia
   const shouldEnableVideoConference = (): boolean => {
-    const usersInCurrentWorkspace = getUsersInLocation(currentUser.currentLocation);
+    if(currentUser.currentLocation===null) return false;
+    const usersInCurrentWorkspace = getUsersInLocation(currentUser.currentLocation, 'shared');
     return usersInCurrentWorkspace.length >= 2;
   };
 
   const getMeetingRoomName = (): string => {
+    if(currentUser.currentLocation===null) return "Not found";
     return `workspace-${currentUser.currentLocation}`;
   };
 
@@ -359,16 +287,16 @@ export default function App() {
     }
   }, [currentUser.currentLocation, users, isJitsiActive]);
 
-  const allUsers = [currentUser, ...users.filter(u => u.id !== currentUser.id)];
-  const privateWorkspaces = workspaces?.filter(w => w.type === 'private') || [];
-  const sharedWorkspaces = workspaces?.filter(w => w.type === 'shared') || [];
+  const allUsers = users;
+  const privateWorkspaces = private_rooms;
+  const sharedWorkspaces = work_rooms;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       {/* Header */}
       <header className="bg-black border-b border-neutral-800 px-6 py-4">
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="flex items-center gap-3 cursor-pointer">
             <div className="flex items-center gap-2 bg-neutral-900 px-3 py-2 rounded-lg border border-neutral-800">
               <Hexagon className="w-6 h-6 text-yellow-500" />
               <span className="text-yellow-500 tracking-wider">HIVEROOMS</span>
@@ -457,8 +385,8 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-neutral-900 rounded-lg border border-neutral-800">
-              <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-full" />
-              <span className="text-sm text-white">{currentUser.name}</span>
+              <img src={currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              <span className="text-sm text-white">{currentUser.user_name}</span>
             </div>
 
             <button
@@ -500,22 +428,22 @@ export default function App() {
 
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {privateWorkspaces?.map(workspace => {
-                      const owner = allUsers.find(u => u.id === workspace.ownerId);
-                      const usersInOffice = getUsersInLocation(workspace.id);
-                      const isOwner = currentUser.id === workspace.ownerId;
-                      const isCurrentUserHere = currentUser.currentLocation === workspace.id;
-                      const isOccupied = usersInOffice.length > 0;
-                      const isOwnerInSharedSpace = owner && owner.locationType === 'shared';
-                      const isOwnerAway = owner && owner.status === 'away' && !isOwnerInSharedSpace;
+                    {privateWorkspaces.map(room => {
+                    const owner = allUsers.find(u => u.id_user === room.id_user);
+                    const usersInOffice = getUsersInLocation(room.id_private_room , 'private');
+                    const isOwner = currentUser.id_user === room.id_user;
+                    const isCurrentUserHere = currentUser.currentLocation === room.id_private_room && currentUser.locationType === 'private';
+                    const isOccupied = usersInOffice.length > 0;
+                    const isOwnerInSharedSpace = owner && owner.locationType === 'shared';
+                    const isOwnerAway = owner && owner.status === 'away' && !isOwnerInSharedSpace;
 
-                      // Verificar si la oficina está accesible para otros usuarios
-                      const isOwnerInOffice = owner && owner.currentLocation === workspace.id;
-                      const isOwnerBusy = owner && owner.status === 'busy';
-                      const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !workspace.isLocked);
+                    // Verificar si la oficina está accesible para otros usuarios
+                    const isOwnerInOffice = owner && owner.currentLocation === room.id_private_room;
+                    const isOwnerBusy = owner && owner.status === 'busy';
+                    const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !room.is_locked);
 
-                      // Verificar si estoy visitando una oficina ajena
-                      const isVisitingOthersOffice = isCurrentUserHere && !isOwner;
+                    // Verificar si estoy visitando una oficina ajena
+                    const isVisitingOthersOffice = isCurrentUserHere && !isOwner;
 
                       // Determinar los colores del borde y fondo
                       let borderColor = 'border-slate-200';
@@ -545,8 +473,8 @@ export default function App() {
 
                       return (
                         <div
-                          key={workspace.id}
-                          onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
+                          key={room.id_private_room}
+                          onClick={() => !isCurrentUserHere && enterWorkSpace(room.id_private_room, 'private')}
                           className={`border-2 rounded-lg p-4 transition-all ${canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                             } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-yellow-500 hover:shadow-md'}`}
                         >
@@ -563,12 +491,12 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    lockWorkSpace(workspace.id);
+                                    lockWorkSpace(room.id_private_room);
                                   }}
-                                  className={`h-8 w-8 rounded flex items-center justify-center ${workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                                     }`}
                                 >
-                                  {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
+                                  {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                                 </button>
                               )}
                             </div>
@@ -578,14 +506,14 @@ export default function App() {
                           {usersInOffice.length > 0 ? (
                             <div className="flex justify-center mb-3 flex-wrap gap-2">
                               {usersInOffice.map(user => {
-                                const isUserInSharedSpace = user.locationType === 'shared' && user.id === workspace.ownerId;
+                                const isUserInSharedSpace = user.locationType === 'shared' && user.id_user === room.id_user;
 
                                 return (
-                                  <div key={user.id} className="flex flex-col items-center gap-1">
+                                  <div key={user.id_user} className="flex flex-col items-center gap-1">
                                     <div className="relative">
                                       <img
-                                        src={user.avatar}
-                                        alt={user.name}
+                                        src={user.imageURL}
+                                        alt={user.user_name}
                                         className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
                                           }`}
                                       />
@@ -595,7 +523,7 @@ export default function App() {
                                             'bg-yellow-500'
                                         }`} />
                                     </div>
-                                    <span className="text-xs text-slate-700 text-center">{user.name}</span>
+                                    <span className="text-xs text-slate-700 text-center">{user.user_name}</span>
                                     <span className={`text-xs ${isUserInSharedSpace ? 'text-slate-400' :
                                       user.status === 'online' ? 'text-green-600' :
                                         user.status === 'busy' ? 'text-red-600' :
@@ -616,8 +544,8 @@ export default function App() {
                                 <div className="flex flex-col items-center gap-1">
                                   <div className="relative">
                                     <img
-                                      src={owner.avatar}
-                                      alt={owner.name}
+                                      src={owner.imageURL}
+                                      alt={owner.user_name}
                                       className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
                                         }`}
                                     />
@@ -627,7 +555,7 @@ export default function App() {
                                           'bg-yellow-500'
                                       }`} />
                                   </div>
-                                  <span className="text-xs text-slate-700 text-center">{owner.name}</span>
+                                  <span className="text-xs text-slate-700 text-center">{owner.user_name}</span>
                                   <span className={`text-xs ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
                                     owner.status === 'online' ? 'text-green-600' :
                                       owner.status === 'busy' ? 'text-red-600' :
@@ -701,15 +629,15 @@ export default function App() {
 
                 <div className="p-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {sharedWorkspaces?.map(workspace => {
-                      const usersInSpace = getUsersInLocation(workspace.id);
-                      const isCurrentUserHere = currentUser.currentLocation === workspace.id;
+                    {sharedWorkspaces?.map(room => {
+                      const usersInSpace = getUsersInLocation(room.id_room, 'shared');
+                      const isCurrentUserHere = currentUser.currentLocation === room.id_room && currentUser.locationType === 'shared';
 
                       return (
                         <div
-                          key={workspace.id}
-                          onClick={() => !isCurrentUserHere && enterWorkSpace(workspace.id)}
-                          className={`rounded-lg p-4 transition-all cursor-pointer ${workspace.isLocked
+                          key={room.id_room}
+                          onClick={() => !isCurrentUserHere && enterWorkSpace(room.id_room, 'shared')}
+                          className={`rounded-lg p-4 transition-all cursor-pointer ${room.is_locked
                             ? 'border-2 border-red-600 bg-red-50'
                             : 'border border-slate-200 bg-slate-50'
                             } ${!isCurrentUserHere && 'hover:border-blue-500 hover:shadow-md'}`}
@@ -718,14 +646,14 @@ export default function App() {
                             <div className="flex items-center gap-2 text-sm text-slate-600">
                               <Users className="w-4 h-4" />
                               <span>{usersInSpace.length}</span>
-                              {workspace.maxUsers && <span className="text-slate-400">/ {workspace.maxUsers}</span>}
+                              {room.max_users && <span className="text-slate-400">/ {room.max_users}</span>}
                             </div>
 
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  deleteWorkSpace(workspace.id);
+                                  deleteWorkSpace(room.id_room);
                                 }}
                                 disabled={isCurrentUserHere}
                                 className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${isCurrentUserHere
@@ -740,12 +668,12 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    lockWorkSpace(workspace.id);
+                                    lockWorkSpace(room.id_room);
                                   }}
-                                  className={`h-8 w-8 rounded flex items-center justify-center ${workspace.isLocked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                  className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                                     }`}
                                 >
-                                  {workspace.isLocked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
+                                  {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
                                 </button>
                               )}
 
@@ -760,14 +688,14 @@ export default function App() {
                           {usersInSpace.length > 0 ? (
                             <div className="flex flex-wrap gap-3 justify-center">
                               {usersInSpace.map(user => (
-                                <div key={user.id} className="group relative">
+                                <div key={user.id_user} className="group relative">
                                   <img
-                                    src={user.avatar}
-                                    alt={user.name}
+                                    src={user.imageURL}
+                                    alt={user.user_name}
                                     className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
                                   />
                                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                    {user.name}
+                                    {user.user_name}
                                   </div>
                                 </div>
                               ))}
@@ -788,56 +716,8 @@ export default function App() {
         </main>
 
         {/* Chat Panel */}
-        <div className={`bg-white  border-l border-slate-200 flex`} style={{ position: 'relative', width: `${chatWidth}px` }}
-        >
-          <Chat tryEnter={true} />
-          {/* Resizer: borde más ancho para arrastrar */}
-          <div
-            onMouseDown={startResize}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0, // o right:0 si está al otro lado
-              width: '8px', // más ancho que el borde real
-              height: '100%',
-              cursor: 'ew-resize',
-              zIndex: 10,
-            }}
-          />
-        </div>
+        
       </div>
-
-      {/* Jitsi - siempre montado cuando está activo, solo cambia de posición */}
-      {isJitsiActive && shouldEnableVideoConference() && (
-        <JitsiMeeting
-          roomName={getMeetingRoomName()}
-          displayName={currentUser.name}
-          onMeetingEnd={handleMeetingEnd}
-          isVisible={isInMeeting}
-          visibleContainerId="jitsi-visible-container"
-          onApiReady={(api) => {
-            jitsiApiRef.current = api;
-            if (api) {
-              // Sincronizar INMEDIATAMENTE el estado inicial con un pequeño retraso
-              setTimeout(() => {
-                api.isAudioMuted()
-                  .then((muted: boolean) => setIsMicOn(!muted))
-                  .catch(() => { });
-                api.isVideoMuted()
-                  .then((muted: boolean) => setIsCameraOn(!muted))
-                  .catch(() => { });
-                api.isSharingScreen()
-                  .then((sharing: boolean) => setIsSharingScreen(sharing))
-                  .catch(() => { });
-              }, 500);
-            }
-          }}
-          onAudioMuteStatusChanged={handleAudioMuteChange}
-          onVideoMuteStatusChanged={handleVideoMuteChange}
-          onScreenSharingStatusChanged={handleScreenSharingChange}
-        />
-      )}
-      <MessageNotifications/>
     </div>
   );
 }
