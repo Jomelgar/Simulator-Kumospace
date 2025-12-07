@@ -307,7 +307,7 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                     transform: 'translateY(-62px)',
                     flex: '1 1 auto',
                     minHeight: '500px',
-                    marginBottom: '-100px',
+                    marginBottom: '-62px',
                 }}
             />
         </div>
