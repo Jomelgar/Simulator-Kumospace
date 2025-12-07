@@ -173,3 +173,23 @@ exports.updatePrivateRoom = async(request, response) => {
         response.status(500).json({ error: error.message });
     }
 }
+
+exports.getPrivateRoomOfUser = async(request, response) => {
+    try {
+        const { id_user, id_hive } = request.query;
+        
+        const private_room = await Private_Room.findOne({
+            where: {
+                id_hive: id_hive,
+                id_user: id_user
+            }
+        });
+        if (!private_room) {
+            return response.status(404).json({ message: "Private room not found." });
+        }
+
+        response.json(private_room);
+    } catch(error) {
+        response.status(500).json({ error: error.message });
+    }
+}

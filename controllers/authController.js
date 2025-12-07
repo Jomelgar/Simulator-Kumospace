@@ -77,6 +77,10 @@ exports.UserThenToken = async (req, res) => {
       attributes: [
         "id_user",
         "user_name",
+        "password",
+        "email",
+        "first_name",
+        "last_name",
         "imageURL",
         "status",
         "currentLocation",
@@ -90,10 +94,7 @@ exports.UserThenToken = async (req, res) => {
     }
 
     // 3. Respuesta exitosa (200 OK)
-    return res.status(200).json({
-      message: "Usuario encontrado y autenticado.",
-      user: user,
-    });
+    return res.status(200).json(user);
   } catch (error) {
     console.error("Error al buscar usuario:", error);
     return res.status(500).json({ message: "Error interno del servidor." });
