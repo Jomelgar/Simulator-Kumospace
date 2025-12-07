@@ -1,10 +1,16 @@
 const Hive = require("../models/hive");
 const Private_Room = require("../models/private_room");
 const Work_Room = require("../models/work_room");
+const User = require("../models/user");
 const { Op } = require("sequelize");
 const fs = require("fs");
 const path = require("path");
 const {decodeToken} = require("../middleware/decodeToken");
+const crypto = require("crypto");
+
+function generateInviteCode() {
+    return crypto.randomBytes(8).toString('base64url').substring(0, 12).toUpperCase();
+}
 
 
 exports.getHives = async( request, response ) => {
@@ -32,10 +38,12 @@ exports.getHives = async( request, response ) => {
             const count = await Private_Room.count({
             where: { id_hive: h.id_hive }
             });
+            const owner = await User.findByPk(h.id_owner);
+            const ownerName = owner ? owner.user_name : 'Unknown';
             return {
             id_hive: h.id_hive,
             hive_name: h.hive_name,
-            description: h.description || `${payload.user_name}'s Hive`,
+            description: h.description || `${ownerName}'s Hive`,
             user_role: payload.id_user === h.id_owner,
             max_count: count,
             imageURL: h.imageURL
@@ -59,7 +67,18 @@ exports.createHive = async( request, response ) => {
         {
             return response.status(500).json({error: "No token here"});
         }
-        const newHive = await Hive.create({ hive_name, id_owner: payload.id_user });
+        let inviteCode = generateInviteCode();
+        let codeExists = await Hive.findOne({ where: { invite_code: inviteCode } });
+        while (codeExists) {
+            inviteCode = generateInviteCode();
+            codeExists = await Hive.findOne({ where: { invite_code: inviteCode } });
+        }
+
+        const newHive = await Hive.create({ 
+            hive_name, 
+            id_owner: payload.id_user,
+            invite_code: inviteCode
+        });
 
         await Private_Room.create({ id_user: newHive.id_owner, id_hive: newHive.id_hive, room_name: payload.user_name });
         
@@ -189,6 +208,95 @@ exports.getPrivateRoomOfUser = async(request, response) => {
         }
 
         response.json(private_room);
+    } catch(error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
+exports.generateInviteCode = async(request, response) => {
+    try {
+        const { id_hive } = request.params;
+        const token = request.cookies?.JWT;
+        const payload = decodeToken(token);
+        
+        if (!payload) {
+            return response.status(401).json({ message: "No autorizado." });
+        }
+
+        const hive = await Hive.findByPk(id_hive);
+        if (!hive) {
+            return response.status(404).json({ message: "Hive not found." });
+        }
+
+        if (hive.id_owner !== payload.id_user) {
+            return response.status(403).json({ message: "Solo el dueño puede generar codigos de invitacion." });
+        }
+
+        let inviteCode = generateInviteCode();
+        let codeExists = await Hive.findOne({ where: { invite_code: inviteCode } });
+        while (codeExists) {
+            inviteCode = generateInviteCode();
+            codeExists = await Hive.findOne({ where: { invite_code: inviteCode } });
+        }
+
+        await hive.update({ invite_code: inviteCode });
+
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CORE_URL || 'http://localhost:3000';
+        const inviteUrl = `${frontendUrl}/join?code=${inviteCode}`;
+
+        response.json({ 
+            invite_code: inviteCode,
+            invite_url: inviteUrl
+        });
+    } catch(error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
+exports.joinByCode = async(request, response) => {
+    try {
+        const { invite_code, room_name } = request.body;
+        const token = request.cookies?.JWT;
+        const payload = decodeToken(token);
+        
+        if (!payload) {
+            return response.status(401).json({ message: "No autorizado." });
+        }
+
+        if (!invite_code) {
+            return response.status(400).json({ message: "Codigo de invitacion requerido." });
+        }
+
+        const hive = await Hive.findOne({ where: { invite_code: invite_code.toUpperCase() } });
+        if (!hive) {
+            return response.status(404).json({ message: "Codigo de invitacion invalido." });
+        }
+
+        const existingRoom = await Private_Room.findOne({
+            where: {
+                id_user: payload.id_user,
+                id_hive: hive.id_hive
+            }
+        });
+
+        if (existingRoom) {
+            return response.status(400).json({ message: "Ya eres miembro de esta Hive." });
+        }
+
+        const user = await User.findByPk(payload.id_user);
+        const newRoom = await Private_Room.create({ 
+            id_user: payload.id_user, 
+            id_hive: hive.id_hive, 
+            room_name: room_name || user.user_name 
+        });
+
+        response.json({ 
+            message: "Te has unido a la Hive exitosamente.",
+            hive: {
+                id_hive: hive.id_hive,
+                hive_name: hive.hive_name
+            }
+        });
     } catch(error) {
         response.status(500).json({ error: error.message });
     }

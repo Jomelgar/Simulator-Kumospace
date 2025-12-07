@@ -22,6 +22,11 @@ const Hive=sequelize.define("Hive", {
     description: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    invite_code: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        unique: true
     }
 }, {
     tableName: "Hive",
