@@ -409,8 +409,9 @@ export default function App() {
                 <h2 className="text-lg font-semibold text-black">Videoconferencia en curso</h2>
                 <p className="text-sm text-neutral-600">Sala: {getMeetingRoomName()}</p>
               </div>
-              <div className="flex-1 min-h-0 overflow-hidden relative">
-                <div id="jitsi-visible-container" className="absolute inset-0"></div>
+              <div className="flex-1 min-h-0 overflow-hidden pb-2 flex items-center justify-center px-8">
+                <div id="jitsi-visible-container" className="w-full max-w-4xl h-full overflow-hidden" style={{ marginTop: '-60px', height: 'calc(100% + 60px)' }}>
+                </div>
               </div>
             </div>
           ) : (
