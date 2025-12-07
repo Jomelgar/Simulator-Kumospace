@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageCircle, Building2, Briefcase, Users, Lock, LockOpen, X, Send, Trash2, Video, VideoOff, Mic, MicOff, MonitorUp, MonitorX, Hexagon, Crown } from 'lucide-react';
 import { MessageNotifications } from '../components/chat/notification';
 import axios from "axios";
-
+import Chat from "../components/chat/Chat";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { relative } from 'path';
 import { useNavigate } from 'react-router-dom';
@@ -48,6 +48,7 @@ export interface ChatMessage {
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User>({
     id_user: 1,
     user_name: 'Tú',
@@ -296,7 +297,7 @@ export default function App() {
       {/* Header */}
       <header className="bg-black border-b border-neutral-800 px-6 py-4">
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex items-center gap-2 bg-neutral-900 px-3 py-2 rounded-lg border border-neutral-800">
               <Hexagon className="w-6 h-6 text-yellow-500" />
               <span className="text-yellow-500 tracking-wider">HIVEROOMS</span>
@@ -717,8 +718,56 @@ export default function App() {
         </main>
 
         {/* Chat Panel */}
-        
-      </div>
+        <div className={`bg-white  border-l border-slate-200 flex`} style={{ position: 'relative', width: `${chatWidth}px` }}
+        >
+          <Chat tryEnter={true} />
+          {/* Resizer: borde más ancho para arrastrar */}
+          <div
+            onMouseDown={startResize}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0, // o right:0 si está al otro lado
+              width: '8px', // más ancho que el borde real
+              height: '100%',
+              cursor: 'ew-resize',
+              zIndex: 10,
+            }}
+          />
+        </div>
+
+        {/* Jitsi - siempre montado cuando está activo, solo cambia de posición */}
+        {isJitsiActive && shouldEnableVideoConference() && (
+          <JitsiMeeting
+            roomName={getMeetingRoomName()}
+            displayName={currentUser?.name}
+            onMeetingEnd={handleMeetingEnd}
+            isVisible={isInMeeting}
+            visibleContainerId="jitsi-visible-container"
+            onApiReady={(api) => {
+              jitsiApiRef.current = api;
+              if (api) {
+                // Sincronizar INMEDIATAMENTE el estado inicial con un pequeño retraso
+                setTimeout(() => {
+                  api.isAudioMuted()
+                    .then((muted: boolean) => setIsMicOn(!muted))
+                    .catch(() => { });
+                  api.isVideoMuted()
+                    .then((muted: boolean) => setIsCameraOn(!muted))
+                    .catch(() => { });
+                  api.isSharingScreen()
+                    .then((sharing: boolean) => setIsSharingScreen(sharing))
+                    .catch(() => { });
+                }, 500);
+              }
+            }}
+            onAudioMuteStatusChanged={handleAudioMuteChange}
+            onVideoMuteStatusChanged={handleVideoMuteChange}
+            onScreenSharingStatusChanged={handleScreenSharingChange}
+          />
+        )}
+        <MessageNotifications/>
+        </div>
     </div>
   );
 }
