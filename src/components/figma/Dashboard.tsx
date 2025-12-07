@@ -26,9 +26,8 @@ export function Dashboard({
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const handleJoinByURL = (url: string) => {
-    console.log("Joining hive with URL:", url);
-    // Aquí puedes implementar la lógica para unirse por URL
+  const handleJoinByURL = () => {
+    onUpdateRoom('', 0);
   };
 
   const handleCreateHive = async (name: string, size: number, url: string) => {

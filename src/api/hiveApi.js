@@ -65,3 +65,23 @@ export const updateHive = async(id_hive,image,description) => {
         return null;
     }
 }
+
+export const generateInviteCode = async(id_hive) => {
+    try{
+        const response = await api.post(`hive/generateInviteCode/${id_hive}`, {}, {withCredentials:true});
+        return response;
+    }catch(error){
+        console.error("Error al generar codigo de invitacion: ",error);
+        return null;
+    }
+}
+
+export const joinByCode = async(invite_code, room_name) => {
+    try{
+        const response = await api.post(`hive/joinByCode`, {invite_code, room_name}, {withCredentials:true});
+        return response;
+    }catch(error){
+        console.error("Error al unirse por codigo de invitacion: ",error);
+        return null;
+    }
+}

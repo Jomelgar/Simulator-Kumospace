@@ -1,23 +1,53 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { joinByCode } from '../../api/hiveApi';
 
 interface JoinByURLModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onJoin: (url: string) => void;
+  onJoin: () => void;
 }
 
 export function JoinByURLModal({ isOpen, onClose, onJoin }: JoinByURLModalProps) {
   const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const extractCode = (input: string): string | null => {
+    const trimmed = input.trim();
+    const urlMatch = trimmed.match(/[?&]code=([^&]+)/i);
+    if (urlMatch) return urlMatch[1];
+    if (/^[A-Z0-9_-]{8,}$/i.test(trimmed)) return trimmed.toUpperCase();
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (url.trim()) {
-      onJoin(url);
-      setUrl('');
-      onClose();
+    setError('');
+    const code = extractCode(url);
+    
+    if (!code) {
+      setError('Código de invitación inválido. Ingresa la URL completa o solo el código.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await joinByCode(code);
+      if (response?.status === 200) {
+        setUrl('');
+        onJoin();
+        onClose();
+        window.location.reload();
+      } else {
+        setError(response?.data?.message || 'Error al unirse a la Hive');
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Error al unirse a la Hive');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,8 +80,11 @@ export function JoinByURLModal({ isOpen, onClose, onJoin }: JoinByURLModalProps)
               autoFocus
             />
             <p className="mt-2 text-xs text-zinc-500">
-              Enter the invite link or code shared with you
+              Ingresa el enlace de invitacion o el codigo compartido contigo
             </p>
+            {error && (
+              <p className="mt-2 text-xs text-red-600">{error}</p>
+            )}
           </div>
 
           {/* Actions */}
@@ -65,10 +98,10 @@ export function JoinByURLModal({ isOpen, onClose, onJoin }: JoinByURLModalProps)
             </button>
             <button
               type="submit"
-              disabled={!url.trim()}
+              disabled={!url.trim() || loading}
               className="flex-1 px-4 py-3 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join Hive
+              {loading ? 'Uniéndose...' : 'Unirse a Hive'}
             </button>
           </div>
         </form>
