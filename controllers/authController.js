@@ -41,11 +41,11 @@ exports.decodeToken = (req, res) => {
     if (!token) {
       return res.status(400).json({ message: "Token requerido." });
     }
-
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     return res.status(200).json({
       message: "Token válido",
+      token: token,
       payload: decoded,
     });
   } catch (error) {

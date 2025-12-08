@@ -1,26 +1,20 @@
 const WebSocket = require("ws");
 const axios = require("axios");
+const {getPrivateRoomsService, getPrivateRoomOfUser, updatePrivateRoomService} = require("./services/hiveService");
+const {getWorkRoomsService,addWorkRoomService,deleteWorkRoomService,updateWorkRoomService} = require("./services/work_roomService");
 
 let users = [];
 let private_rooms = [];
 let work_rooms = [];
 let server;
 
-async function getRooms(id_hive, token) {
+async function getRooms(id_hive) {
   if (!id_hive) return;
   try {
-    const priv = await axios.get(`http://localhost:3001/api/hive/getPrivateRooms/${id_hive}`,{
-      headers: {
-        Authorization: `Bearer ${token}`
-      },withCredentials: true
-    });
-    private_rooms = priv.data;
-    const work = await axios.get(`http://localhost:3001/api/work_room/getWorkRooms/${id_hive}`,{
-      headers: {
-        Authorization: `Bearer ${token}`
-      },withCredentials: true
-    });
-    work_rooms = work.data;
+    const priv = await getPrivateRoomsService(id_hive);
+    private_rooms = priv;
+    const work = await getWorkRoomsService(id_hive);
+    work_rooms = work;
   } catch (err) {
     console.log(err.message);
   }
@@ -39,26 +33,13 @@ async function getRooms(id_hive, token) {
       switch (data.type) {
         case "setHive":
           ws.hiveID = parseInt(data.id_hive);
-          ws.currentUserID = data.id_user;
+          ws.currentUserID = data.user.id_user;
           ws.token = data.token;
-          const user = await axios.get(`http://localhost:3001/api/auth/decode-user/${data.id_user}`,{
-            headers: {
-              Authorization: `Bearer ${data.token}`
-            },withCredentials: true
-          });
-          const newUser = user.data;
+          const newUser = data.user;
           const found = users.find(u => u.id_user === newUser.id_user);
           if(!found){
-            const privateRoom = await axios.get(`http://localhost:3001/api/hive/getPrivateRoomOfUser/`, {
-              params: {
-                id_user: data.id_user,
-                id_hive: data.id_hive
-              },
-              headers: {
-                Authorization: `Bearer ${data.token}`
-              },withCredentials: true
-            });
-            const privateRoomID = privateRoom.data.id_private_room;
+            const privateRoom = await getPrivateRoomOfUser(ws.hiveID,ws.currentUserID);
+            const privateRoomID = privateRoom.id_private_room;
             users.push({...newUser, 
               currentLocation: privateRoomID, 
               locationType: "private", 
@@ -147,50 +128,25 @@ async function handleToggleLock(workspaceId, token) {
       (w) => w.id_private_room === workspaceId
     );
     if (wsToToggleLock) {
-      await axios.put(`http://localhost:3001/api/hive/updatePrivateRoom/${workspaceId}`, 
-        {
-          room_name: wsToToggleLock.room_name,
-          is_locked: !wsToToggleLock.is_locked
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },withCredentials: true
-        }
-      );
+      await updatePrivateRoomService(workspaceId,!wsToToggleLock.is_locked);
     }
     return;
   }
-  await axios.put(`http://localhost:3001/api/work_room/updateWorkRoom/${workspaceId}`, 
-    {
+  await updateWorkRoomService(workspaceId,{
       room_name: wsToToggleLock.room_name,
       max_users: wsToToggleLock.max_users,
       is_locked: !wsToToggleLock.is_locked
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },withCredentials: true
-    }
-  );
+  });
 }
 
 async function handleCreateSharedWorkspace(hiveID, newWorkspaceMaxUsers, token) {
   const maxUsers = parseInt(newWorkspaceMaxUsers);
   if (isNaN(maxUsers) || maxUsers < 1) return;
-
-  await axios.post(`http://localhost:3001/api/work_room/addWorkRoom`, 
-    {
+  await addWorkRoomService({
       id_hive: hiveID,
       room_name: "New-Room",
       max_users: newWorkspaceMaxUsers
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },withCredentials: true
-    }
-  );
+  });
 }
 
 async function handleDeleteSharedWorkspace(userId, workspaceId, token) {
@@ -212,11 +168,7 @@ async function handleDeleteSharedWorkspace(userId, workspaceId, token) {
     return user;
   });
 
-  await axios.delete(`http://localhost:3001/api/work_room/deleteWorkRoom/${workspaceId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    },withCredentials: true
-  });
+  await deleteWorkRoomService(workspaceId);
 }
 
 async function broadcast(id_hive, token) {

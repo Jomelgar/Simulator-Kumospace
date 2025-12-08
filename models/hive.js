@@ -8,7 +8,7 @@ const Hive=sequelize.define("Hive", {
         autoIncrement: true
     },
     hive_name: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.STRING,
         allowNull: false
     },
     id_owner: {
