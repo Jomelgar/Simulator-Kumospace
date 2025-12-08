@@ -12,7 +12,7 @@ interface DashboardProps {
   hiveData: Hive;
   rooms: Room[];
   users: User[];
-  onJoinRoom: (room: Room) => void;
+  onJoinRoom: (room: number) => void;
   onUpdateRoom: (roomId: string, maxUsers: number) => void;
 }
 
@@ -80,9 +80,8 @@ export function Dashboard({
                   key={room.id}
                   room={room}
                   icon={MessageSquare}
-                  onJoin={(roomId: string) => {
-                    const target = rooms.find((r) => r.id === roomId);
-                    if (target) onJoinRoom(target);
+                  onJoin={(roomId: number) => {
+                    if (roomId) onJoinRoom(roomId);
                   }}
                   onUpdateRoom={onUpdateRoom}
                 />

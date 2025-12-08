@@ -52,7 +52,7 @@ function App() {
   const [currentView, setCurrentView] = useState<
     "dashboard" | "profile" | "virtual-office" | "chat"
   >("dashboard");
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+    const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [activeNavItem, setActiveNavItem] = useState("dashboard");
   const navigate = useNavigate();
 
@@ -158,13 +158,8 @@ function App() {
   useEffect(()=>{
     fetchRooms();
   },[]);
-  const handleJoinRoom = (room: Room) => {
-    const roomWithUsers = {
-      ...room,
-      users: users.filter((u) => u.currentRoom === room.name),
-    };
-    setSelectedRoom(roomWithUsers);
-    setCurrentView("virtual-office");
+  const handleJoinRoom = (room: number) => {
+    navigate(`/office/${room}`);
   };
 
   const handleLeaveRoom = () => {

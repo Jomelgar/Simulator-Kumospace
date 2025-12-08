@@ -28,3 +28,13 @@ export const logoutRequest = async () =>
     throw error;
   }
 }
+
+export const decodeToken = async () => {
+  try {
+    const response = await api.post("auth/decode-token",{},{withCredentials: true});
+    if(response?.status === 200) return response.data
+    return null;
+  } catch (error) {
+    throw error;
+  }
+}

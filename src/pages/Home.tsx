@@ -4,6 +4,8 @@ import { MessageNotifications } from '../components/chat/notification';
 import axios from "axios";
 import Chat from "../components/chat/Chat";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
+import {decodeToken} from "../api/authApi";
+import { useParams } from "react-router-dom";
 import { relative } from 'path';
 import { useNavigate } from 'react-router-dom';
 
@@ -47,6 +49,11 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
+let baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+if (baseUrl.endsWith("/api")) {
+  baseUrl = baseUrl.slice(0, -4);
+}
 export default function App() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User>({
@@ -67,58 +74,54 @@ export default function App() {
   const [work_rooms, setWorkRooms] = useState<Work_Room[]>([]);
   const [socket, setSocket] = useState<WebSocket|null>(null);
   const [token, setToken] = useState(null);
+  const { hiveId } = useParams();
 
   useEffect(() => {
-  const init = async () => {
-    try {
-      const tokenRes = await axios.post(
-        `http://localhost:3001/api/auth/login`,
-        { user_name: "bryan123", password: "123" },
-        { withCredentials: true }
-      );
-      const authToken = tokenRes.data.token;
-      setToken(authToken);
+    const init = async () => {
+      try {
+        const response = await decodeToken();
+        if(response === null) return;
+        
+        const authToken = response.token;
+        setToken(authToken);
 
-      const userRes = await axios.get(`http://localhost:3001/api/auth/decode-user/1`, {
-        withCredentials: true,
-      });
-      const user = userRes.data;
-      setCurrentUser(user);
+        const user = response.payload.user;
+        setCurrentUser(user);
 
-      const ws = new WebSocket("ws://localhost:3002");
-      setSocket(ws);
+        const ws = new WebSocket("ws://localhost:3002");
+        setSocket(ws);
 
-      ws.onopen = () => {
-        ws.send(
-          JSON.stringify({
-            type: "setHive",
-            id_hive: 1,
-            id_user: user.id_user,
-            token: authToken,
-          })
-        );
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        if (data.type === "init" || data.type === "update") {
-          setUsers(data.users);
-          setPrivateRooms(data.private_rooms);
-          setWorkRooms(data.work_rooms);
-
-          const updatedCurrentUser = data.users.find(
-            (u: User) => u.id_user === user.id_user
+        ws.onopen = () => {
+          ws.send(
+            JSON.stringify({
+              type: "setHive",
+              id_hive: hiveId,
+              user: user,
+              token: token,
+            })
           );
-          if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
-        }
-      };
+        };
 
-      ws.onclose = () => console.log("WebSocket disconnected");
-    } catch (error) {
-      console.error(error);
-    }
-  };
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+
+          if (data.type === "init" || data.type === "update") {
+            setUsers(data.users);
+            setPrivateRooms(data.private_rooms);
+            setWorkRooms(data.work_rooms);
+
+            const updatedCurrentUser = data.users.find(
+              (u: User) => u.id_user === user.id_user
+            );
+            if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
+          }
+        };
+
+        ws.onclose = () => console.log("WebSocket disconnected");
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
   init();
 }, []);
@@ -386,8 +389,8 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-neutral-900 rounded-lg border border-neutral-800">
-              <img src={currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
-              <span className="text-sm text-white">{currentUser.user_name}</span>
+              <img src={baseUrl + currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              <span className="stext-sm text-white">{currentUser.user_name}</span>
             </div>
 
             <button
@@ -514,7 +517,7 @@ export default function App() {
                                   <div key={user.id_user} className="flex flex-col items-center gap-1">
                                     <div className="relative">
                                       <img
-                                        src={user.imageURL}
+                                        src={baseUrl + user.imageURL}
                                         alt={user.user_name}
                                         className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
                                           }`}
@@ -546,7 +549,7 @@ export default function App() {
                                 <div className="flex flex-col items-center gap-1">
                                   <div className="relative">
                                     <img
-                                      src={owner.imageURL}
+                                      src={baseUrl + owner.imageURL}
                                       alt={owner.user_name}
                                       className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
                                         }`}
@@ -692,7 +695,7 @@ export default function App() {
                               {usersInSpace.map(user => (
                                 <div key={user.id_user} className="group relative">
                                   <img
-                                    src={user.imageURL}
+                                    src={baseUrl + user.imageURL}
                                     alt={user.user_name}
                                     className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
                                   />
@@ -740,7 +743,7 @@ export default function App() {
         {isJitsiActive && shouldEnableVideoConference() && (
           <JitsiMeeting
             roomName={getMeetingRoomName()}
-            displayName={currentUser?.name}
+            displayName={currentUser?.user_name}
             onMeetingEnd={handleMeetingEnd}
             isVisible={isInMeeting}
             visibleContainerId="jitsi-visible-container"

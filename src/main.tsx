@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/login" element={<App page="login" />} />
         <Route path="/signin" element={<App page="signin" />} />
         <Route path="/inicio" element={<App page="inicio" />} />
-        <Route path="/office" element={<App page="office" />} />
+        <Route path="/office/:hiveId" element={<App page="office" />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />

@@ -26,7 +26,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
   const navigate = useNavigate();
   const isFull = (room?.usersInside || 0) >= (room?.maxUsers || 0);
   const isAdministrator = room?.userRole === "Hive Queen";
-
+  console.log(room);
   const imageIndex = ((Number(room.id) - 1) % 6) + 1;
   const fallbackImage = roomImages[imageIndex.toString()] || roomImages["1"];
 
@@ -47,7 +47,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
             <div className="flex items-center gap-2 text-white/90 text-sm mb-1">
               <Users className="w-4 h-4" />
               <span>
-                {room?.usersInside || 0} / {room?.maxUsers || 0} members
+                {room?.maxUsers || 0} members
               </span>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
                 Hive Queen
               </span>
             )}
-            {room?.userRole === "Bee" && (
+            {room?.userRole === "User" && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 rounded-md text-xs">
                 <UserCheck className="w-3 h-3" />
                 Bee
@@ -107,7 +107,7 @@ export function RoomCardDB({ room, onJoin, onUpdateRoom }: RoomCardDBProps) {
               </button>
             )}
             <button
-              onClick={() => navigate("/office")}
+              onClick={() => onJoin(room?.id)}
               disabled={isFull}
               className={`
                 ${isAdministrator ? "flex-1" : "w-full"
