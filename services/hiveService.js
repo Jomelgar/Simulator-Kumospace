@@ -26,11 +26,17 @@ exports.getPrivateRoomOfUser= async(id_hive, id_user) => {
         throw new Error("id required.");
     }
 
-    const rooms = await Private_Room.findAll({
+    const room = await Private_Room.findOne({
         where: { id_hive, id_user }
     });
 
-    return rooms;
+    if (!room) {
+        const err = new Error("Private room not found.");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    return room;
 }
 
 exports.updatePrivateRoomService = async (id_private_room, is_locked) => {
