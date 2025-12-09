@@ -182,11 +182,22 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             {/* Avatar */}
             <div className="relative">
               <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-yellow-100">
-                <img
-                  src={imagePreview || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+                {imagePreview? 
+                (
+                  <img
+                    src={imagePreview || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ):
+                (
+                  <div className={`h-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center grayscale opacity-50`}>
+                    <span className="text-4xl text-slate-600 font-medium">
+                      {name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )
+              }
               </div>
               {isEditing && (
                 <>
