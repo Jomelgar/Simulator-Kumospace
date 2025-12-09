@@ -1,16 +1,42 @@
-import { useState } from "react";
+import { useState } from "react"; 
 import { useNavigate } from "react-router-dom";
 import logoImage from "../asset/logo.png";
 import hexagonImage from "../asset/hexagon.png";
 import "./Login.css";
+import { requestResetCode } from "../api/authApi"; // <--- Cambiado
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
-  const handleSendCode = () => {
-    if (!email.trim()) return;
-    navigate("/verify-code", { state: { email } });
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSendCode = async () => {
+    if (!email.trim()) {
+      setErrorMsg("Email is required");
+      return;
+    }
+
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      // Llamada a la API para solicitar el código
+      const response = await requestResetCode(email);
+
+      if (response?.status === 200) {
+        // Ir a la pantalla de verificación con el email
+        navigate("/verify-code", { state: { email } });
+      } else {
+        setErrorMsg(response?.data?.message || "Unable to send verification code");
+      }
+    } catch (error) {
+      setErrorMsg("Error sending code. Try again later.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +55,7 @@ export default function ForgotPassword() {
       {/* RIGHT SIDE */}
       <div className="login-right-side">
         <div className="login-form-wrapper">
+
           {/* Hexagon */}
           <div className="hexagon-container">
             <img src={hexagonImage} className="hexagon-icon" alt="Hexagon" />
@@ -39,6 +66,7 @@ export default function ForgotPassword() {
 
           <div className="login-form">
             <label className="login-label">EMAIL</label>
+
             <input
               type="email"
               className="login-input"
@@ -47,8 +75,13 @@ export default function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)}
             />
 
-            <button className="login-btn" onClick={handleSendCode}>
-              Send Code
+            {/* MENSAJE DE ERROR */}
+            {errorMsg && (
+              <p style={{ color: "red", marginTop: "4px" }}>{errorMsg}</p>
+            )}
+
+            <button className="login-btn" onClick={handleSendCode} disabled={loading}>
+              {loading ? "Sending..." : "Send Code"}
             </button>
 
             <button

@@ -1,67 +1,76 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react"; 
+import { useNavigate, useLocation } from "react-router-dom";
 import logoImage from "../asset/logo.png";
 import hexagonImage from "../asset/hexagon.png";
 import "./Login.css";
+import { resetPassword } from "../api/authApi"; // función que hace POST /auth/reset-password
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const email = state?.email || ""; // viene desde VerifyCode
+  const code = state?.code || "";   // también viene desde VerifyCode
 
-  const [activeField, setActiveField] = useState<"password" | "confirm" | null>(
-    null
-  );
+  const [activeField, setActiveField] = useState(null);
   const [form, setForm] = useState({ password: "", confirm: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
+    const newErrors = {};
     if (!form.password.trim()) newErrors.password = "Password is required";
     if (!form.confirm.trim()) newErrors.confirm = "Confirm your password";
     if (form.password !== form.confirm)
       newErrors.confirm = "Passwords do not match";
-
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validateForm();
 
+    const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
     setErrors({});
+    setApiError("");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await resetPassword(email, code, form.password);
+
+      if (response?.status === 200) {
+        // Contraseña cambiada correctamente
+        navigate("/login");
+      } else {
+        setApiError(response?.data?.message || "Unable to reset password. Try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      setApiError("Server error. Please try later.");
+    } finally {
       setLoading(false);
-      navigate("/login");
-    }, 1500);
+    }
   };
 
   return (
     <div className="login-container">
       <div className="gradient-blur"></div>
 
-      {/* LEFT SIDE */}
+      {/* LEFT */}
       <div className="login-left-wrapper">
-        <img
-          src={logoImage}
-          alt="Rooms Hive Logo"
-          className="login-left-logo"
-        />
+        <img src={logoImage} alt="Rooms Hive Logo" className="login-left-logo" />
       </div>
 
-      {/* RIGHT SIDE */}
+      {/* RIGHT */}
       <div className="login-right-side">
         <div className="login-form-wrapper">
           <div className="hexagon-container">
@@ -71,17 +80,16 @@ export default function ResetPassword() {
           <h1 className="login-title">Reset Password</h1>
           <p className="login-subtitle">Create your new password</p>
 
+          {apiError && (
+            <p style={{ color: "red", marginBottom: "10px" }}>{apiError}</p>
+          )}
+
           <form className="login-form" onSubmit={handleSubmit}>
             {/* PASSWORD */}
             <div className="login-field-group">
-              <label
-                className={`login-label ${
-                  activeField === "password" ? "label-active" : ""
-                }`}
-              >
+              <label className={`login-label ${activeField === "password" ? "label-active" : ""}`}>
                 NEW PASSWORD
               </label>
-
               <input
                 name="password"
                 type="password"
@@ -90,27 +98,17 @@ export default function ResetPassword() {
                 onChange={handleChange}
                 onFocus={() => setActiveField("password")}
                 onBlur={() => setActiveField(null)}
-                className={`login-input ${
-                  activeField === "password" ? "input-active" : ""
-                }`}
+                className={`login-input ${activeField === "password" ? "input-active" : ""}`}
                 disabled={loading}
               />
-
-              {errors.password && (
-                <p className="input-error">{errors.password}</p>
-              )}
+              {errors.password && <p className="input-error">{errors.password}</p>}
             </div>
 
             {/* CONFIRM PASSWORD */}
             <div className="login-field-group">
-              <label
-                className={`login-label ${
-                  activeField === "confirm" ? "label-active" : ""
-                }`}
-              >
+              <label className={`login-label ${activeField === "confirm" ? "label-active" : ""}`}>
                 CONFIRM PASSWORD
               </label>
-
               <input
                 name="confirm"
                 type="password"
@@ -119,24 +117,17 @@ export default function ResetPassword() {
                 onChange={handleChange}
                 onFocus={() => setActiveField("confirm")}
                 onBlur={() => setActiveField(null)}
-                className={`login-input ${
-                  activeField === "confirm" ? "input-active" : ""
-                }`}
+                className={`login-input ${activeField === "confirm" ? "input-active" : ""}`}
                 disabled={loading}
               />
-
-              {errors.confirm && (
-                <p className="input-error">{errors.confirm}</p>
-              )}
+              {errors.confirm && <p className="input-error">{errors.confirm}</p>}
             </div>
 
-            {/* BUTTON */}
             <button type="submit" className="login-btn" disabled={loading}>
               {loading ? "Saving..." : "Save Password"}
             </button>
           </form>
 
-          {/* BACK TO LOGIN */}
           <div className="signup-wrapper" style={{ marginTop: "1rem" }}>
             <button
               onClick={() => navigate("/login")}
