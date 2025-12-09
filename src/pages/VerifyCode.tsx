@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import logoImage from "../asset/logo.png";
 import hexagonImage from "../asset/hexagon.png";
 import "./Login.css";
+import { verifyResetCode } from "../api/authApi";
 
 export default function VerifyCode() {
   const navigate = useNavigate();
@@ -10,10 +11,33 @@ export default function VerifyCode() {
   const email = state?.email || "";
 
   const [code, setCode] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleVerify = () => {
-    if (!code.trim()) return;
-    navigate("/reset-password", { state: { email } });
+  const handleVerify = async () => {
+    if (!code.trim()) {
+      setErrorMsg("Please enter the verification code");
+      return;
+    }
+
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      const response = await verifyResetCode(email, code);
+
+      if (response?.status === 200) {
+        // Código correcto, navegar a pantalla de reset password
+        navigate("/reset-password", { state: { email, code } });
+      } else {
+        setErrorMsg("Invalid or expired code");
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMsg("Error verifying code. Try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,16 +72,20 @@ export default function VerifyCode() {
               placeholder="6-digit code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              disabled={loading}
             />
 
-            <button className="login-btn" onClick={handleVerify}>
-              Verify Code
+            {errorMsg && <p style={{ color: "red", marginTop: "4px" }}>{errorMsg}</p>}
+
+            <button className="login-btn" onClick={handleVerify} disabled={loading}>
+              {loading ? "Verifying..." : "Verify Code"}
             </button>
 
             <button
               className="forgot-text"
               style={{ marginTop: "16px" }}
               onClick={() => navigate("/forgot-password")}
+              disabled={loading}
             >
               Back
             </button>
