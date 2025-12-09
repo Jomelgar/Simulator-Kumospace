@@ -404,18 +404,12 @@ export default function App() {
           </div>
         </div>
       </header>
-
       <div className="flex-1 flex overflow-hidden">
         <main className={`flex-1 ${isInMeeting ? 'flex flex-col' : 'overflow-auto'}`}>
           {isInMeeting ? (
             <div className="flex-1 flex flex-col h-full">
-              <div className="flex-shrink-0 px-3 py-2 bg-white border-b border-neutral-200">
-                <h2 className="text-lg font-semibold text-black">Videoconferencia en curso</h2>
-                <p className="text-sm text-neutral-600">Sala: {getMeetingRoomName()}</p>
-              </div>
-              <div className="flex-1 min-h-0 overflow-hidden pb-2 flex items-center justify-center px-8">
-                <div id="jitsi-visible-container" className="w-full max-w-4xl h-full overflow-hidden" style={{ marginTop: '-60px', height: 'calc(100% + 60px)' }}>
-                </div>
+              <div className="flex-1 min-h-0 overflow-hidden flex items-stretch justify-center bg-slate-900">
+                <div id="jitsi-visible-container" className="w-full h-full"></div>
               </div>
             </div>
           ) : (

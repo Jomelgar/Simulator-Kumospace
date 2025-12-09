@@ -110,7 +110,7 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 const rect = container.getBoundingClientRect();
                 const parentRect = container.parentElement?.getBoundingClientRect();
                 const calculatedHeight = rect.height || parentRect?.height || containerHeight || window.innerHeight - 200;
-                const finalHeight = Math.max(calculatedHeight, 700);
+                const finalHeight = Math.max(calculatedHeight, 800);
 
                 const domain = JITSI_DOMAIN;
                 const options = {
@@ -280,12 +280,11 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
 
     return (
         <div
-            className="relative w-full h-full bg-slate-900 rounded-lg border border-slate-700"
+            className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-700 "
             style={{
-                minHeight: 'calc(100vh + 150px)',
                 display: isVisible ? 'flex' : 'none',
                 flexDirection: 'column',
-                overflow: 'visible', // ← AGREGAR ESTO
+                minHeight: '500px',
             }}
         >
 
@@ -294,20 +293,23 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-20">
                     <div className="text-center">
-                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p className="text-white text-sm">Conectando...</p>
+                        <div className="relative">
+                            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="absolute inset-0 w-16 h-16 border-4 border-blue-300 border-t-transparent rounded-full animate-ping opacity-20 mx-auto"></div>
+                        </div>
+                        <p className="text-white text-base font-medium">Conectando a la reunión...</p>
+                        <p className="text-slate-400 text-sm mt-2">Por favor espera un momento</p>
                     </div>
                 </div>
             )}
 
             <div
                 ref={jitsiContainerRef}
-                className="w-full flex-1"
+                className="w-full flex-1 "
                 style={{
-                    transform: 'translateY(-62px)',
                     flex: '1 1 auto',
-                    minHeight: '500px',
-                    marginBottom: '-62px',
+                    minHeight: '600px',
+                    height: '100%',
                 }}
             />
         </div>
