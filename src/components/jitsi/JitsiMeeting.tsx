@@ -139,7 +139,6 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                             'desktop',
                             'fullscreen',
                             'fodeviceselection',
-                            'hangup',
                             'profile',
                             'chat',
                             'settings',
