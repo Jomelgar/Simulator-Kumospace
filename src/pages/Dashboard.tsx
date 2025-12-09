@@ -138,11 +138,8 @@ function App() {
     const response = await getHive();
     if(response?.status === 200)
     {
-      let baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-      if (baseUrl.endsWith("/api")) {
-        baseUrl = baseUrl.slice(0, -4);
-      }
       console.log(response.data);
       setRooms(response.data.map((d) => ({
         id: d.id_hive,

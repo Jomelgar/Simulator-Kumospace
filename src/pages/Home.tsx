@@ -49,11 +49,6 @@ export interface ChatMessage {
   recipientId?: string;
 }
 
-let baseUrl = import.meta.env.VITE_API_BASE_URL;
-
-if (baseUrl.endsWith("/api")) {
-  baseUrl = baseUrl.slice(0, -4);
-}
 export default function App() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User>({
@@ -88,7 +83,7 @@ export default function App() {
         const user = response.payload.user;
         setCurrentUser(user);
 
-        const ws = new WebSocket("ws://localhost:3002");
+        const ws = new WebSocket(import.meta.env.VITE_WS_URL || "ws://localhost:3002");
         setSocket(ws);
 
         ws.onopen = () => {
@@ -389,7 +384,7 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-neutral-900 rounded-lg border border-neutral-800">
-              <img src={baseUrl + currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              <img src={import.meta.env.VITE_API_BASE_URL + currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
               <span className="stext-sm text-white">{currentUser.user_name}</span>
             </div>
 
@@ -511,7 +506,7 @@ export default function App() {
                                   <div key={user.id_user} className="flex flex-col items-center gap-1">
                                     <div className="relative">
                                       <img
-                                        src={baseUrl + user.imageURL}
+                                        src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
                                         alt={user.user_name}
                                         className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
                                           }`}
@@ -543,7 +538,7 @@ export default function App() {
                                 <div className="flex flex-col items-center gap-1">
                                   <div className="relative">
                                     <img
-                                      src={baseUrl + owner.imageURL}
+                                      src={import.meta.env.VITE_API_BASE_URL + owner.imageURL}
                                       alt={owner.user_name}
                                       className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
                                         }`}
@@ -689,7 +684,7 @@ export default function App() {
                               {usersInSpace.map(user => (
                                 <div key={user.id_user} className="group relative">
                                   <img
-                                    src={baseUrl + user.imageURL}
+                                    src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
                                     alt={user.user_name}
                                     className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
                                   />
