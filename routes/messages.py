@@ -71,7 +71,7 @@ def rocket_dm_webhook():
     room_id = data.get("channel_id")
     message_id = data.get("message_id")
     sender_id = data.get("user_id")
-    auth_token = data['auth_token']
+    auth_token = data.get("auth_token")
 
 
     if not room_id or not message_id or not sender_id:
