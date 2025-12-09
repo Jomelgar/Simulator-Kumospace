@@ -61,7 +61,7 @@ export default function App() {
     currentLocation: 1,
     locationType: 'private',
     status: 'online',
-    imageURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current'
+    imageURL: undefined
   });
 
   const [users, setUsers] = useState<User[]>([]);
@@ -132,11 +132,12 @@ export default function App() {
     }
   }
 
-  const lockWorkSpace = (workspaceID: number) =>{
+  const lockWorkSpace = (workspaceID: number, roomType?: WorkspaceType) =>{
     if(socket){
       socket.send(JSON.stringify({
         type: "lockWorkspace",
-        workspaceId: workspaceID
+        workspaceId: workspaceID,
+        roomType: roomType
       }));
     }
   }
@@ -218,13 +219,26 @@ export default function App() {
   // Funciones para videoconferencia
   const shouldEnableVideoConference = (): boolean => {
     if(currentUser.currentLocation===null) return false;
-    const usersInCurrentWorkspace = getUsersInLocation(currentUser.currentLocation, 'shared');
-    return usersInCurrentWorkspace.length >= 2;
+    const locationType = currentUser.locationType;
+    if(locationType === 'shared' || locationType === 'private') {
+      const usersInCurrentWorkspace = getUsersInLocation(currentUser.currentLocation, locationType)
+        .filter((user, index, self) => 
+          index === self.findIndex((u) => u.id_user === user.id_user)
+        );
+      return usersInCurrentWorkspace.length >= 2;
+    }
+    return false;
   };
 
   const getMeetingRoomName = (): string => {
     if(currentUser.currentLocation===null) return "Not found";
-    return `workspace-${currentUser.currentLocation}`;
+    const locationType = currentUser.locationType;
+    if(locationType === 'shared') {
+      return `workspace-${currentUser.currentLocation}`;
+    } else if(locationType === 'private') {
+      return `private-room-${currentUser.currentLocation}`;
+    }
+    return "Not found";
   };
 
   const handleMeetingEnd = useCallback(() => {
@@ -384,7 +398,9 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-neutral-900 rounded-lg border border-neutral-800">
-              <img src={import.meta.env.VITE_API_BASE_URL + currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              {currentUser.imageURL && (
+                <img src={import.meta.env.VITE_API_BASE_URL + currentUser.imageURL} alt={currentUser.user_name} className="w-8 h-8 rounded-full" />
+              )}
               <span className="stext-sm text-white">{currentUser.user_name}</span>
             </div>
 
@@ -424,7 +440,10 @@ export default function App() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                     {privateWorkspaces.map(room => {
                     const owner = allUsers.find(u => u.id_user === room.id_user);
-                    const usersInOffice = getUsersInLocation(room.id_private_room , 'private');
+                    const usersInOffice = getUsersInLocation(room.id_private_room , 'private')
+                      .filter((user, index, self) => 
+                        index === self.findIndex((u) => u.id_user === user.id_user)
+                      );
                     const isOwner = currentUser.id_user === room.id_user;
                     const isCurrentUserHere = currentUser.currentLocation === room.id_private_room && currentUser.locationType === 'private';
                     const isOccupied = usersInOffice.length > 0;
@@ -432,9 +451,10 @@ export default function App() {
                     const isOwnerAway = owner && owner.status === 'away' && !isOwnerInSharedSpace;
 
                     // Verificar si la oficina está accesible para otros usuarios
-                    const isOwnerInOffice = owner && owner.currentLocation === room.id_private_room;
+                    const isOwnerInOffice = owner && owner.currentLocation === room.id_private_room && owner.locationType === 'private';
                     const isOwnerBusy = owner && owner.status === 'busy';
-                    const canEnter = isOwner || isCurrentUserHere || (isOwnerInOffice && !isOwnerBusy && !room.is_locked);
+                    const isOwnerInactive = owner && owner.status === 'inactive';
+                    const canEnter = isOwner || (isOwnerInOffice && !isOwnerBusy && !isOwnerInactive && !room.is_locked);
 
                     // Verificar si estoy visitando una oficina ajena
                     const isVisitingOthersOffice = isCurrentUserHere && !isOwner;
@@ -444,57 +464,36 @@ export default function App() {
                       let bgColor = 'bg-slate-50';
 
                       if (isCurrentUserHere) {
-                        // Estoy en esta oficina (sea mi oficina o visitando): amarillo fuerte + amarillo suave
                         borderColor = 'border-yellow-400';
                         bgColor = 'bg-yellow-50';
-                      } else if (isOwner && !isCurrentUserHere) {
-                        // Mi oficina pero NO estoy en ella: gris fuerte + gris suave
-                        borderColor = 'border-slate-600';
-                        bgColor = 'bg-slate-100';
-                      } else if (isOwnerBusy) {
-                        // Oficina de otro, owner ocupado: rojo fuerte + rojo suave
-                        borderColor = 'border-red-600';
-                        bgColor = 'bg-red-50';
-                      } else if (isOwnerAway) {
-                        // Oficina de otro, owner ausente: gris suave + gris más suave
-                        borderColor = 'border-slate-300';
-                        bgColor = 'bg-slate-100';
-                      } else if (isOwnerInSharedSpace) {
-                        // Oficina de otro, owner en espacio compartido: gris fuerte + gris suave
+                      } else if (isOwnerInactive || !isOwnerInOffice) {
+                        // Prioridad: owner inactivo o no está
                         borderColor = 'border-slate-400';
                         bgColor = 'bg-slate-100';
+                      } else if (room.is_locked) {
+                        borderColor = 'border-red-600';
+                        bgColor = 'bg-red-50';
                       }
 
                       return (
                         <div
                           key={room.id_private_room}
                           onClick={() => !isCurrentUserHere && enterWorkSpace(room.id_private_room, 'private')}
-                          className={`border-2 rounded-lg p-4 transition-all ${canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+                          className={`relative border-2 rounded-lg p-4 transition-all ${canEnter ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                             } ${borderColor} ${bgColor} ${!isCurrentUserHere && canEnter && 'hover:border-yellow-500 hover:shadow-md'}`}
                         >
-                          <div className="flex items-center justify-between mb-3">
-                            {isCurrentUserHere && (
-                              <div className="text-xs text-yellow-800 px-2 py-0.5 bg-yellow-100 rounded border border-yellow-400 flex items-center gap-1">
-                                <Crown className="w-2.5 h-2.5" />
-                                You're here
-                              </div>
-                            )}
-
-                            <div className={isCurrentUserHere ? '' : 'ml-auto'}>
                               {isOwner && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    lockWorkSpace(room.id_private_room);
-                                  }}
-                                  className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
-                                    }`}
-                                >
-                                  {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
-                                </button>
-                              )}
-                            </div>
-                          </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                lockWorkSpace(room.id_private_room, 'private');
+                              }}
+                              className={`absolute top-3 right-3 h-8 w-8 rounded flex items-center justify-center ${room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                                }`}
+                            >
+                              {room.is_locked ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
+                            </button>
+                          )}
 
                           {/* Mostrar usuarios en la oficina */}
                           {usersInOffice.length > 0 ? (
@@ -505,28 +504,40 @@ export default function App() {
                                 return (
                                   <div key={user.id_user} className="flex flex-col items-center gap-1">
                                     <div className="relative">
-                                      <img
-                                        src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
-                                        alt={user.user_name}
-                                        className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
-                                          }`}
-                                      />
+                                      {user.imageURL ? (
+                                        <img
+                                          src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
+                                          alt={user.user_name}
+                                          className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
+                                            }`}
+                                        />
+                                      ) : (
+                                        <div className={`w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
+                                          }`}>
+                                          <span className="text-xs text-slate-600 font-medium">
+                                            {user.user_name.charAt(0).toUpperCase()}
+                                          </span>
+                                        </div>
+                                      )}
                                       <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isUserInSharedSpace ? 'bg-slate-400' :
                                         user.status === 'online' ? 'bg-green-500' :
                                           user.status === 'busy' ? 'bg-red-500' :
-                                            'bg-yellow-500'
+                                            user.status === 'inactive' ? 'bg-gray-400' :
+                                              'bg-yellow-500'
                                         }`} />
                                     </div>
                                     <span className="text-xs text-slate-700 text-center">{user.user_name}</span>
                                     <span className={`text-xs ${isUserInSharedSpace ? 'text-slate-400' :
                                       user.status === 'online' ? 'text-green-600' :
                                         user.status === 'busy' ? 'text-red-600' :
-                                          'text-yellow-600'
+                                          user.status === 'inactive' ? 'text-gray-500' :
+                                            'text-yellow-600'
                                       }`}>
                                       {isUserInSharedSpace ? 'Activo' :
                                         user.status === 'online' ? 'Activo' :
                                           user.status === 'busy' ? 'Ocupado' :
-                                            'Ausente'}
+                                            user.status === 'inactive' ? 'Inactivo' :
+                                              'Ausente'}
                                     </span>
                                   </div>
                                 );
@@ -537,29 +548,41 @@ export default function App() {
                               <div className="flex justify-center mb-3">
                                 <div className="flex flex-col items-center gap-1">
                                   <div className="relative">
-                                    <img
-                                      src={import.meta.env.VITE_API_BASE_URL + owner.imageURL}
-                                      alt={owner.user_name}
-                                      className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
-                                        }`}
-                                    />
+                                    {owner.imageURL ? (
+                                      <img
+                                        src={import.meta.env.VITE_API_BASE_URL + owner.imageURL}
+                                        alt={owner.user_name}
+                                        className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
+                                          }`}
+                                      />
+                                    ) : (
+                                      <div className={`w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
+                                        }`}>
+                                        <span className="text-xs text-slate-600 font-medium">
+                                          {owner.user_name.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                    )}
                                     <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'bg-slate-400' :
                                       owner.status === 'online' ? 'bg-green-500' :
                                         owner.status === 'busy' ? 'bg-red-500' :
-                                          'bg-yellow-500'
+                                          owner.status === 'inactive' ? 'bg-gray-400' :
+                                            'bg-yellow-500'
                                       }`} />
                                   </div>
                                   <span className="text-xs text-slate-700 text-center">{owner.user_name}</span>
                                   <span className={`text-xs ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'text-slate-400' :
                                     owner.status === 'online' ? 'text-green-600' :
                                       owner.status === 'busy' ? 'text-red-600' :
-                                        'text-yellow-600'
+                                        owner.status === 'inactive' ? 'text-gray-500' :
+                                          'text-yellow-600'
                                     }`}>
-                                    {isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'Activo' :
-                                      owner.status === 'online' ? 'Activo' :
-                                        owner.status === 'busy' ? 'Ocupado' :
-                                          'Ausente'}
-                                  </span>
+                                      {isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'Activo' :
+                                        owner.status === 'online' ? 'Activo' :
+                                          owner.status === 'busy' ? 'Ocupado' :
+                                            owner.status === 'inactive' ? 'Inactivo' :
+                                              'Ausente'}
+                                    </span>
                                 </div>
                               </div>
                             )
@@ -662,7 +685,7 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    lockWorkSpace(room.id_room);
+                                    lockWorkSpace(room.id_room, 'shared');
                                   }}
                                   className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked ? 'bg-red-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
                                     }`}
@@ -683,11 +706,19 @@ export default function App() {
                             <div className="flex flex-wrap gap-3 justify-center">
                               {usersInSpace.map(user => (
                                 <div key={user.id_user} className="group relative">
-                                  <img
-                                    src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
-                                    alt={user.user_name}
-                                    className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
-                                  />
+                                  {user.imageURL ? (
+                                    <img
+                                      src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
+                                      alt={user.user_name}
+                                      className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center hover:border-yellow-500 transition-colors cursor-pointer">
+                                      <span className="text-sm text-slate-600 font-medium">
+                                        {user.user_name.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
                                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                                     {user.user_name}
                                   </div>
