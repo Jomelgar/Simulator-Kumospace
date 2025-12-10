@@ -5,6 +5,7 @@ import axios from "axios";
 import Chat from "../components/chat/Chat";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import {decodeToken} from "../api/authApi";
+import {verifyHiveForUser} from "../api/hiveApi";
 import { useParams } from "react-router-dom";
 import { relative } from 'path';
 import { useNavigate } from 'react-router-dom';
@@ -63,7 +64,7 @@ export default function App() {
     status: 'online',
     imageURL: undefined
   });
-
+  const [owner,setOwner] = useState<boolean>(false);
   const [users, setUsers] = useState<User[]>([]);
   const [private_rooms, setPrivateRooms] = useState<Private_Room[]>([]);
   const [work_rooms, setWorkRooms] = useState<Work_Room[]>([]);
@@ -71,8 +72,23 @@ export default function App() {
   const [token, setToken] = useState(null);
   const { hiveId } = useParams();
 
+
+
   useEffect(() => {
-    const init = async () => {
+    verifyHive();
+  }, []);
+
+  const verifyHive= async() =>{
+    const verify = await verifyHiveForUser(hiveId);
+    console.log(verify);
+    if(verify.exit) navigate("/error");
+    else {
+      setOwner(verify.isOwner);
+      init();
+    }
+  }
+
+  const init = async () => {
       try {
         const response = await decodeToken();
         if(response === null) return;
@@ -163,9 +179,6 @@ export default function App() {
         console.error(error);
       }
     };
-
-  init();
-}, []);
 
   const enterWorkSpace = (workspaceID: number, roomType: WorkspaceType) =>{
     if(socket){
@@ -660,13 +673,15 @@ export default function App() {
                       </div>
                       <h2 className="text-black">Work Rooms</h2>
                     </div>
-                    <button
-                      onClick={() => setShowCreateWorkspace(!showCreateWorkspace)}
-                      className="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 transition-colors text-sm flex items-center gap-2"
-                    >
-                      <Hexagon className="w-4 h-4" />
-                      Create Hive
-                    </button>
+                    {owner && 
+                      <button
+                        onClick={() => setShowCreateWorkspace(!showCreateWorkspace)}
+                        className="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 transition-colors text-sm flex items-center gap-2"
+                      >
+                        <Hexagon className="w-4 h-4" />
+                        Create Hive
+                      </button>
+                    }
                   </div>
 
                   {showCreateWorkspace && (

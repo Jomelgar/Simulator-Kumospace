@@ -85,3 +85,13 @@ export const joinByCode = async(invite_code, room_name) => {
         return null;
     }
 }
+
+export const verifyHiveForUser = async(id_hive) => {
+    try{
+        const response = await api.get(`hive/verifyHiveForUser/${id_hive}`,  {withCredentials:true});
+        return response.data;
+    }catch(error){
+        console.error("Error al encontrar el hive del user: ",error);
+        return {exit: true};
+    }
+}

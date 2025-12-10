@@ -184,12 +184,21 @@ export function SignInPage() {
                 name="username"
                 type="text"
                 placeholder="Choose a username"
-                onChange={handleChange}
-                onFocus={() => setActiveField("username")}
+                pattern="^[A-Za-z0-9._-]+$"
+                title="Solo letras, números, punto (.), guion (-) y guion bajo (_)"
+                value={form.username}
+                onChange={(e) => {
+                  const { name, value,type, checked } = e.target;
+                  const filteredValue = value.replace(/[^A-Za-z0-9._-]/g, '');
+                  setForm({
+                    ...form,
+                    [name]: type === 'checkbox' ? checked : filteredValue,
+                  });
+                }}
+                onFocus={() => setActiveField('username')}
                 onBlur={() => setActiveField(null)}
-                className={`signin-input ${
-                  activeField === "username" ? "input-active" : ""
-                }`}
+                className={`signin-input ${activeField === 'username' ? 'input-active' : ''}`}
+                required
               />
               {errors.username && (
                 <p className="input-error">{errors.username}</p>
