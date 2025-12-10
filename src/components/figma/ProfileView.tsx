@@ -62,6 +62,8 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             if (userData.location) setLocation(userData.location);
             if (userData.title) setTitle(userData.title);
             if (userData.about) setAbout(userData.about);
+            if (Array.isArray(userData.skills)) setSkills(userData.skills);
+            
 
             if (userData.imageURL) {
               let baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -136,11 +138,12 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
     if (!userId) return;
 
     try {
-      const userData = {
-        about: tempAbout
-      };
+      const formData = new FormData();
+      formData.append("about", tempAbout);
+      formData.append("skills", JSON.stringify(tempSkills));
 
-      await updateUser(userId, userData);
+      await updateUser(userId, formData);
+
       setAbout(tempAbout);
       setSkills([...tempSkills]);
       setIsEditingAbout(false);
@@ -207,6 +210,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                     className="hidden"
                     id="profile-image-upload"
                     onChange={handleImageChange}
+                    style={{ display: "none" }}
                   />
                   <label
                     htmlFor="profile-image-upload"
