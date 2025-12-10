@@ -62,6 +62,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             if (userData.location) setLocation(userData.location);
             if (userData.title) setTitle(userData.title);
             if (userData.about) setAbout(userData.about);
+            if (Array.isArray(userData.skills)) setSkills(userData.skills);
 
             if (userData.imageURL) {
               let baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -110,7 +111,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
         formData.append('image', imageFile);
       }
 
-      console.log ("Saving profile")
+      console.log("Saving profile")
       await updateUser(userId, formData);
       setOriginalImagePreview(imagePreview);
       setIsEditing(false);
@@ -136,11 +137,12 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
     if (!userId) return;
 
     try {
-      const userData = {
-        about: tempAbout
-      };
+      const formData = new FormData();
+      formData.append("about", tempAbout);
+      formData.append("skills", JSON.stringify(tempSkills));
 
-      await updateUser(userId, userData);
+      await updateUser(userId, formData);
+
       setAbout(tempAbout);
       setSkills([...tempSkills]);
       setIsEditingAbout(false);
@@ -148,6 +150,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
       console.error("Error saving about:", error);
     }
   };
+
 
   const handleCancelAbout = () => {
     setTempAbout(about);
@@ -182,22 +185,22 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
             {/* Avatar */}
             <div className="relative">
               <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-yellow-100">
-                {imagePreview? 
-                (
-                  <img
-                    src={imagePreview || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ):
-                (
-                  <div className={`h-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center grayscale opacity-50`}>
-                    <span className="text-4xl text-slate-600 font-medium">
-                      {name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )
-              }
+                {imagePreview ?
+                  (
+                    <img
+                      src={imagePreview || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) :
+                  (
+                    <div className={`h-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center grayscale opacity-50`}>
+                      <span className="text-4xl text-slate-600 font-medium">
+                        {name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )
+                }
               </div>
               {isEditing && (
                 <>
@@ -207,6 +210,7 @@ export function ProfileView({ hiveData }: ProfileViewProps) {
                     className="hidden"
                     id="profile-image-upload"
                     onChange={handleImageChange}
+                    style={{ display: "none" }}
                   />
                   <label
                     htmlFor="profile-image-upload"
