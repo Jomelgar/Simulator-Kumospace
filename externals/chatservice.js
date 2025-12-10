@@ -50,9 +50,9 @@ async function sendDMWebhook(payload) {
   }
 }
 
-async function change_email(userId, newEmail) {
+async function change_email(chatUserId, newEmail) {
   try {
-    const response = await api.post("/change-email", { userId, newEmail });
+    const response = await api.post("/change-email", { userId: chatUserId, newEmail });
     if (response?.status === 200) return true;
     return false;
   } catch (err) {
@@ -61,39 +61,16 @@ async function change_email(userId, newEmail) {
   }
 }
 
-
-async function request_reset(email) {
-  try {
-    const response = await api.post("/auth/request_password_reset", { email });
-    if (response?.status === 200) return true;
-    return false;
-  } catch (err) {
-    console.error("Error solicitando código de recuperación:", err);
-    return false;
+async function change_password(chatUserId,username,newPassword){
+  try{
+    const response = await api.post("/change-password",{userId: chatUserId, username, newPassword});
+    if(response?.status === 200) return {authToken: response.data?.authToken, userId: response.data?.userId};
+    return null;
+  }catch(err){
+    console.error("Error de cambio de contraseña en chat:",err)
+    return null;
   }
-}
-
-async function verify_reset_code(email, code) {
-  try {
-    const response = await api.post("/auth/verify_reset_code", { email, code });
-    if (response?.status === 200) return true;
-    return false;
-  } catch (err) {
-    console.error("Error verificando código de recuperación:", err);
-    return false;
-  }
-}
-
-async function reset_password(email, code, newPassword) {
-  try {
-    const response = await api.post("/auth/reset_password", { email, code, newPassword });
-    if (response?.status === 200) return true;
-    return false;
-  } catch (err) {
-    console.error("Error reiniciando contraseña:", err);
-    return false;
-  }
-}
+};
 
 module.exports = {
   login,
@@ -101,8 +78,6 @@ module.exports = {
   createChannel,
   sendDMWebhook,
   change_email,
-  request_reset,
-  verify_reset_code,
-  reset_password,
+  change_password,
   api
 };

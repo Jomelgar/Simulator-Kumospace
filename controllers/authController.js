@@ -211,7 +211,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado." });
 
     // Encriptar nueva contraseña
-    const hash = await bcrypt.hash(newPassword, 10);
+    const hash = await bcrypt.hash(newPassword, 12);
 
     await user.update({ password: hash });
 

@@ -18,6 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/hive", hiveRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/work_room", work_roomRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads"));
