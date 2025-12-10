@@ -110,6 +110,52 @@ export default function App() {
             setPrivateRooms(data.private_rooms);
             setWorkRooms(data.work_rooms);
 
+            setPrivateOrder((prev) => {
+              const next: Record<number, number> = { ...prev };
+              let max = Object.values(next).length ? Math.max(...Object.values(next)) : -1;
+              if (Object.keys(next).length === 0) {
+                data.private_rooms.forEach((r: Private_Room, idx: number) => {
+                  next[r.id_private_room] = idx;
+                });
+              } else {
+                data.private_rooms.forEach((r: Private_Room) => {
+                  if (next[r.id_private_room] === undefined) {
+                    max += 1;
+                    next[r.id_private_room] = max;
+                  }
+                });
+              }
+              const validIds = new Set<number>(data.private_rooms.map((r: Private_Room) => r.id_private_room));
+              Object.keys(next).forEach((k) => {
+                const id = Number(k);
+                if (!validIds.has(id)) delete next[id];
+              });
+              return next;
+            });
+
+            setSharedOrder((prev) => {
+              const next: Record<number, number> = { ...prev };
+              let max = Object.values(next).length ? Math.max(...Object.values(next)) : -1;
+              if (Object.keys(next).length === 0) {
+                data.work_rooms.forEach((r: Work_Room, idx: number) => {
+                  next[r.id_room] = idx;
+                });
+              } else {
+                data.work_rooms.forEach((r: Work_Room) => {
+                  if (next[r.id_room] === undefined) {
+                    max += 1;
+                    next[r.id_room] = max;
+                  }
+                });
+              }
+              const validIds = new Set<number>(data.work_rooms.map((r: Work_Room) => r.id_room));
+              Object.keys(next).forEach((k) => {
+                const id = Number(k);
+                if (!validIds.has(id)) delete next[id];
+              });
+              return next;
+            });
+
             const updatedCurrentUser = data.users.find(
               (u: User) => u.id_user === user.id_user
             );
@@ -172,6 +218,8 @@ export default function App() {
   const [chatTarget, setChatTarget] = useState<string>('general');
   const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState('8');
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+  const [privateOrder, setPrivateOrder] = useState<Record<number, number>>({});
+  const [sharedOrder, setSharedOrder] = useState<Record<number, number>>({});
 
   //Inccrementador de div de chat
   const [chatWidth, setChatWidth] = useState(window.innerWidth * 0.3);
@@ -306,8 +354,16 @@ export default function App() {
   }, [currentUser.currentLocation, users, isJitsiActive]);
 
   const allUsers = users;
-  const privateWorkspaces = private_rooms;
-  const sharedWorkspaces = work_rooms;
+  const privateWorkspaces = [...private_rooms].sort((a, b) => {
+    const ai = privateOrder[a.id_private_room] ?? 0;
+    const bi = privateOrder[b.id_private_room] ?? 0;
+    return ai - bi;
+  });
+  const sharedWorkspaces = [...work_rooms].sort((a, b) => {
+    const ai = sharedOrder[a.id_room] ?? 0;
+    const bi = sharedOrder[b.id_room] ?? 0;
+    return ai - bi;
+  });
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
