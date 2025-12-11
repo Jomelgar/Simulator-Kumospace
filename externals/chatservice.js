@@ -3,7 +3,7 @@ const axios = require("axios");
 // Crear instancia de Axios
 const api = axios.create({
   baseURL: process.env.CHAT_API_URL || "http://localhost:8000",
-  timeout: 10000,                    
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -50,29 +50,27 @@ async function sendDMWebhook(payload) {
   }
 }
 
-async function change_email(userId,newEmail) 
-{
-  try{
-    const response = await api.post("/change-email",{userId,newEmail});
-    if(response?.status === 200) return true;
+async function change_email(chatUserId, newEmail) {
+  try {
+    const response = await api.post("/change-email", { userId: chatUserId, newEmail });
+    if (response?.status === 200) return true;
     return false;
-  }catch(err){
-    console.error("Error de cambio de email en chat:",err)
+  } catch (err) {
+    console.error("Error de cambio de email en chat:", err)
     return false;
   }
 }
 
-async function change_password(userId,newEmail) 
-{
+async function change_password(chatUserId,username,newPassword){
   try{
-    const response = await api.post("/change-email",{userId,newEmail});
+    const response = await api.post("/change-password",{userId: chatUserId, username, newPassword});
     if(response?.status === 200) return {authToken: response.data?.authToken, userId: response.data?.userId};
     return null;
   }catch(err){
-    console.error("Error de cambio de email en chat:",err)
+    console.error("Error de cambio de contraseña en chat:",err)
     return null;
   }
-}
+};
 
 module.exports = {
   login,
@@ -80,5 +78,6 @@ module.exports = {
   createChannel,
   sendDMWebhook,
   change_email,
+  change_password,
   api
 };

@@ -2,6 +2,8 @@ const WebSocket = require("ws");
 const Redis = require("ioredis");
 const {getPrivateRoomsService, getPrivateRoomOfUser, updatePrivateRoomService} = require("./services/hiveService");
 const {getWorkRoomsService,addWorkRoomService,deleteWorkRoomService,updateWorkRoomService} = require("./services/work_roomService");
+const Private_Room = require("./models/private_room");
+const User = require("./models/user");
 
 let hive = {};
 let server;
@@ -18,6 +20,46 @@ async function getRooms(id_hive) {
     hive[id_hive].work_rooms = work;
   } catch (err) {
     console.log(err.message);
+  }
+}
+
+async function loadHiveUsers(id_hive) {
+  try {
+    const privateRooms = await Private_Room.findAll({
+      where: { id_hive }
+    });
+    
+    const userIds = privateRooms.map(pr => pr.id_user);
+    const users = await User.findAll({
+      where: { id_user: userIds },
+      attributes: ['id_user', 'user_name', 'email', 'first_name', 'last_name', 'imageURL', 'status']
+    });
+    
+    const thisHive = hive[id_hive];
+    for (const user of users) {
+      const existingUser = thisHive.users.find(u => u.id_user === user.id_user);
+      if (!existingUser) {
+        const privateRoom = privateRooms.find(pr => pr.id_user === user.id_user);
+        if (privateRoom) {
+          thisHive.users.push({
+            ...user.dataValues,
+            currentLocation: privateRoom.id_private_room,
+            locationType: "private",
+            status: "inactive"
+          });
+        }
+      } else {
+        Object.assign(existingUser, {
+          user_name: user.user_name,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          imageURL: user.imageURL
+        });
+      }
+    }
+  } catch (err) {
+    console.log("Error loading hive users:", err.message);
   }
 }
 
@@ -66,7 +108,7 @@ async function getRooms(id_hive) {
           }
           break;
         case "enterWorkspace":
-          handleEnterWorkspace(
+          await handleEnterWorkspace(
             ws.hiveID,
             parseInt(data.userId),
             parseInt(data.workspaceId),
@@ -76,7 +118,8 @@ async function getRooms(id_hive) {
         case "lockWorkspace":
           await handleToggleLock(
             ws.hiveID, 
-            parseInt(data.workspaceId));
+            parseInt(data.workspaceId),
+            data.roomType);
           break;
         case "createWorkSpace":
           await handleCreateSharedWorkspace(
@@ -107,7 +150,7 @@ async function getRooms(id_hive) {
   });
 })();
 
-function handleEnterWorkspace(hiveId, userId, workspaceId, type) {
+async function handleEnterWorkspace(hiveId, userId, workspaceId, type) {
   if(!hive[hiveId]) return;
 
   const currentUser = hive[hiveId].users.find((u) => u.id_user === userId);
@@ -119,46 +162,131 @@ function handleEnterWorkspace(hiveId, userId, workspaceId, type) {
   }
   if (!currentUser || !workspace) return;
 
-  if (
-    type === "private" &&
-    workspace.is_locked &&
-    workspace.id_user !== currentUser.id_user
-  ) {
-    return;
-  }
+  if (type === "private") {
+    if (workspace.id_user === userId) {
+      const previousLocation = currentUser.currentLocation;
+      const previousLocationType = currentUser.locationType;
+      
+      currentUser.currentLocation = workspaceId;
+      currentUser.locationType = type;
+      
+      if (previousLocationType === "private" && previousLocation !== workspaceId) {
+        const previousPrivateRoom = hive[hiveId].private_rooms.find(
+          (pr) => pr.id_private_room === previousLocation
+        );
+        if (previousPrivateRoom && previousPrivateRoom.id_user === userId) {
+          const guestsInRoom = hive[hiveId].users.filter(
+            (u) => u.currentLocation === previousLocation && 
+                   u.locationType === "private" && 
+                   u.id_user !== userId
+          );
+          
+          for (const guest of guestsInRoom) {
+            const guestPrivateRoom = await getPrivateRoomOfUser(hiveId, guest.id_user);
+            if (guestPrivateRoom) {
+              guest.currentLocation = guestPrivateRoom.id_private_room;
+              guest.locationType = "private";
+            }
+          }
+        }
+      }
+      return;
+    }
 
-  // Para oficinas privadas: verificar si el owner está presente y no ocupado
-  if (type === "private" && workspace.id_user !== userId) {
+    if (workspace.is_locked) {
+      return;
+    }
+
+    const usersInRoom = hive[hiveId].users.filter(
+      (u) => u.currentLocation === workspaceId && u.locationType === "private"
+    );
+    
+    if (usersInRoom.length >= 2) {
+      return;
+    }
+
     const owner = hive[hiveId].users.find((u) => u.id_user === workspace.id_user);
     if (!owner) return;
 
-    // No permitir entrar si el owner no está en su oficina
-    if (owner.currentLocation !== workspaceId) return;
+    if (owner.status === "inactive") return;
 
-    // No permitir entrar si el owner está ocupado
+    if (owner.currentLocation !== workspaceId || owner.locationType !== "private") return;
+
     if (owner.status === "busy") return;
+  } else if (type === "shared") {
+    if (currentUser.locationType === "private") {
+      const previousPrivateRoom = hive[hiveId].private_rooms.find(
+        (pr) => pr.id_private_room === currentUser.currentLocation
+      );
+      if (previousPrivateRoom && previousPrivateRoom.id_user === userId) {
+        const guestsInRoom = hive[hiveId].users.filter(
+          (u) => u.currentLocation === previousPrivateRoom.id_private_room && 
+                 u.locationType === "private" && 
+                 u.id_user !== userId
+        );
+        
+        for (const guest of guestsInRoom) {
+          const guestPrivateRoom = await getPrivateRoomOfUser(hiveId, guest.id_user);
+          if (guestPrivateRoom) {
+            guest.currentLocation = guestPrivateRoom.id_private_room;
+            guest.locationType = "private";
+          }
+        }
+      }
+    }
+    
+    if (workspace.is_locked) {
+      return;
+    }
   }
 
   currentUser.currentLocation = workspaceId;
   currentUser.locationType = type;
 }
 
-async function handleToggleLock(hiveId, workspaceId) {
-  let wsToToggleLock = hive[hiveId].work_rooms.find((w) => w.id_room === workspaceId);
-  if (!wsToToggleLock) {
-    wsToToggleLock = hive[hiveId].private_rooms.find(
-      (w) => w.id_private_room === workspaceId
+async function handleToggleLock(hiveId, workspaceId, roomType) {
+  if (!hive[hiveId]) return;
+  
+  if (roomType === "shared") {
+    const workRoom = hive[hiveId].work_rooms.find((w) => w.id_room === workspaceId);
+    
+    if (!workRoom) return;
+    
+    const usersInWorkspace = hive[hiveId].users.filter(
+      (u) => u.currentLocation === workspaceId && u.locationType === "shared"
     );
-    if (wsToToggleLock) {
-      await updatePrivateRoomService(workspaceId,!wsToToggleLock.is_locked);
+    
+    if (usersInWorkspace.length === 0 && !workRoom.is_locked) {
+      return;
     }
+    
+    const newLockState = !workRoom.is_locked;
+    
+    if (usersInWorkspace.length === 0 && newLockState) {
+      return;
+    }
+    
+    await updateWorkRoomService(workspaceId,{
+        room_name: workRoom.room_name,
+        max_users: workRoom.max_users,
+        is_locked: newLockState
+    });
+    workRoom.is_locked = newLockState;
     return;
   }
-  await updateWorkRoomService(workspaceId,{
-      room_name: wsToToggleLock.room_name,
-      max_users: wsToToggleLock.max_users,
-      is_locked: !wsToToggleLock.is_locked
-  });
+  
+  if (roomType === "private") {
+    const privateRoom = hive[hiveId].private_rooms.find(
+      (w) => w.id_private_room === workspaceId
+    );
+    
+    if (!privateRoom) return;
+    
+    const newLockState = !privateRoom.is_locked;
+    await updatePrivateRoomService(workspaceId, newLockState);
+    privateRoom.is_locked = newLockState;
+    return;
+  }
 }
 
 async function handleCreateSharedWorkspace(hiveID, newWorkspaceMaxUsers) {
@@ -198,8 +326,24 @@ async function broadcast(id_hive) {
   if(!hive[id_hive]) return;
 
   await getRooms(id_hive);
+  await loadHiveUsers(id_hive);
 
   const thisHive = hive[id_hive];
+
+  for (const workRoom of thisHive.work_rooms) {
+    const usersInWorkspace = thisHive.users.filter(
+      (u) => u.currentLocation === workRoom.id_room && u.locationType === "shared"
+    );
+    
+    if (usersInWorkspace.length === 0 && workRoom.is_locked) {
+      await updateWorkRoomService(workRoom.id_room, {
+        room_name: workRoom.room_name,
+        max_users: workRoom.max_users,
+        is_locked: false
+      });
+      workRoom.is_locked = false;
+    }
+  }
 
   const payload = JSON.stringify({
     type: "update",

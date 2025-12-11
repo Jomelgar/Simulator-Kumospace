@@ -14,5 +14,6 @@ router.get("/getPrivateRooms/:id_hive", Hive.getPrivateRooms);
 router.put("/updatePrivateRoom/:id_private_room", Hive.updatePrivateRoom);
 router.post("/generateInviteCode/:id_hive", Hive.generateInviteCode);
 router.post("/joinByCode", Hive.joinByCode);
+router.get("/verifyHiveForUser/:id_hive",Hive.verifyHiveForUser);
 
 module.exports = router;

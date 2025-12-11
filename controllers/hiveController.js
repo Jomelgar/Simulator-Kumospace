@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const {decodeToken} = require("../middleware/decodeToken");
 const crypto = require("crypto");
+const { exit } = require("process");
 
 function generateInviteCode() {
     return crypto.randomBytes(8).toString('base64url').substring(0, 12).toUpperCase();
@@ -301,3 +302,27 @@ exports.joinByCode = async(request, response) => {
         response.status(500).json({ error: error.message });
     }
 }
+
+exports.verifyHiveForUser = async(req,res) =>{
+    try{
+        const {id_hive} = req.params;
+        const token = req.cookies["JWT"];
+        const payload = decodeToken(token);
+
+        if(!id_hive) return res.status(500).json({ error: "No id_hive was sended",exit:true });
+
+        //1. Verify if user is in hive (also verifies if exists)
+        const private_room = await Private_Room.findOne({
+          where: { id_hive: id_hive, id_user: payload.id_user }
+        });
+        if(!private_room) return res.status(404).json({ exit: true });
+
+        //2. Verify if is owner or not
+        const hive = await Hive.findByPk(id_hive);
+
+        return res.status(200).json({exit: false, isOwner: hive.id_owner === payload.id_user});
+
+    }catch(error){
+        return res.status(500).json({ error: error.message,exit: true });
+    }
+};
