@@ -238,6 +238,14 @@ async function handleEnterWorkspace(hiveId, userId, workspaceId, type) {
     if (workspace.is_locked) {
       return;
     }
+    const guestsInRoom = hive[hiveId].users.filter(
+      (u) => u.currentLocation === workspaceId && 
+              u.locationType === "shared" && 
+              u.id_user !== userId
+    );
+    if(workspace.maxUsers === guestsInRoom.length){
+      return;
+    }
   }
 
   currentUser.currentLocation = workspaceId;
