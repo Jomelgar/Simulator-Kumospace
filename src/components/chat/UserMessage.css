@@ -1,14 +1,50 @@
+/* Animación entrada */
 @keyframes slide-in-right {
-  0% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Hexágonos borde amarillo */
+.bg-hexagon-yellow-border {
+  background-image: repeating-conic-gradient(
+    from 30deg,
+    #facc15 0deg 60deg,
+    transparent 60deg 120deg
+  );
+  background-size: 60px 60px;
+  border-radius: 2xl; /* que respete el contenedor */
+  animation: hexagon-glow 3s infinite alternate;
+}
+
+.bg-hexagon-gradient {
+  background-image: repeating-conic-gradient(
+    from 30deg,
+    #facc15 0deg 60deg,
+    #f59e0b 60deg 120deg
+  );
+  background-size: 60px 60px;
+  border-radius: 2xl;
+  animation: hexagon-glow 3s infinite alternate;
+}
+
+@keyframes hexagon-glow {
+  0% { opacity: 0.2; }
+  50% { opacity: 0.4; }
+  100% { opacity: 0.2; }
+}
+
+/* Clip hexagonal para avatar */
+.clip-hexagon {
+  clip-path: polygon(
+    25% 6.7%,
+    75% 6.7%,
+    100% 50%,
+    75% 93.3%,
+    25% 93.3%,
+    0% 50%
+  );
 }

@@ -3,7 +3,7 @@ import { BarLoader } from "react-spinners";
 import {getChatRequest} from "../../api/userApi";
 import { login } from "./axios";
 
-export default function Chat({ tryEnter, exit }) {
+export default function Chat({ tryEnter, user,exit }) {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function Chat({ tryEnter, exit }) {
 
   return (
     <iframe
-      src={`${import.meta.env.VITE_CHAT_URL || "http://localhost:3000"}/home?resumeToken=${token}`}
+      src={`${import.meta.env.VITE_CHAT_URL || "http://localhost:3000"}/${user || 'home'}?resumeToken=${token}`}
       allow="notifications"
       className="w-full h-full border-none"
     />

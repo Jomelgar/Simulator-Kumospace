@@ -1,5 +1,5 @@
 import React from "react";
-import './UserMessage.css';
+import "./UserMessage.css";
 
 interface UserMessageProps {
   id: string;
@@ -19,31 +19,40 @@ export function UserMessage({
   onClose,
 }: UserMessageProps) {
   return (
-    <div className="max-w-xs w-full bg-white shadow-lg rounded-lg p-3 flex items-start gap-3 animate-slide-in-right border border-zinc-200 relative">
-      {/* Botón de cierre */}
-      <button
-        className="absolute top-1 right-2 text-zinc-400 hover:text-zinc-600 text-sm font-bold"
-        onClick={() => onClose(id)}
-      >
-        ×
-      </button>
+    <div className="relative max-w-xs w-full animate-slide-in-right rounded-2xl shadow-2xl overflow-hidden
+                    bg-black/90 border border-amber-500/50">
 
-      {/* Avatar */}
-      <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0 flex items-center justify-center text-zinc-500 font-bold">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
-        ) : (
-          username[0].toUpperCase()
-        )}
-      </div>
+      {/* Hexágonos amarillos brillantes en los bordes */}
+      <div className="absolute inset-0 pointer-events-none bg-hexagon-yellow-border bg-hexagon-gradient"></div>
 
-      {/* Contenido del mensaje */}
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-zinc-900">{username}</span>
-          {timestamp && <span className="text-zinc-400 text-xs">{timestamp}</span>}
+      <div className="relative flex gap-3 p-3">
+        {/* Avatar hexagonal */}
+        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center
+                        bg-amber-500 font-bold border-2
+                        border-zinc-600 rounded-full text-zinc-600 font-xl">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={username} className=" w-full h-full object-cover" />
+          ) : (
+            username[0].toUpperCase()
+          )}
         </div>
-        <p className="text-zinc-700 text-sm mt-1">{message}</p>
+
+        {/* Contenido del mensaje */}
+        <div className="flex-1 flex flex-col gap-1 text-zinc-600">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">{username}</span>
+            <div className="flex items-center gap-2">
+              {timestamp && <span className=" text-xs">{timestamp}</span>}
+              <button
+                className="text-zinc-500 hover:text-zinc-200 text-sm font-bold"
+                onClick={() => onClose(id)}
+              >
+                X
+              </button>
+            </div>
+          </div>
+          <p className=" text-sm">{message}</p>
+        </div>
       </div>
     </div>
   );

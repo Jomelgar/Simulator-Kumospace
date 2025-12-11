@@ -3,7 +3,7 @@ import { UserMessage } from "./UserMessage";
 import { getChatRequest } from "../../api/userApi";
 
 interface Message {
-  id: string; // ID único para cada mensaje
+  id: string;
   username: string;
   message: string;
   timestamp?: string;
@@ -17,54 +17,95 @@ type ChatUser = {
 export function MessageNotifications() {
   const [notifications, setNotifications] = useState<Message[]>([]);
   const [chatData, setChatData] = useState<ChatUser | null>(null);
+
   const wsRef = useRef<WebSocket | null>(null);
+  const connectingRef = useRef<boolean>(false); // 🟢 Evita conexiones múltiples
   const reconnectRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchData = async () => {
-      const response = await getChatRequest();
-      if (response?.status === 200) setChatData(response.data);
+      try {
+        const response = await getChatRequest();
+        if (mounted && response?.status === 200) {
+          setChatData(response.data);
+        }
+      } catch (err) {
+        console.error("Error cargando chat info:", err);
+      }
     };
+
     fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Conectar WebSocket con reconexión automática
   useEffect(() => {
     if (!chatData) return;
 
-    const connectWS = () => {
-      const wsUrl = `${import.meta.env.VITE_WS_NOTIFICATION || "ws://localhost:3003"}?userId=${chatData.userId}&authToken=${chatData.authToken}`;
+    const connect = async () => {
+      if (connectingRef.current) return;
+      connectingRef.current = true;
+
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        connectingRef.current = false;
+        return;
+      }
+
+      const wsUrl = `${
+        import.meta.env.VITE_WS_NOTIFICATION || "ws://localhost:3003"
+      }?userId=${chatData.userId}&authToken=${chatData.authToken}`;
+
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
-      ws.onopen = () => console.log("WebSocket conectado");
+      ws.onopen = () => {
+        console.log("WS conectado ✔");
+        connectingRef.current = false;
+      };
+
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
+        // Mensaje normal
         const message: Message = {
           id: crypto.randomUUID(),
           username: data.username || "Chat",
           message: data.text || data.message || "Nuevo mensaje",
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         };
 
         setNotifications((prev) => [...prev, message]);
 
-        // Eliminar mensaje automáticamente después de 5s
         setTimeout(() => {
           setNotifications((prev) => prev.filter((msg) => msg.id !== message.id));
         }, 5000);
       };
 
-      ws.onerror = (err) => console.error("WS error:", err);
+      ws.onerror = (err) => {
+        console.warn("WS error:", err);
+      };
 
       ws.onclose = () => {
-        console.log("WS cerrado, reconectando en 2s...");
-        reconnectRef.current = setTimeout(connectWS, 2000);
+        console.warn("WS desconectado, reintentando...");
+        connectingRef.current = false;
+
+        if (!reconnectRef.current) {
+          reconnectRef.current = setTimeout(() => {
+            reconnectRef.current = null;
+            connect();
+          }, 2000);
+        }
       };
     };
 
-    connectWS();
+    connect();
 
     return () => {
       if (wsRef.current) wsRef.current.close();
@@ -72,7 +113,6 @@ export function MessageNotifications() {
     };
   }, [chatData]);
 
-  // Cerrar notificación manualmente
   const handleClose = (id: string) => {
     setNotifications((prev) => prev.filter((msg) => msg.id !== id));
   };

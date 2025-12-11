@@ -70,6 +70,7 @@ export default function App() {
   const [work_rooms, setWorkRooms] = useState<Work_Room[]>([]);
   const [socket, setSocket] = useState<WebSocket|null>(null);
   const [token, setToken] = useState(null);
+  const [userChat,setUserChat] = useState<string|null>(null);
   const { hiveId } = useParams();
 
 
@@ -579,6 +580,7 @@ export default function App() {
                                           alt={user.user_name}
                                           className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
                                             }`}
+                                          onClick={() => setUserChat(user.user_name)}
                                         />
                                       ) : (
                                         <div className={`w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center ${isUserInSharedSpace ? 'grayscale opacity-50' : ''
@@ -623,6 +625,7 @@ export default function App() {
                                         alt={owner.user_name}
                                         className={`w-10 h-10 rounded-full border-2 border-slate-200 ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
                                           }`}
+                                        onClick={() => setUserChat(owner.user_name)}
                                       />
                                     ) : (
                                       <div className={`w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center ${isOwnerInSharedSpace || (isOwner && !isCurrentUserHere) ? 'grayscale opacity-50' : ''
@@ -738,19 +741,21 @@ export default function App() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteWorkSpace(room.id_room);
-                                }}
-                                disabled={isCurrentUserHere}
-                                className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${isCurrentUserHere
-                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
-                                  }`}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
+                              {owner && 
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteWorkSpace(room.id_room);
+                                  }}
+                                  disabled={isCurrentUserHere}
+                                  className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${isCurrentUserHere
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
+                                    }`}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              }
 
                               {isCurrentUserHere && (
                                 <button
@@ -782,6 +787,7 @@ export default function App() {
                                       src={import.meta.env.VITE_API_BASE_URL + user.imageURL}
                                       alt={user.user_name}
                                       className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
+                                      onClick={() => setUserChat(user.user_name)}
                                     />
                                   ) : (
                                     <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center hover:border-yellow-500 transition-colors cursor-pointer">
@@ -814,7 +820,7 @@ export default function App() {
         {/* Chat Panel */}
         <div className={`bg-white  border-l border-slate-200 flex`} style={{ position: 'relative', width: `${chatWidth}px` }}
         >
-          <Chat tryEnter={true} />
+          <Chat tryEnter={true} user={userChat}/>
           {/* Resizer: borde más ancho para arrastrar */}
           <div
             onMouseDown={startResize}
