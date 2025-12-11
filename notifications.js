@@ -13,26 +13,42 @@ console.log("WebSocket server en port 3003");
 
 const users = new Map();
 
-wss.on('connection', (ws, req) => {
-  const params = new URLSearchParams(req.url.replace('/?', ''));
-  const rocketUserId = params.get('userId'); 
-  const rocketAuthToken = params.get('authToken');
+(async () => {
+  wss.on('connection', (ws, req) => {
+    const params = new URLSearchParams(req.url.replace('/?', ''));
+    const rocketUserId = params.get('userId'); 
+    const rocketAuthToken = params.get('authToken');
 
-  if (rocketUserId) {
-    users.set(rocketUserId, {ws, userId: rocketUserId, authToken: rocketAuthToken,});
+    if (rocketUserId) {
+      users.set(rocketUserId, {ws, userId: rocketUserId, authToken: rocketAuthToken});
+    }
 
-    // 🔹 Enviar mensaje de conexión exitosa
-    ws.send(JSON.stringify({
+    console.log(`Usuario conectado: ${rocketUserId}`);
+
+    ws.send(JSON.stringify({ 
       type: "connection",
-      message: "Conexión establecida con chat correctamente",
-      userId: rocketUserId
+      message: "Conexión establecida con chat correctamente", 
+      userId: rocketUserId 
     }));
-  }
-  ws.on('close', () => {
-    users.delete(rocketUserId);
-    console.log(`Usuario desconectado: ${rocketUserId}`);
+
+    ws.on("message", (msg) => {
+      try {
+        const data = JSON.parse(msg.toString());
+        if (data === "ping") {
+          ws.send(JSON.stringify("pong"));
+          return;
+        }
+      } catch (err) {
+        console.error("Error procesando mensaje:", err.message);
+      }
+    });
+    
+    ws.on('close', () => {
+      users.delete(rocketUserId);
+      console.log(`Usuario desconectado: ${rocketUserId}`);
+    });
   });
-});
+})();
 
 app.post('/rocketchat-webhook', async (req, res) => {
   try {
