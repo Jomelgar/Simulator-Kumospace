@@ -1,10 +1,14 @@
 const WebSocket = require("ws");
-const axios = require("axios");
+const Redis = require("ioredis");
 const {getPrivateRoomsService, getPrivateRoomOfUser, updatePrivateRoomService} = require("./services/hiveService");
 const {getWorkRoomsService,addWorkRoomService,deleteWorkRoomService,updateWorkRoomService} = require("./services/work_roomService");
 
 let hive = {};
 let server;
+const redis = new Redis({
+  host: process.env.REDIS_HOST || "127.0.0.1",
+  port: process.env.REDIS_PORT || 6379,
+});
 
 async function getRooms(id_hive) {
   try {
@@ -20,6 +24,13 @@ async function getRooms(id_hive) {
 (async () => {
   server = new WebSocket.Server({ port: 3002 });
   console.log("WebSocket server en port 3002");
+  
+  redis.on("connect", () => {
+    console.log("Connected to Redis");
+  });
+  redis.on("error", (err) => {
+    console.error("Redis error:", err);
+  });
 
   server.on("connection", (ws) => {
     ws.hiveID = null;
@@ -32,11 +43,13 @@ async function getRooms(id_hive) {
           ws.hiveID = parseInt(data.id_hive);
           ws.currentUserID = data.user.id_user;
           if(!hive[data.id_hive]){
+            const usersRedis = await redis.get(data.id_hive);
             hive[data.id_hive] = {
-              users: [],
+              users: usersRedis ? JSON.parse(usersRedis) : [],
               private_rooms: [],
               work_rooms: []
             }
+            await redis.set(data.id_hive, JSON.stringify(hive[data.id_hive].users));
           }
           const newUser = data.user;
           const thisHive = hive[data.id_hive]
@@ -47,7 +60,9 @@ async function getRooms(id_hive) {
             thisHive.users.push({...newUser, 
               currentLocation: privateRoomID, 
               locationType: "private", 
-              status: "online"});
+              status: "online"
+            });
+            await redis.set(data.id_hive, JSON.stringify(thisHive.users));
           }
           break;
         case "enterWorkspace":
@@ -81,10 +96,11 @@ async function getRooms(id_hive) {
       broadcast(ws.hiveID);
     });
 
-    ws.on("close", () => {
+    ws.on("close", async() => {
       console.log("Cliente desconectado");
       if(ws.currentUserID){
         hive[ws.hiveID].users = hive[ws.hiveID].users.filter(u => u.id_user !== ws.currentUserID);
+        await redis.set(ws.hiveID, JSON.stringify(hive[ws.hiveID].users));
         broadcast(ws.hiveID);
       }
     });
