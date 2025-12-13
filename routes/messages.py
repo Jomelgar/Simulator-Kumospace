@@ -68,19 +68,16 @@ def rocket_dm_webhook():
 
     print("Webhook recibido:", data)
 
-    room_id = data.get("channel_id")
-    message_id = data.get("message_id")
-    sender_id = data.get("user_id")
-    auth_token = data.get("auth_token")
-
+    room_id = data["channel_id"]
+    message_id = data["message_id"]
+    sender_id = data["user_id"]
+    auth_token = data["auth_token"]
 
     if not room_id or not message_id or not sender_id:
         return jsonify({"error": "Missing required fields"}), 400
 
     rocket_client = getRocketUser(sender_id,auth_token)
-    # -----------------------------
-    # 2) Obtener los miembros del IM
-    # -----------------------------
+
     members_res = rocket_client.call_api_get(
         "im.members",
         roomId=room_id
@@ -94,9 +91,6 @@ def rocket_dm_webhook():
     if len(members) != 2:
         return jsonify({"error": "This is not a DM"}), 402
 
-    # -----------------------------
-    # 3) El receptor es el que no envía
-    # -----------------------------
     receiver = next((u for u in members if u["_id"] != sender_id), None)
 
     if not receiver:
@@ -104,9 +98,6 @@ def rocket_dm_webhook():
 
     receiver_id = receiver["_id"]
 
-    # -----------------------------
-    # 4) Obtener mensaje completo
-    # -----------------------------
     msg_res = rocket_client.call_api_get(
         "chat.getMessage",
         msgId=message_id
@@ -115,25 +106,32 @@ def rocket_dm_webhook():
     if not msg_res.get("success"):
         return jsonify({"error": "Failed to get message", "detail": msg_res}), 404
 
-    full_msg = msg_res.get("message")
-
-    # -----------------------------
-    # 5) Preparar payload para WS
-    # -----------------------------
-    payload = {
-        "type": "dm_message",
-        "sender": sender_id,
-        "receiver": receiver_id,
-        "room_id": room_id,
-        "message": full_msg
-    }
-
-    # -----------------------------
-    # 6) Enviar por WebSocket
-    # -----------------------------
-    # ❗ Aquí llamas tu WS real
-    # ws_send(receiver_id, payload)
-    print("Enviar por WS a:", receiver_id)
-    print(payload)
-
     return jsonify({"success": True, "sentTo": receiver_id})
+
+@messages_bp.route('/getUserRID', methods=['POST'])
+def get_user_rid():
+    data = request.get_json()
+
+    user_id = data['user_id']
+    auth_token = data['auth_token']
+    for_user = data['for_user']
+
+    if not user_id or not auth_token or not for_user:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    rocket_user = getRocketUser(user_id, auth_token)
+    if not rocket_user:
+        return jsonify({"error": "Invalid user_id or auth_token"}), 401
+    
+    im_res = rocket_user.im_create(for_user).json()
+
+    if not im_res.get("success"):
+        return jsonify({"error": "Failed to create/get DM", "detail": im_res}), 400
+
+    rid = im_res["room"]["_id"]
+
+    return jsonify({
+        "success": True,
+        "rid": rid,
+        "username": for_user
+    })
