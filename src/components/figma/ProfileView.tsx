@@ -11,10 +11,10 @@ interface ProfileViewProps {
 export function ProfileView({ hiveData }: ProfileViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
-  const [name, setName] = useState('Sarah Chen');
-  const [title, setTitle] = useState('Product Designer • Team Lead');
-  const [email, setEmail] = useState('sarah.chen@roomshive.com');
-  const [phone, setPhone] = useState('+1 (555) 123-4567');
+  const [name, setName] = useState('Name');
+  const [title, setTitle] = useState('Title');
+  const [email, setEmail] = useState('email@roomshive.com');
+  const [phone, setPhone] = useState('0000-0000');
   const [location, setLocation] = useState('San Francisco, CA');
   const [about, setAbout] = useState('Product designer with 8+ years of experience creating intuitive user experiences. Passionate about collaboration and building products that make a difference.');
   const [tempAbout, setTempAbout] = useState('');

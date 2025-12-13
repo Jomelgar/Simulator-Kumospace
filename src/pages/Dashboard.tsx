@@ -4,6 +4,7 @@ import { Dashboard } from "../components/figma/Dashboard";
 import { VirtualOfficeDB } from "../components/figma/VirtualOfficeDB";
 import { getHive} from "../api/hiveApi";
 import Chat from "../components/chat/Chat";
+import NotificationDashboard from "../components/figma/NotificationDashboard";
 import {logoutRequest} from "../api/authApi";
 import { MessageNotifications } from '../components/chat/notification';
 import { useNavigate } from "react-router-dom";
@@ -50,7 +51,7 @@ export interface Hive {
 
 function App() {
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "profile" | "virtual-office" | "chat"
+    "dashboard" | "profile" | "virtual-office" | "chat" | "notification"
   >("dashboard");
     const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [activeNavItem, setActiveNavItem] = useState("dashboard");
@@ -175,6 +176,8 @@ function App() {
       navigate("/login");
     } else if (item === "chat") {
       setCurrentView("chat");
+    }else if(item === "notification"){
+      setCurrentView("notification");
     }
   };
 
@@ -205,6 +208,7 @@ function App() {
           />
         )}
         {currentView === "chat" && <Chat tryEnter={true} />}
+        {currentView === "notification" && <NotificationDashboard/>}
       </div>
       <MessageNotifications/>
     </div>
