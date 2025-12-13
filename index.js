@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const hiveRoutes = require("./routes/hiveRoutes");
 const authRoutes = require("./routes/authRoutes");
 const work_roomRoutes = require("./routes/work_roomRoutes");
+const notificationRoute = require("./routes/notificationRoutes");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -21,6 +22,7 @@ app.use("/api/hive", hiveRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/work_room", work_roomRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/notification",notificationRoute);
 app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {

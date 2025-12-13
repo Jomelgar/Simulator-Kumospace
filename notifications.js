@@ -2,6 +2,7 @@ const WebSocket = require("ws");
 const express = require('express');
 const morgan = require("morgan");
 const { sendDMWebhook } = require("./externals/chatservice");
+const notificationService = require("./services/notificationService");
 
 const app = express();
 app.use(express.json());
@@ -79,7 +80,7 @@ app.post('/rocketchat-webhook', async (req, res) => {
       console.log(`Usuario ${dmData.sentTo} no conectado`);
     }
 
-
+    await notificationService.createNotification(dmData.sentTo,req.body?.user_name,req.body?.text);
     res.sendStatus(200);
 
   } catch (err) {
