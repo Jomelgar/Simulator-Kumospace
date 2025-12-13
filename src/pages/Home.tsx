@@ -21,6 +21,7 @@ import {
 import { MessageNotifications } from "../components/chat/notification";
 import axios from "axios";
 import Chat from "../components/chat/Chat";
+import {getRID} from "../components/chat/axios";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { decodeToken } from "../api/authApi";
 import { verifyHiveForUser } from "../api/hiveApi";
@@ -89,6 +90,12 @@ export default function App() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [token, setToken] = useState(null);
   const [userChat, setUserChat] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState("8");
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+  const [privateOrder, setPrivateOrder] = useState<Record<number, number>>({});
+  const [sharedOrder, setSharedOrder] = useState<Record<number, number>>({});
+  const [chatWidth, setChatWidth] = useState(window.innerWidth * 0.3);
   const { hiveId } = useParams();
 
   useEffect(() => {
@@ -207,6 +214,13 @@ export default function App() {
     }
   };
 
+
+  const handleTouchUser = async(username:string) => {
+    const response = await decodeToken();
+    if (response === null) return;
+    const dataRID = await getRID(response?.payload?.user.chatUserId,response?.payload?.user.chatAuthToken,username);
+    setUserChat(dataRID.rid);
+  }
   const enterWorkSpace = (workspaceID: number, roomType: WorkspaceType) => {
     if (socket) {
       socket.send(
@@ -255,17 +269,6 @@ export default function App() {
     }
   };
 
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [chatTarget, setChatTarget] = useState<string>("general");
-  const [newWorkspaceMaxUsers, setNewWorkspaceMaxUsers] = useState("8");
-  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
-  const [privateOrder, setPrivateOrder] = useState<Record<number, number>>({});
-  const [sharedOrder, setSharedOrder] = useState<Record<number, number>>({});
-
-  //Inccrementador de div de chat
-  const [chatWidth, setChatWidth] = useState(window.innerWidth * 0.3);
   const panelRef = useRef(null);
   const isChatResizing = useRef(false);
 
@@ -388,7 +391,7 @@ export default function App() {
     // timeout inicial más largo para dejar estabilizar Jitsi
     const initialTimeout = setTimeout(syncState, 800);
     const interval = setInterval(syncState, 1000);
-
+    
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
@@ -514,11 +517,13 @@ export default function App() {
               <button
                 onClick={() => {
                   if (shouldEnableVideoConference()) {
+                    if(!isChatOpen) setIsChatOpen(!isChatOpen);
+                    setChatWidth(0);
                     if (!isJitsiActive) {
                       setIsJitsiActive(true);
                     }
                     setIsInMeeting(!isInMeeting);
-                  }
+                  }else{setChatWidth(isChatOpen? window.innerWidth * 0.3 : 0);}
                 }}
                 disabled={!shouldEnableVideoConference()}
                 className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
@@ -554,9 +559,10 @@ export default function App() {
             </div>
 
             <button
+              disabled={isInMeeting}
               onClick={() => {
                 setIsChatOpen(!isChatOpen);
-                isChatOpen === true
+                isChatOpen
                   ? setChatWidth(window.innerWidth * 0.3)
                   : setChatWidth(0);
               }}
@@ -676,7 +682,7 @@ export default function App() {
                         >
                           {/* ---------- HEADER (nombre + estado + candado) ---------- */}
                           <div className="flex items-start justify-between mb-3">
-                            <div className="space-y-1">
+                            <div className="space-y-1 overflow-y-auto">
                               {usersInOffice.length > 0
                                 ? usersInOffice.map((user) => (
                                     <div
@@ -777,11 +783,14 @@ export default function App() {
                                         user.imageURL
                                       }
                                       alt={user.user_name}
-                                      className="w-10 h-10 rounded-full border-2 border-slate-200"
+                                      className="w-10 h-10 cursor-pointer rounded-full border-2 border-slate-200"
+                                      onClick={() => handleTouchUser(user.user_name)}
                                     />
                                   ) : (
-                                    <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
-                                      <span className="text-xs text-slate-600 font-medium">
+                                    <div className="w-10 cursor-pointer h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center"
+                                      onClick={() => handleTouchUser(user.user_name)}
+                                    >
+                                      <span className="text-xs text-slate-600 font-medium" >
                                         {user.user_name.charAt(0).toUpperCase()}
                                       </span>
                                     </div>
@@ -1022,12 +1031,12 @@ export default function App() {
                                       }
                                       alt={user.user_name}
                                       className="w-12 h-12 rounded-full border-2 border-slate-200 hover:border-yellow-500 transition-colors cursor-pointer"
-                                      onClick={() =>
-                                        setUserChat(user.user_name)
-                                      }
+                                      onClick={() => handleTouchUser(user.user_name)}
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center hover:border-yellow-500 transition-colors cursor-pointer">
+                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center hover:border-yellow-500 transition-colors cursor-pointer"
+                                      onClick={() => handleTouchUser(user.user_name)}
+                                    >
                                       <span className="text-sm text-slate-600 font-medium">
                                         {user.user_name.charAt(0).toUpperCase()}
                                       </span>
