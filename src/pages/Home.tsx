@@ -142,6 +142,10 @@ export default function App() {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
+        if(data.type === "pong"){
+          return;
+        }
+
         if (data.type === "init" || data.type === "update") {
           setUsers(data.users);
           setPrivateRooms(data.private_rooms);
@@ -213,6 +217,18 @@ export default function App() {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if(socket){
+      const interval = setInterval(() => {
+        if(socket.readyState === WebSocket.OPEN){
+          socket.send(JSON.stringify({type: "ping"}));
+        }
+      }, 20000)
+
+      return () => clearInterval(interval);
+    }
+  }, [socket]);
 
 
   const handleTouchUser = async(username:string) => {
