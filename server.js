@@ -111,6 +111,11 @@ async function loadHiveUsers(id_hive) {
     ws.on("message", async (message) => {
       const data = JSON.parse(message.toString());
       switch (data.type) {
+        case "ping":
+          if(ws.readyState === WebSocket.OPEN){
+            ws.send(JSON.stringify({type: "pong"}));
+          }
+          return;
         case "setHive":
           ws.hiveID = parseInt(data.id_hive);
           ws.currentUserID = data.user.id_user;
