@@ -596,7 +596,6 @@ export default function App() {
           ) : (
             <div className="max-w-[1800px] mx-auto p-8 space-y-6">
               {/* Oficinas Privadas */}
-              {/* Oficinas Privadas */}
               <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
                 <div className="px-6 py-4 border-b border-neutral-200">
                   <div className="flex items-center gap-3">
@@ -681,7 +680,7 @@ export default function App() {
                           }`}
                         >
                           {/* ---------- HEADER (nombre + estado + candado) ---------- */}
-                          <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start justify-between ">
                             <div className="space-y-1 overflow-y-auto">
                               {usersInOffice.length > 0
                                 ? usersInOffice.map((user) => (
@@ -768,101 +767,87 @@ export default function App() {
                           </div>
 
                           {/* ---------- ICONOS ---------- */}
-                          {usersInOffice.length > 0 ? (
-                            // Usuarios dentro de la oficina
-                            <div className="flex justify-center flex-wrap gap-2">
-                              {usersInOffice.map((user) => (
-                                <div
-                                  key={user.id_user}
-                                  className="group relative"
-                                >
-                                  {user.imageURL ? (
-                                    <img
-                                      src={
-                                        import.meta.env.VITE_API_BASE_URL +
-                                        user.imageURL
-                                      }
-                                      alt={user.user_name}
-                                      className="w-10 h-10 cursor-pointer rounded-full border-2 border-slate-200"
-                                      onClick={() => handleTouchUser(user.user_name)}
-                                    />
-                                  ) : (
-                                    <div className="w-10 cursor-pointer h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center"
-                                      onClick={() => handleTouchUser(user.user_name)}
-                                    >
-                                      <span className="text-xs text-slate-600 font-medium" >
-                                        {user.user_name.charAt(0).toUpperCase()}
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  {/* estado */}
+                          <div className="w-12 h-12 flex items-center justify-center mx-auto">
+                            {usersInOffice.length > 0
+                              ? usersInOffice.map((user) => (
                                   <div
-                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                      user.status === "online"
-                                        ? "bg-green-500"
-                                        : user.status === "busy"
-                                        ? "bg-red-500"
-                                        : user.status === "inactive"
-                                        ? "bg-gray-400"
-                                        : "bg-yellow-500"
-                                    }`}
-                                  />
-
-                                  {/* tooltip */}
-                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                    {user.user_name}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            // Mostrar icono del owner SOLO si está en su oficina
-                            owner &&
-                            owner.currentLocation === room.id_private_room &&
-                            owner.locationType === "private" && (
-                              <div className="flex justify-center">
-                                <div className="group relative">
-                                  {owner.imageURL ? (
-                                    <img
-                                      src={
-                                        import.meta.env.VITE_API_BASE_URL +
-                                        owner.imageURL
-                                      }
-                                      alt={owner.user_name}
-                                      className="w-12 h-12 rounded-full border-2 border-slate-200"
+                                    key={user.id_user}
+                                    className="group relative"
+                                  >
+                                    {user.imageURL ? (
+                                      <img
+                                        src={
+                                          import.meta.env.VITE_API_BASE_URL +
+                                          user.imageURL
+                                        }
+                                        alt={user.user_name}
+                                        className="w-10 h-10 rounded-full border-2 border-slate-200"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
+                                        <span className="text-xs text-slate-600 font-medium">
+                                          {user.user_name
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div
+                                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                                        user.status === "online"
+                                          ? "bg-green-500"
+                                          : user.status === "busy"
+                                          ? "bg-red-500"
+                                          : user.status === "inactive"
+                                          ? "bg-gray-400"
+                                          : "bg-yellow-500"
+                                      }`}
                                     />
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
-                                      <span className="text-sm text-slate-600 font-medium">
-                                        {owner.user_name
-                                          .charAt(0)
-                                          .toUpperCase()}
-                                      </span>
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                      {user.user_name}
                                     </div>
-                                  )}
-
-                                  {/* estado */}
-                                  <div
-                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                      owner.status === "online"
-                                        ? "bg-green-500"
-                                        : owner.status === "busy"
-                                        ? "bg-red-500"
-                                        : owner.status === "inactive"
-                                        ? "bg-gray-400"
-                                        : "bg-yellow-500"
-                                    }`}
-                                  />
-
-                                  {/* tooltip */}
-                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                    {owner.user_name}
                                   </div>
-                                </div>
-                              </div>
-                            )
-                          )}
+                                ))
+                              : owner &&
+                                owner.currentLocation ===
+                                  room.id_private_room &&
+                                owner.locationType === "private" && (
+                                  <div className="group relative">
+                                    {owner.imageURL ? (
+                                      <img
+                                        src={
+                                          import.meta.env.VITE_API_BASE_URL +
+                                          owner.imageURL
+                                        }
+                                        alt={owner.user_name}
+                                        className="w-12 h-12 rounded-full border-2 border-slate-200"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
+                                        <span className="text-sm text-slate-600 font-medium">
+                                          {owner.user_name
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div
+                                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                                        owner.status === "online"
+                                          ? "bg-green-500"
+                                          : owner.status === "busy"
+                                          ? "bg-red-500"
+                                          : owner.status === "inactive"
+                                          ? "bg-gray-400"
+                                          : "bg-yellow-500"
+                                      }`}
+                                    />
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                      {owner.user_name}
+                                    </div>
+                                  </div>
+                                )}
+                          </div>
                         </div>
                       );
                     })}
