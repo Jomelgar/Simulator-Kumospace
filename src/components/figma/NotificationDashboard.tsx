@@ -4,6 +4,7 @@ import {
   readNotification,
 } from "../../api/notificationApi";
 import { Bell, Clock, CheckCircle2, Circle, Sparkles } from "lucide-react";
+import "./Notification.css";
 
 interface Notification {
   id_notification: string;
@@ -16,6 +17,7 @@ interface Notification {
 export default function NotificationDashboard() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selected, setSelected] = useState<Notification | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
     try {
@@ -53,7 +55,6 @@ export default function NotificationDashboard() {
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
-  const readCount = notifications.filter((n) => n.is_read).length;
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -70,227 +71,739 @@ export default function NotificationDashboard() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const getNotificationBg = (n: Notification) => {
+    if (selected?.id_notification === n.id_notification) return "#FFFBEB";
+    if (hoveredId === n.id_notification)
+      return n.is_read ? "#FAFAFA" : "#FFFBEB";
+    return n.is_read ? "#FFFFFF" : "#FFFEF5";
+  };
+
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-amber-50/50 via-orange-50/30 to-yellow-50/40 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: "#FAFAFA",
+        padding: "2rem",
+        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
         {/* Header with Stats */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div style={{ marginBottom: "2rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "1.5rem",
+            }}
+          >
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Bell className="w-6 h-6 text-black" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <div
+                  style={{
+                    position: "relative",
+                    width: "3rem",
+                    height: "3rem",
+                    backgroundColor: "#F4C430",
+                    borderRadius: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 10px 15px -3px rgba(234, 179, 8, 0.3)",
+                  }}
+                >
+                  <Bell
+                    style={{
+                      width: "1.5rem",
+                      height: "1.5rem",
+                      color: "white",
+                    }}
+                  />
                 </div>
                 <div>
-                  <h1 className="text-neutral-900 mb-0.5">
+                  <h1
+                    style={{
+                      fontSize: "1.875rem",
+                      fontWeight: "700",
+                      color: "#171717",
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
                     Notifications Center
                   </h1>
-                  <p className="text-neutral-600">
+                  <p
+                    style={{
+                      fontSize: "0.875rem",
+                      fontWeight: "400",
+                      color: "#737373",
+                      margin: 0,
+                    }}
+                  >
                     Stay updated with your latest alerts
                   </p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-center px-6 py-3 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl shadow-lg shadow-amber-500/30">
-                <div className="text-2xl text-black">{unreadCount}</div>
-                <div className="text-xs text-amber-50 mt-0.5">Unread</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "0.75rem 1.5rem",
+                  backgroundColor: "#F4C430",
+                  borderRadius: "0.75rem",
+                  boxShadow: "0 10px 15px -3px rgba(234, 179, 8, 0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: "700",
+                    color: "white",
+                  }}
+                >
+                  {unreadCount}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: "500",
+                    color: "rgba(255, 255, 255, 0.9)",
+                    marginTop: "0.125rem",
+                  }}
+                >
+                  Unread
+                </div>
               </div>
-              <div className="text-center px-6 py-3 bg-gradient-to-br from-neutral-800 to-neutral-900 rounded-xl shadow-lg">
-                <div className="text-2xl text-black">
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "0.75rem 1.5rem",
+                  background:
+                    "linear-gradient(to bottom right, #262626, #171717)",
+                  borderRadius: "0.75rem",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: "700",
+                    color: "#F4C430",
+                  }}
+                >
                   {notifications.length}
                 </div>
-                <div className="text-xs text-neutral-300 mt-0.5">Total</div>
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: "500",
+                    color: "#D4D4D4",
+                    marginTop: "0.125rem",
+                  }}
+                >
+                  Total
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Container - Always show two panels */}
+        {/* Main Container */}
         <div
-          className="grid grid-cols-1 lg:grid-cols-5 gap-6"
-          style={{ height: "calc(100vh - 280px)", minHeight: "500px" }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+            gap: "1.5rem",
+            height: "calc(100vh - 280px)",
+            minHeight: "500px",
+          }}
         >
-          {/* Left Panel: Notification List */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col shadow-xl">
-            <div className="p-5 border-b border-neutral-200 bg-gradient-to-r from-amber-50 to-orange-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-neutral-900">Inbox</h3>
+          <style>{`
+            @media (min-width: 1024px) {
+              .grid-container {
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+              }
+              .left-panel {
+                grid-column: span 2 / span 2 !important;
+              }
+              .right-panel {
+                grid-column: span 3 / span 3 !important;
+              }
+            }
+          `}</style>
+
+          <div
+            className="grid-container"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+              gap: "1.5rem",
+              height: "100%",
+            }}
+          >
+            {/* Left Panel: Notification List */}
+            <div
+              className="left-panel"
+              style={{
+                backgroundColor: "white",
+                borderRadius: "1rem",
+                border: "1px solid #E5E5E5",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "1.25rem",
+                  borderBottom: "1px solid #FDE68A",
+                  background: "#FFFBEB",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <Sparkles
+                      style={{
+                        width: "1.25rem",
+                        height: "1.25rem",
+                        color: "#F4C430",
+                      }}
+                    />
+                    <h3
+                      style={{
+                        fontSize: "1.125rem",
+                        fontWeight: "600",
+                        color: "#171717",
+                        margin: 0,
+                      }}
+                    >
+                      Inbox
+                    </h3>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: "600",
+                      padding: "0.25rem 0.75rem",
+                      backgroundColor: "#F4C430",
+                      borderRadius: "9999px",
+                      color: "white",
+                      boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    {notifications.length} messages
+                  </span>
                 </div>
-                <span className="text-xs px-3 py-1 bg-amber-100 rounded-full text-amber-700 border border-amber-200">
-                  {notifications.length} messages
-                </span>
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {notifications.length === 0 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      padding: "2rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "5rem",
+                        height: "5rem",
+                        backgroundColor: "#FEF9C3",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: "1rem",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <Bell
+                        style={{
+                          width: "2.5rem",
+                          height: "2.5rem",
+                          color: "#F4C430",
+                        }}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "1.125rem",
+                        fontWeight: "600",
+                        color: "#171717",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      All caught up!
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "0.875rem",
+                        fontWeight: "400",
+                        color: "#737373",
+                        textAlign: "center",
+                        margin: 0,
+                      }}
+                    >
+                      No notifications yet
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ padding: "0.75rem" }}>
+                    {notifications.map((n) => (
+                      <div
+                        key={n.id_notification}
+                        onClick={() => handleSelect(n)}
+                        onMouseEnter={() => setHoveredId(n.id_notification)}
+                        onMouseLeave={() => setHoveredId(null)}
+                        style={{
+                          cursor: "pointer",
+                          padding: "1rem",
+                          borderRadius: "0.75rem",
+                          transition: "all 0.2s",
+                          position: "relative",
+                          marginBottom: "0.5rem",
+                          backgroundColor: getNotificationBg(n),
+                          border:
+                            selected?.id_notification === n.id_notification ||
+                            !n.is_read
+                              ? "1px solid #FDE68A"
+                              : "1px solid #F5F5F5",
+                          boxShadow:
+                            selected?.id_notification === n.id_notification
+                              ? "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+                              : hoveredId === n.id_notification
+                              ? "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                              : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "0.75rem",
+                          }}
+                        >
+                          <div style={{ flexShrink: 0, marginTop: "0.375rem" }}>
+                            {n.is_read ? (
+                              <CheckCircle2
+                                style={{
+                                  width: "1.25rem",
+                                  height: "1.25rem",
+                                  color: "#10B981",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "1.25rem",
+                                  height: "1.25rem",
+                                  backgroundColor: "#F4C430",
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  boxShadow:
+                                    "0 4px 6px -1px rgba(234, 179, 8, 0.4)",
+                                }}
+                              >
+                                <Circle
+                                  style={{
+                                    width: "0.625rem",
+                                    height: "0.625rem",
+                                    color: "white",
+                                    fill: "white",
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                fontWeight: "500",
+                                marginBottom: "0.375rem",
+                                lineHeight: 1.625,
+                                color: n.is_read ? "#737373" : "#171717",
+                                overflow: "hidden",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                margin: 0,
+                                marginBottom: "0.375rem",
+                              }}
+                            >
+                              {n.title}
+                            </p>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  fontWeight: "400",
+                                  color: "#A3A3A3",
+                                }}
+                              >
+                                {formatRelativeTime(n.date)}
+                              </span>
+                              {!n.is_read && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    fontWeight: "600",
+                                    padding: "0.125rem 0.5rem",
+                                    backgroundColor: "#F4C430",
+                                    color: "white",
+                                    borderRadius: "9999px",
+                                    boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+                                  }}
+                                >
+                                  New
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {selected?.id_notification === n.id_notification && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: 0,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              width: "0.375rem",
+                              height: "3rem",
+                              backgroundColor: "#F4C430",
+                              borderTopRightRadius: "9999px",
+                              borderBottomRightRadius: "9999px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full p-8">
-                  <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <Bell className="w-10 h-10 text-amber-600" />
-                  </div>
-                  <p className="text-neutral-900 mb-1">All caught up!</p>
-                  <p className="text-sm text-neutral-600 text-center">
-                    No notifications yet
-                  </p>
-                </div>
-              ) : (
-                <div className="p-3 space-y-2">
-                  {notifications.map((n) => (
+            {/* Right Panel: Notification Detail */}
+            <div
+              className="right-panel"
+              style={{
+                backgroundColor: "white",
+                borderRadius: "1rem",
+                border: "1px solid #E5E5E5",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              {selected ? (
+                <>
+                  <div
+                    style={{
+                      padding: "2rem",
+                      borderBottom: selected.is_read
+                        ? "1px solid #F5F5F5"
+                        : "1px solid #FDE68A",
+                      background: selected.is_read ? "#FAFAFA" : "#FFFBEB",
+                    }}
+                  >
                     <div
-                      key={n.id_notification}
-                      onClick={() => handleSelect(n)}
-                      className={`cursor-pointer p-4 rounded-xl transition-all duration-200 relative group ${
-                        selected?.id_notification === n.id_notification
-                          ? "bg-gradient-to-r from-amber-50 to-orange-50 shadow-lg border border-amber-200"
-                          : n.is_read
-                          ? "bg-white hover:shadow-md border border-neutral-100 hover:border-amber-200"
-                          : "bg-amber-50/50 hover:bg-amber-50 border border-amber-200 hover:shadow-md"
-                      }`}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "1rem",
+                        marginBottom: "1rem",
+                      }}
                     >
-                      <div className="flex items-start gap-3">
-                        {/* Status Indicator */}
-                        <div className="flex-shrink-0 mt-1.5">
-                          {n.is_read ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      <div
+                        style={{
+                          flexShrink: 0,
+                          width: "3.5rem",
+                          height: "3.5rem",
+                          borderRadius: "1rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                          backgroundColor: selected.is_read
+                            ? "#F5F5F5"
+                            : "#F4C430",
+                        }}
+                      >
+                        <Bell
+                          style={{
+                            width: "1.75rem",
+                            height: "1.75rem",
+                            color: selected.is_read ? "#737373" : "white",
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h2
+                          style={{
+                            fontSize: "1.5rem",
+                            fontWeight: "700",
+                            color: "#171717",
+                            marginBottom: "0.5rem",
+                            lineHeight: 1.33,
+                            margin: 0,
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          {selected.title}
+                        </h2>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.75rem",
+                            fontSize: "0.875rem",
+                            fontWeight: "400",
+                            color: "#737373",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.375rem",
+                            }}
+                          >
+                            <Clock
+                              style={{
+                                width: "1rem",
+                                height: "1rem",
+                                color: "#F4C430",
+                              }}
+                            />
+                            <span style={{ fontWeight: "400" }}>
+                              {new Date(selected.date).toLocaleDateString(
+                                "en-US",
+                                {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                          </div>
+                          {selected.is_read ? (
+                            <span
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.375rem",
+                                padding: "0.25rem 0.75rem",
+                                backgroundColor: "#D1FAE5",
+                                color: "#047857",
+                                borderRadius: "9999px",
+                                border: "1px solid #A7F3D0",
+                                fontSize: "0.75rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              <CheckCircle2
+                                style={{ width: "1rem", height: "1rem" }}
+                              />
+                              Read
+                            </span>
                           ) : (
-                            <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-md">
-                              <Circle className="w-2.5 h-2.5 text-white fill-white" />
-                            </div>
+                            <span
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.375rem",
+                                padding: "0.25rem 0.75rem",
+                                backgroundColor: "#F4C430",
+                                color: "white",
+                                borderRadius: "9999px",
+                                boxShadow:
+                                  "0 4px 6px -1px rgba(234, 179, 8, 0.4)",
+                                fontSize: "0.75rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              <Circle
+                                style={{
+                                  width: "1rem",
+                                  height: "1rem",
+                                  fill: "currentColor",
+                                }}
+                              />
+                              Unread
+                            </span>
                           )}
                         </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-sm mb-1.5 line-clamp-2 ${
-                              n.is_read
-                                ? "text-neutral-600"
-                                : "text-neutral-900"
-                            }`}
-                          >
-                            {n.title}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-neutral-400">
-                              {formatRelativeTime(n.date)}
-                            </span>
-                            {!n.is_read && (
-                              <span className="text-xs px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
-                                New
-                              </span>
-                            )}
-                          </div>
-                        </div>
                       </div>
-
-                      {/* Hover indicator */}
-                      {selected?.id_notification === n.id_notification && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-amber-400 to-orange-500 rounded-r-full" />
-                      )}
                     </div>
-                  ))}
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: "auto", padding: "2rem" }}>
+                    <div style={{ maxWidth: "48rem" }}>
+                      <p
+                        style={{
+                          fontSize: "1rem",
+                          fontWeight: "400",
+                          color: "#404040",
+                          whiteSpace: "pre-line",
+                          lineHeight: 1.625,
+                          margin: 0,
+                        }}
+                      >
+                        {selected.content}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    padding: "3rem",
+                  }}
+                >
+                  <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+                    <div
+                      style={{
+                        width: "7rem",
+                        height: "7rem",
+                        backgroundColor: "#FEF9C3",
+                        borderRadius: "1.5rem",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <Bell
+                        style={{
+                          width: "3.5rem",
+                          height: "3.5rem",
+                          color: "#F4C430",
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-0.5rem",
+                        right: "-0.5rem",
+                        width: "2.5rem",
+                        height: "2.5rem",
+                        backgroundColor: "#F4C430",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "white",
+                          fontWeight: "700",
+                          fontSize: "1.125rem",
+                        }}
+                      >
+                        !
+                      </span>
+                    </div>
+                  </div>
+                  <h3
+                    style={{
+                      fontSize: "1.25rem",
+                      fontWeight: "700",
+                      color: "#171717",
+                      marginBottom: "0.5rem",
+                      margin: 0,
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    No notification selected
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "0.875rem",
+                      fontWeight: "400",
+                      color: "#737373",
+                      textAlign: "center",
+                      maxWidth: "24rem",
+                      marginBottom: "1rem",
+                      lineHeight: 1.625,
+                      margin: 0,
+                      marginBottom: "1rem",
+                    }}
+                  >
+                    Choose a notification from the inbox to view its full
+                    details and content
+                  </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      fontSize: "0.75rem",
+                      fontWeight: "600",
+                      padding: "0.5rem 1rem",
+                      backgroundColor: "#FEF9C3",
+                      color: "#A16207",
+                      borderRadius: "9999px",
+                      border: "1px solid #FDE68A",
+                    }}
+                  >
+                    <Sparkles
+                      style={{ width: "0.875rem", height: "0.875rem" }}
+                    />
+                    <span>Select a message to get started</span>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Right Panel: Notification Detail */}
-          <div className="lg:col-span-3 bg-white rounded-2xl border border-neutral-200 overflow-hidden flex flex-col shadow-xl">
-            {selected ? (
-              <>
-                {/* Detail Header */}
-                <div
-                  className={`p-8 border-b ${
-                    selected.is_read
-                      ? "border-neutral-100 bg-neutral-50"
-                      : "border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div
-                      className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
-                        selected.is_read
-                          ? "bg-neutral-100"
-                          : "bg-gradient-to-br from-amber-400 to-orange-500"
-                      }`}
-                    >
-                      <Bell
-                        className={`w-7 h-7 ${
-                          selected.is_read ? "text-neutral-600" : "text-white"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-2xl text-neutral-900 mb-2">
-                        {selected.title}
-                      </h2>
-                      <div className="flex items-center gap-3 text-sm text-neutral-600">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-4 h-4 text-amber-600" />
-                          <span>
-                            {new Date(selected.date).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </span>
-                        </div>
-                        {selected.is_read ? (
-                          <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Read
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full">
-                            <Circle className="w-4 h-4 fill-current" />
-                            Unread
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detail Content */}
-                <div className="flex-1 overflow-y-auto p-8">
-                  <div className="max-w-3xl">
-                    <p className="text-neutral-700 whitespace-pre-line leading-relaxed">
-                      {selected.content}
-                    </p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full p-12">
-                <div className="relative mb-6">
-                  <div className="w-28 h-28 bg-gradient-to-br from-amber-100 to-orange-100 rounded-3xl flex items-center justify-center shadow-lg">
-                    <Bell className="w-14 h-14 text-amber-600" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white">!</span>
-                  </div>
-                </div>
-                <h3 className="text-neutral-900 mb-2">
-                  No notification selected
-                </h3>
-                <p className="text-sm text-neutral-600 text-center max-w-sm mb-4">
-                  Choose a notification from the inbox to view its full details
-                  and content
-                </p>
-                <div className="flex items-center gap-2 text-xs px-4 py-2 bg-amber-100 text-amber-700 rounded-full border border-amber-200">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Select a message to get started</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

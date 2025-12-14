@@ -781,10 +781,14 @@ export default function App() {
                                           user.imageURL
                                         }
                                         alt={user.user_name}
-                                        className="w-10 h-10 rounded-full border-2 border-slate-200"
+                                        onClick={() => handleTouchUser(user.user_name)}
+                                        className="w-10 h-10 rounded-full border-2 border-slate-200 cursor-pointer"
                                       />
                                     ) : (
-                                      <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
+                                      <div 
+                                        onClick={() => handleTouchUser(user.user_name)}
+                                        className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer"
+                                      >
                                         <span className="text-xs text-slate-600 font-medium">
                                           {user.user_name
                                             .charAt(0)
@@ -820,10 +824,14 @@ export default function App() {
                                           owner.imageURL
                                         }
                                         alt={owner.user_name}
-                                        className="w-12 h-12 rounded-full border-2 border-slate-200"
+                                        className="w-12 h-12 rounded-full border-2 border-slate-200 cursor-pointer"
+                                        onClick={() => handleTouchUser(owner.user_name)}
                                       />
                                     ) : (
-                                      <div className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center">
+                                      <div 
+                                        onClick={() => handleTouchUser(owner.user_name)} 
+                                        className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer"
+                                      >
                                         <span className="text-sm text-slate-600 font-medium">
                                           {owner.user_name
                                             .charAt(0)
