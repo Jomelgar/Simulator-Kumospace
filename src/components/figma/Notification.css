@@ -1,0 +1,67 @@
+.dashboardRoot {
+  all: initial;
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #fafafa;
+  padding: 2rem;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  box-sizing: border-box;
+}
+
+.dashboardRoot *,
+.dashboardRoot *::before,
+.dashboardRoot *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Reset específico para elementos dentro del dashboard */
+.dashboardRoot h1,
+.dashboardRoot h2,
+.dashboardRoot h3,
+.dashboardRoot h4,
+.dashboardRoot p,
+.dashboardRoot span,
+.dashboardRoot div {
+  all: unset;
+  display: block;
+  box-sizing: border-box;
+}
+
+.dashboardRoot h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #171717;
+}
+
+.dashboardRoot h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.33;
+  color: #171717;
+}
+
+.dashboardRoot h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #171717;
+}
+
+.dashboardRoot p {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #525252;
+}
+
+.dashboardRoot span {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
