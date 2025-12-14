@@ -3,7 +3,7 @@ import {
   getNotificationUser,
   readNotification,
 } from "../../api/notificationApi";
-import { Bell, Clock, Mail, Circle } from "lucide-react";
+import { Bell, Clock, Mail, Circle, CheckCircle2 } from "lucide-react";
 
 interface Notification {
   id_notification: string;
