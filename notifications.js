@@ -26,12 +26,6 @@ const users = new Map();
 
     console.log(`Usuario conectado: ${rocketUserId}`);
 
-    ws.send(JSON.stringify({ 
-      type: "connection",
-      message: "Conexión establecida con chat correctamente", 
-      userId: rocketUserId 
-    }));
-
     ws.on("message", (msg) => {
       try {
         const data = JSON.parse(msg.toString());
@@ -80,7 +74,7 @@ app.post('/rocketchat-webhook', async (req, res) => {
       console.log(`Usuario ${dmData.sentTo} no conectado`);
     }
 
-    await notificationService.createNotification(dmData.sentTo,req.body?.user_name,req.body?.text);
+    await notificationService.createNotification(dmData?.sentTo,req.body?.user_name,req.body?.text);
     res.sendStatus(200);
 
   } catch (err) {
