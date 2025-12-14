@@ -79,7 +79,7 @@ export default function NotificationDashboard() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Bell className="w-6 h-6 text-white" />
+                  <Bell className="w-6 h-6 text-black" />
                 </div>
                 <div>
                   <h1 className="text-neutral-900 mb-0.5">
@@ -93,11 +93,11 @@ export default function NotificationDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center px-6 py-3 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl shadow-lg shadow-amber-500/30">
-                <div className="text-2xl text-white">{unreadCount}</div>
+                <div className="text-2xl text-black">{unreadCount}</div>
                 <div className="text-xs text-amber-50 mt-0.5">Unread</div>
               </div>
               <div className="text-center px-6 py-3 bg-gradient-to-br from-neutral-800 to-neutral-900 rounded-xl shadow-lg">
-                <div className="text-2xl text-white">
+                <div className="text-2xl text-black">
                   {notifications.length}
                 </div>
                 <div className="text-xs text-neutral-300 mt-0.5">Total</div>
