@@ -1,7 +1,7 @@
-const { DataTypes }=require("sequelize");
-const sequelize=require("../config/database");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const User = sequelize.define("User",{
+const User = sequelize.define("User", {
     id_user: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -29,11 +29,11 @@ const User = sequelize.define("User",{
         type: DataTypes.STRING,
         allowNull: false
     },
-    imageURL:{
+    imageURL: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    status : {
+    status: {
         type: DataTypes.STRING,
         defaultValue: 'online'
     },
@@ -53,7 +53,7 @@ const User = sequelize.define("User",{
         allowNull: true,
         unique: true
     },
-    description : {
+    description: {
         type: DataTypes.STRING
     },
     phone: {
@@ -72,7 +72,11 @@ const User = sequelize.define("User",{
         type: DataTypes.TEXT,
         allowNull: true
     },
-    joined_at : {
+    skills: {
+        type: DataTypes.JSON,
+        allowNull: true
+    },
+    joined_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
     },

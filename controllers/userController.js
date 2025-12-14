@@ -1,7 +1,7 @@
 const User = require("../models/user");
-const { register, login } = require("../externals/chatservice");
+const { register, login, change_email } = require("../externals/chatservice");
 const bcrypt = require("bcryptjs");
-const { decodeToken } = require("../middleware/decodeToken"); 
+const { decodeToken } = require("../middleware/decodeToken");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -80,13 +80,26 @@ exports.updateUser = async (request, response) => {
         const { id_user } = request.params;
         // Combine fields from both requirements: Profile editing + Status updates
         const {
-            first_name, last_name, email, phone, location, title, about, // Profile fields
+            first_name, last_name, email, phone, location, title, about, skills, // Profile fields
             status, description, currentLocation, locationType // Status fields
         } = request.body;
 
         const updateUser = await User.findByPk(id_user);
         if (!updateUser) {
             return response.status(404).json({ message: "User not found." });
+        }
+
+        // Logic to update email in chat service if it changes
+        if (email && email !== updateUser.email && updateUser.chatUserId) {
+            try {
+                const emailChanged = await change_email(updateUser.chatUserId, email);
+                if (!emailChanged) {
+                    console.error("Failed to update email in chat service");
+                    // Optionally handle partial failure or just log it
+                }
+            } catch (chatError) {
+                console.error("Error calling change_email:", chatError);
+            }
         }
 
         let newImageUrl = updateUser.imageURL;
@@ -100,10 +113,21 @@ exports.updateUser = async (request, response) => {
             }
         }
 
+        let parsedSkills = skills;
+        if (typeof skills === 'string') {
+            try {
+                parsedSkills = JSON.parse(skills);
+            } catch (error) {
+                console.error("Error parsing skills:", error);
+                parsedSkills = [];
+            }
+        }
+
         await updateUser.update({
             first_name, last_name, email, phone, location, title, about,
             status, description, currentLocation, locationType,
-            imageURL: newImageUrl
+            imageURL: newImageUrl,
+            skills: parsedSkills
         });
         response.json(updateUser);
     } catch (error) {
@@ -111,18 +135,18 @@ exports.updateUser = async (request, response) => {
     }
 }
 
-exports.getChat = async (req,res) => {
+exports.getChat = async (req, res) => {
     const token = req.cookies?.JWT;
     if (!token) {
-    return res
-      .status(401)
-      .json({ status: "No token provided", message: "No puedes acceder" });
+        return res
+            .status(401)
+            .json({ status: "No token provided", message: "No puedes acceder" });
     }
-    
+
     const decode = decodeToken(token);
-    if(!decode) return res
-      .status(401)
-      .json({ status: "Invalid token", message: "No puedes acceder" });
-    
-    return res.status(200).json({authToken: decode.chatAuthToken , userId: decode.chatUserId})
+    if (!decode) return res
+        .status(401)
+        .json({ status: "Invalid token", message: "No puedes acceder" });
+
+    return res.status(200).json({ authToken: decode.chatAuthToken, userId: decode.chatUserId })
 }
