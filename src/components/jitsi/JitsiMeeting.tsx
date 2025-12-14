@@ -5,6 +5,7 @@ import { JAAS_APP_ID, JITSI_DOMAIN } from '../../config/JitsiConfig';
 interface JitsiMeetingProps {
     roomName: string;
     displayName: string;
+    avatarUrl?: string;
     onMeetingEnd: () => void;
     isVisible?: boolean;
     visibleContainerId?: string;
@@ -23,6 +24,7 @@ declare global {
 const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
     roomName,
     displayName,
+    avatarUrl,
     onMeetingEnd,
     isVisible = true,
     visibleContainerId,
@@ -120,10 +122,11 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                     parentNode: container,
                     userInfo: {
                         displayName: displayName,
+                        avatarUrl: avatarUrl,
                     },
                     configOverwrite: {
                         startWithAudioMuted: true,
-                        startWithVideoMuted: false,
+                        startWithVideoMuted: true,
                         prejoinPageEnabled: false,
                         prejoinConfig: {
                             enabled: false,
@@ -180,11 +183,24 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 }
 
                 api.executeCommand('displayName', displayName);
+                
+                if (avatarUrl) {
+                    api.executeCommand('avatarUrl', avatarUrl);
+                }
 
                 api.addEventListener('videoConferenceJoined', () => {
                     if (isMounted) {
                         console.log('Usuario se unió a la conferencia');
                         setIsLoading(false);
+                        setTimeout(() => {
+                            if (avatarUrl && jitsiApiRef.current) {
+                                try {
+                                    jitsiApiRef.current.executeCommand('avatarUrl', avatarUrl);
+                                } catch (e) {
+                                    console.log('No se pudo actualizar avatar:', e);
+                                }
+                            }
+                        }, 500);
                     }
                 });
 
@@ -251,7 +267,21 @@ const JitsiMeeting: React.FC<JitsiMeetingProps> = ({
                 onApiReady(null);
             }
         };
-    }, [roomName, displayName]);
+    }, [roomName, displayName, avatarUrl]);
+
+    useEffect(() => {
+        if (jitsiApiRef.current && avatarUrl) {
+            try {
+                setTimeout(() => {
+                    if (jitsiApiRef.current) {
+                        jitsiApiRef.current.executeCommand('avatarUrl', avatarUrl);
+                    }
+                }, 1000);
+            } catch (e) {
+                console.error('Error al actualizar avatar:', e);
+            }
+        }
+    }, [avatarUrl]);
 
     const handleClose = () => {
         if (jitsiApiRef.current) {

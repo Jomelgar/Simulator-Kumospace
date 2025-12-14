@@ -269,6 +269,18 @@ export default function App() {
     }
   };
 
+  const leaveToDashboard = () => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "leaveToDashboard",
+          userId: currentUser.id_user,
+        })
+      );
+    }
+    navigate("/");
+  };
+
   const panelRef = useRef(null);
   const isChatResizing = useRef(false);
 
@@ -427,7 +439,7 @@ export default function App() {
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
           <div
             className="flex items-center gap-3 cursor-pointer"
-            onClick={() => navigate("/")}
+            onClick={leaveToDashboard}
           >
             <div className="flex items-center gap-2 bg-neutral-900 px-3 py-2 rounded-lg border border-neutral-800">
               <Hexagon className="w-6 h-6 text-yellow-500" />
@@ -630,6 +642,13 @@ export default function App() {
                       const isOwnerBusy = owner && owner.status === "busy";
                       const isOwnerInactive =
                         owner && owner.status === "inactive";
+                      const isOwnerInPrivateRoom = owner && 
+                        owner.currentLocation === room.id_private_room && 
+                        owner.locationType === "private";
+                      const isOwnerActive = owner && owner.status === "online";
+                      const isLockedAndOwnerActiveInRoom = room.is_locked && 
+                        isOwnerActive && 
+                        isOwnerInPrivateRoom;
 
                       const canEnter =
                         isOwner ||
@@ -647,15 +666,21 @@ export default function App() {
                       if (isCurrentUserHere) {
                         borderColor = "border-yellow-400";
                         bgColor = "bg-yellow-50";
-                      } else if (isOwner && !isCurrentUserHere) {
-                        borderColor = "border-slate-600";
-                        bgColor = "bg-slate-100";
+                      } else if (isLockedAndOwnerActiveInRoom) {
+                        borderColor = "border-red-600";
+                        bgColor = "bg-red-50";
                       } else if (isOwnerBusy) {
                         borderColor = "border-red-600";
                         bgColor = "bg-red-50";
                       } else if (isOwnerInactive) {
                         borderColor = "border-gray-400";
                         bgColor = "bg-gray-100";
+                      } else if (room.is_locked) {
+                        borderColor = "border-gray-400";
+                        bgColor = "bg-gray-100";
+                      } else if (isOwner && !isCurrentUserHere) {
+                        borderColor = "border-slate-600";
+                        bgColor = "bg-slate-100";
                       } else if (isOwnerInSharedSpace) {
                         borderColor = "border-slate-400";
                         bgColor = "bg-slate-100";
@@ -682,37 +707,7 @@ export default function App() {
                           {/* ---------- HEADER (nombre + estado + candado) ---------- */}
                           <div className="flex items-start justify-between ">
                             <div className="space-y-1 overflow-y-auto">
-                              {usersInOffice.length > 0
-                                ? usersInOffice.map((user) => (
-                                    <div
-                                      key={`info-${user.id_user}`}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <span className="text-sm text-slate-400 tracking-wide">
-                                        {user.user_name}
-                                      </span>
-                                      <span
-                                        className={`text-sm ${
-                                          user.status === "online"
-                                            ? "text-green-500"
-                                            : user.status === "busy"
-                                            ? "text-red-500"
-                                            : user.status === "inactive"
-                                            ? "text-gray-500"
-                                            : "text-yellow-500"
-                                        }`}
-                                      >
-                                        {user.status === "online"
-                                          ? "Activo"
-                                          : user.status === "busy"
-                                          ? "Ocupado"
-                                          : user.status === "inactive"
-                                          ? "Inactivo"
-                                          : "Ausente"}
-                                      </span>
-                                    </div>
-                                  ))
-                                : owner && (
+                              {owner && (
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm text-slate-400 tracking-wide">
                                         {owner.user_name}
@@ -1082,6 +1077,7 @@ export default function App() {
           <JitsiMeeting
             roomName={getMeetingRoomName()}
             displayName={currentUser?.user_name}
+            avatarUrl={currentUser?.imageURL ? import.meta.env.VITE_API_BASE_URL + currentUser.imageURL : undefined}
             onMeetingEnd={handleMeetingEnd}
             isVisible={isInMeeting}
             visibleContainerId="jitsi-visible-container"
