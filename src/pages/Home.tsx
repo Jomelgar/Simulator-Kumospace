@@ -97,6 +97,8 @@ export default function App() {
   const [sharedOrder, setSharedOrder] = useState<Record<number, number>>({});
   const [chatWidth, setChatWidth] = useState(window.innerWidth * 0.3);
   const { hiveId } = useParams();
+  const connectingRef = useRef<boolean>(false); // 🟢 Evita conexiones múltiples
+  const reconnectRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     verifyHive();
@@ -114,6 +116,9 @@ export default function App() {
 
   const init = async () => {
     try {
+      if (connectingRef.current) return;
+      connectingRef.current = true;
+
       const response = await decodeToken();
       if (response === null) return;
 
@@ -211,8 +216,18 @@ export default function App() {
           if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
         }
       };
+      
+      ws.onclose = () => {
+        console.warn("WS cerrado, reintentando...");
+        connectingRef.current = false;
 
-      ws.onclose = () => console.log("WebSocket disconnected");
+        if (!reconnectRef.current) {
+          reconnectRef.current = setTimeout(() => {
+            reconnectRef.current = null;
+            init();
+          }, 2000);
+        }
+      };
     } catch (error) {
       console.error(error);
     }
