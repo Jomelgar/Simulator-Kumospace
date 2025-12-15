@@ -117,59 +117,59 @@ async function loadHiveUsers(id_hive) {
           }
           return;
         case "setHive":
-          ws.hiveID = parseInt(data.id_hive);
-          ws.currentUserID = data.user.id_user;
-          if(!hive[data.id_hive]){
-            const usersRedis = await redis.get(data.id_hive);
-            let usersList = usersRedis ? JSON.parse(usersRedis) : [];
-            const uniqueUsers = [];
-            const seenIds = new Set();
-            const connectedUserIds = new Set();
-            
-            server.clients.forEach(client => {
-              if (client.readyState === 1 && client.hiveID === parseInt(data.id_hive) && client.currentUserID) {
-                connectedUserIds.add(client.currentUserID);
-              }
-            });
-            
-            for (const user of usersList) {
-              if (!seenIds.has(user.id_user)) {
-                seenIds.add(user.id_user);
-                const isConnected = connectedUserIds.has(user.id_user);
-                uniqueUsers.push({
-                  ...user,
-                  status: isConnected ? "online" : "inactive"
-                });
-              }
+        ws.hiveID = parseInt(data.id_hive);
+        ws.currentUserID = data.user.id_user;
+              
+        if (!hive[data.id_hive]) {
+          const usersRedis = await redis.get(data.id_hive);
+          let usersList = usersRedis ? JSON.parse(usersRedis) : [];
+          const uniqueUsers = [];
+          const seenIds = new Set();
+          const connectedUserIds = new Set();
+        
+          server.clients.forEach(client => {
+            if (client.readyState === 1 && client.hiveID === parseInt(data.id_hive) && client.currentUserID) {
+              connectedUserIds.add(client.currentUserID);
             }
-            hive[data.id_hive] = {
-              users: uniqueUsers,
-              private_rooms: [],
-              work_rooms: []
+          });
+        
+          for (const user of usersList) {
+            if (!seenIds.has(user.id_user)) {
+              seenIds.add(user.id_user);
+              const isConnected = connectedUserIds.has(user.id_user);
+              uniqueUsers.push({
+                ...user,
+                status: isConnected ? "online" : "inactive"
+              });
             }
-            await redis.set(data.id_hive, JSON.stringify(hive[data.id_hive].users));
           }
-          const newUser = data.user;
-          const thisHive = hive[data.id_hive]
-          const found = thisHive.users.find(u => u.id_user === newUser.id_user);
-          if(!found){
-            const privateRoom = await getPrivateRoomOfUser(ws.hiveID,ws.currentUserID);
-            const privateRoomID = privateRoom.id_private_room;
-            thisHive.users.push({...newUser, 
-              currentLocation: privateRoomID, 
-              locationType: "private", 
-              status: "online"
-            });
-            await redis.set(data.id_hive, JSON.stringify(thisHive.users));
-          } else {
-            const privateRoom = await getPrivateRoomOfUser(ws.hiveID,ws.currentUserID);
-            const privateRoomID = privateRoom.id_private_room;
-            found.currentLocation = privateRoomID;
-            found.locationType = "private";
-            found.status = "online";
-            await redis.set(data.id_hive, JSON.stringify(thisHive.users));
-          }
-          break;
+        
+          hive[data.id_hive] = {
+            users: uniqueUsers,
+            private_rooms: [],
+            work_rooms: []
+          };
+          await redis.set(data.id_hive, JSON.stringify(hive[data.id_hive].users));
+        }
+      
+        const newUser = data.user;
+        const thisHive = hive[data.id_hive];
+        const found = thisHive.users.find(u => u.id_user === newUser.id_user);
+      
+        if (!found) {
+          const privateRoom = await getPrivateRoomOfUser(ws.hiveID, ws.currentUserID);
+          const privateRoomID = privateRoom.id_private_room;
+          thisHive.users.push({
+            ...newUser,
+            currentLocation: privateRoomID,
+            locationType: "private",
+            status: "online"
+          });
+        } else {
+          found.status = "online";
+        }
+        await redis.set(data.id_hive, JSON.stringify(thisHive.users));
+        break;
         case "enterWorkspace":
           await handleEnterWorkspace(
             ws.hiveID,
@@ -198,7 +198,8 @@ async function loadHiveUsers(id_hive) {
         case "leaveToDashboard":
           await handleLeaveToDashboard(
             ws.hiveID,
-            parseInt(data.userId));
+            parseInt(data.userId)
+          );
           break;
         default:
           console.log("Servidor fue a default");
@@ -209,21 +210,6 @@ async function loadHiveUsers(id_hive) {
 
     ws.on("close", async() => {
       console.log("Cliente desconectado");
-      if(ws.currentUserID && hive[ws.hiveID]){
-        const disconnectedUser = hive[ws.hiveID].users.find(u => u.id_user === ws.currentUserID);
-        if(disconnectedUser){
-          disconnectedUser.status = "inactive";
-          if(disconnectedUser.locationType === "shared"){
-            const privateRoom = await getPrivateRoomOfUser(ws.hiveID, ws.currentUserID);
-            if(privateRoom){
-              disconnectedUser.currentLocation = privateRoom.id_private_room;
-              disconnectedUser.locationType = "private";
-            }
-          }
-          await redis.set(ws.hiveID, JSON.stringify(hive[ws.hiveID].users));
-          broadcast(ws.hiveID);
-        }
-      }
     });
   });
 })();

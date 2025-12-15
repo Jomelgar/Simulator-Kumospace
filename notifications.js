@@ -47,7 +47,7 @@ const users = new Map();
 
 app.post('/rocketchat-webhook', async (req, res) => {
   try {
-    const token = users.get(req.body?.user_id)?.authToken;
+    const token = await users.get(req.body?.user_id)?.authToken;
     const dmData = await sendDMWebhook(
       {
         channel_id: req.body?.channel_id,
