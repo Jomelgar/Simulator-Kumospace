@@ -1,7 +1,7 @@
 import { LayoutDashboard, User, LogOutIcon, MessageCircle, Bell, BellRing } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getNews } from "../../api/notificationApi";
-import logo from "../../asset/logo2.png";
+import logo from "../../asset/logowhite2.png";
 
 interface SidebarProps {
   activeItem: string;
@@ -15,23 +15,21 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "profile", icon: User, label: "Profile" },
     { id: "chat", icon: MessageCircle, label: "Chat" },
-    { id: "notification", icon: Bell, label: "Notifications"},
+    { id: "notification", icon: Bell, label: "Notifications" },
     { id: "LogOut", icon: LogOutIcon, label: "Cerrar Sesión" },
   ];
 
   const fetchNotifications = async () => {
-      try {
-        const data = await getNews();
-        if (data?.count)
-        {
-          setHasNotifications(true);
-        }else 
-        {
-          setHasNotifications(false);
-        }
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
+    try {
+      const data = await getNews();
+      if (data?.count) {
+        setHasNotifications(true);
+      } else {
+        setHasNotifications(false);
       }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
   };
 
   useEffect(() => {

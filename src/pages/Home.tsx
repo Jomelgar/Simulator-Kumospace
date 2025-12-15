@@ -21,7 +21,7 @@ import {
 import { MessageNotifications } from "../components/chat/notification";
 import axios from "axios";
 import Chat from "../components/chat/Chat";
-import {getRID} from "../components/chat/axios";
+import { getRID } from "../components/chat/axios";
 import JitsiMeeting from "../components/jitsi/JitsiMeeting";
 import { decodeToken } from "../api/authApi";
 import { verifyHiveForUser } from "../api/hiveApi";
@@ -147,7 +147,7 @@ export default function App() {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if(data.type === "pong"){
+        if (data.type === "pong") {
           return;
         }
 
@@ -216,7 +216,7 @@ export default function App() {
           if (updatedCurrentUser) setCurrentUser(updatedCurrentUser);
         }
       };
-      
+
       ws.onclose = () => {
         console.warn("WS cerrado, reintentando...");
         connectingRef.current = false;
@@ -234,22 +234,22 @@ export default function App() {
   };
 
   useEffect(() => {
-    if(socket){
+    if (socket) {
       const interval = setInterval(() => {
-        if(socket.readyState === WebSocket.OPEN){
-          socket.send(JSON.stringify({type: "ping"}));
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "ping" }));
         }
       }, 20000)
 
       return () => clearInterval(interval);
     }
-  }, [socket]);
+  }, [socket]);
 
 
-  const handleTouchUser = async(username:string) => {
+  const handleTouchUser = async (username: string) => {
     const response = await decodeToken();
     if (response === null) return;
-    const dataRID = await getRID(response?.payload?.user.chatUserId,response?.payload?.user.chatAuthToken,username);
+    const dataRID = await getRID(response?.payload?.user.chatUserId, response?.payload?.user.chatAuthToken, username);
     setUserChat(dataRID.rid);
   }
   const enterWorkSpace = (workspaceID: number, roomType: WorkspaceType) => {
@@ -434,7 +434,7 @@ export default function App() {
     // timeout inicial más largo para dejar estabilizar Jitsi
     const initialTimeout = setTimeout(syncState, 800);
     const interval = setInterval(syncState, 1000);
-    
+
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
@@ -491,11 +491,10 @@ export default function App() {
                     }
                   }
                 }}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  isCameraOn
-                    ? "bg-neutral-800 text-white"
-                    : "bg-black text-neutral-400"
-                }`}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isCameraOn
+                  ? "bg-neutral-800 text-white"
+                  : "bg-black text-neutral-400"
+                  }`}
                 title={isCameraOn ? "Desactivar cámara" : "Activar cámara"}
               >
                 {isCameraOn ? (
@@ -515,11 +514,10 @@ export default function App() {
                     }
                   }
                 }}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  isMicOn
-                    ? "bg-neutral-800 text-white"
-                    : "bg-black text-neutral-400"
-                }`}
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${isMicOn
+                  ? "bg-neutral-800 text-white"
+                  : "bg-black text-neutral-400"
+                  }`}
                 title={isMicOn ? "Desactivar micrófono" : "Activar micrófono"}
               >
                 {isMicOn ? (
@@ -536,13 +534,12 @@ export default function App() {
                   }
                 }}
                 disabled={!jitsiApiRef.current}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  !jitsiApiRef.current
-                    ? "bg-black text-neutral-600 cursor-not-allowed"
-                    : isSharingScreen
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${!jitsiApiRef.current
+                  ? "bg-black text-neutral-600 cursor-not-allowed"
+                  : isSharingScreen
                     ? "bg-yellow-500 text-black"
                     : "bg-black text-neutral-400"
-                }`}
+                  }`}
                 title={
                   isSharingScreen
                     ? "Dejar de compartir pantalla"
@@ -560,28 +557,27 @@ export default function App() {
               <button
                 onClick={() => {
                   if (shouldEnableVideoConference()) {
-                    if(!isChatOpen) setIsChatOpen(!isChatOpen);
+                    if (!isChatOpen) setIsChatOpen(!isChatOpen);
                     setChatWidth(0);
                     if (!isJitsiActive) {
                       setIsJitsiActive(true);
                     }
                     setIsInMeeting(!isInMeeting);
-                  }else{setChatWidth(isChatOpen? window.innerWidth * 0.3 : 0);}
+                  } else { setChatWidth(isChatOpen ? window.innerWidth * 0.3 : 0); }
                 }}
                 disabled={!shouldEnableVideoConference()}
-                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${
-                  !shouldEnableVideoConference()
-                    ? "bg-black text-neutral-600 cursor-not-allowed"
-                    : isInMeeting
+                className={`h-9 w-9 rounded flex items-center justify-center transition-colors ${!shouldEnableVideoConference()
+                  ? "bg-black text-neutral-600 cursor-not-allowed"
+                  : isInMeeting
                     ? "bg-green-600 text-white"
                     : "bg-neutral-800 text-white hover:bg-neutral-700"
-                }`}
+                  }`}
                 title={
                   !shouldEnableVideoConference()
                     ? "Necesitas 2+ personas para iniciar videoconferencia"
                     : isInMeeting
-                    ? "Ocultar videoconferencia"
-                    : "Mostrar videoconferencia"
+                      ? "Ocultar videoconferencia"
+                      : "Mostrar videoconferencia"
                 }
               >
                 <Users className="w-4 h-4" />
@@ -609,11 +605,10 @@ export default function App() {
                   ? setChatWidth(window.innerWidth * 0.3)
                   : setChatWidth(0);
               }}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                isChatOpen
-                  ? "bg-yellow-500 text-black"
-                  : "bg-white text-black border border-neutral-300"
-              }`}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${isChatOpen
+                ? "bg-yellow-500 text-black"
+                : "bg-white text-black border border-neutral-300"
+                }`}
             >
               <MessageCircle className="w-4 h-4" />
               Chat
@@ -623,9 +618,8 @@ export default function App() {
       </header>
       <div className="flex-1 flex overflow-hidden">
         <main
-          className={`flex-1 ${
-            isInMeeting ? "flex flex-col" : "overflow-auto"
-          }`}
+          className={`flex-1 ${isInMeeting ? "flex flex-col" : "overflow-auto"
+            }`}
         >
           {isInMeeting ? (
             <div className="flex-1 flex flex-col h-full">
@@ -673,12 +667,12 @@ export default function App() {
                       const isOwnerBusy = owner && owner.status === "busy";
                       const isOwnerInactive =
                         owner && owner.status === "inactive";
-                      const isOwnerInPrivateRoom = owner && 
-                        owner.currentLocation === room.id_private_room && 
+                      const isOwnerInPrivateRoom = owner &&
+                        owner.currentLocation === room.id_private_room &&
                         owner.locationType === "private";
                       const isOwnerActive = owner && owner.status === "online";
-                      const isLockedAndOwnerActiveInRoom = room.is_locked && 
-                        isOwnerActive && 
+                      const isLockedAndOwnerActiveInRoom = room.is_locked &&
+                        isOwnerActive &&
                         isOwnerInPrivateRoom;
 
                       const canEnter =
@@ -725,46 +719,43 @@ export default function App() {
                             canEnter &&
                             enterWorkSpace(room.id_private_room, "private")
                           }
-                          className={`border-2 rounded-lg p-4 transition-all ${
-                            canEnter
-                              ? "cursor-pointer"
-                              : "cursor-not-allowed opacity-60"
-                          } ${borderColor} ${bgColor} ${
-                            !isCurrentUserHere &&
+                          className={`border-2 rounded-lg p-4 transition-all ${canEnter
+                            ? "cursor-pointer"
+                            : "cursor-not-allowed opacity-60"
+                            } ${borderColor} ${bgColor} ${!isCurrentUserHere &&
                             canEnter &&
                             "hover:border-yellow-500 hover:shadow-md"
-                          }`}
+                            }`}
                         >
                           {/* ---------- HEADER (nombre + estado + candado) ---------- */}
                           <div className="flex items-start justify-between ">
                             <div className="space-y-1 overflow-y-auto">
                               {owner && (
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-slate-400 tracking-wide">
-                                        {owner.user_name}
-                                      </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-slate-400 tracking-wide">
+                                    {owner.user_name}
+                                  </span>
 
-                                      <span
-                                        className={`text-sm ${
-                                          owner.status === "online"
-                                            ? "text-green-500"
-                                            : owner.status === "busy"
-                                            ? "text-red-500"
-                                            : owner.status === "inactive"
-                                            ? "text-gray-500"
-                                            : "text-yellow-500"
-                                        }`}
-                                      >
-                                        {owner.status === "online"
-                                          ? "Activo"
-                                          : owner.status === "busy"
-                                          ? "Ocupado"
-                                          : owner.status === "inactive"
+                                  <span
+                                    className={`text-sm ${owner.status === "online"
+                                      ? "text-green-500"
+                                      : owner.status === "busy"
+                                        ? "text-red-500"
+                                        : owner.status === "inactive"
+                                          ? "text-gray-500"
+                                          : "text-yellow-500"
+                                      }`}
+                                  >
+                                    {owner.status === "online"
+                                      ? "Activo"
+                                      : owner.status === "busy"
+                                        ? "Ocupado"
+                                        : owner.status === "inactive"
                                           ? "Inactivo"
                                           : "Ausente"}
-                                      </span>
-                                    </div>
-                                  )}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             {/* Candado */}
@@ -777,11 +768,10 @@ export default function App() {
                                     "private"
                                   );
                                 }}
-                                className={`h-8 w-8 rounded flex items-center justify-center ${
-                                  room.is_locked
-                                    ? "bg-red-600 text-white"
-                                    : "bg-white border border-slate-300 text-slate-700"
-                                }`}
+                                className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked
+                                  ? "bg-red-600 text-white"
+                                  : "bg-white border border-slate-300 text-slate-700"
+                                  }`}
                               >
                                 {room.is_locked ? (
                                   <Lock className="w-3 h-3" />
@@ -793,94 +783,92 @@ export default function App() {
                           </div>
 
                           {/* ---------- ICONOS ---------- */}
-                          <div className="w-12 h-12 flex items-center justify-center mx-auto">
+                          <div className="flex items-center justify-center mx-auto flex-wrap gap-2 min-h-[3rem]">
                             {usersInOffice.length > 0
                               ? usersInOffice.map((user) => (
+                                <div
+                                  key={user.id_user}
+                                  className="group relative"
+                                >
+                                  {user.imageURL ? (
+                                    <img
+                                      src={
+                                        import.meta.env.VITE_API_BASE_URL +
+                                        user.imageURL
+                                      }
+                                      alt={user.user_name}
+                                      onClick={() => handleTouchUser(user.user_name)}
+                                      className="w-10 h-10 rounded-full border-2 border-slate-200 cursor-pointer object-cover flex-shrink-0"
+                                    />
+                                  ) : (
+                                    <div
+                                      onClick={() => handleTouchUser(user.user_name)}
+                                      className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer flex-shrink-0"
+                                    >
+                                      <span className="text-xs text-slate-600 font-medium">
+                                        {user.user_name
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
                                   <div
-                                    key={user.id_user}
-                                    className="group relative"
-                                  >
-                                    {user.imageURL ? (
-                                      <img
-                                        src={
-                                          import.meta.env.VITE_API_BASE_URL +
-                                          user.imageURL
-                                        }
-                                        alt={user.user_name}
-                                        onClick={() => handleTouchUser(user.user_name)}
-                                        className="w-10 h-10 rounded-full border-2 border-slate-200 cursor-pointer"
-                                      />
-                                    ) : (
-                                      <div 
-                                        onClick={() => handleTouchUser(user.user_name)}
-                                        className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer"
-                                      >
-                                        <span className="text-xs text-slate-600 font-medium">
-                                          {user.user_name
-                                            .charAt(0)
-                                            .toUpperCase()}
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div
-                                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                        user.status === "online"
-                                          ? "bg-green-500"
-                                          : user.status === "busy"
-                                          ? "bg-red-500"
-                                          : user.status === "inactive"
+                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${user.status === "online"
+                                      ? "bg-green-500"
+                                      : user.status === "busy"
+                                        ? "bg-red-500"
+                                        : user.status === "inactive"
                                           ? "bg-gray-400"
                                           : "bg-yellow-500"
                                       }`}
-                                    />
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                      {user.user_name}
-                                    </div>
+                                  />
+                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    {user.user_name}
                                   </div>
-                                ))
+                                </div>
+                              ))
                               : owner &&
-                                owner.currentLocation ===
-                                  room.id_private_room &&
-                                owner.locationType === "private" && (
-                                  <div className="group relative">
-                                    {owner.imageURL ? (
-                                      <img
-                                        src={
-                                          import.meta.env.VITE_API_BASE_URL +
-                                          owner.imageURL
-                                        }
-                                        alt={owner.user_name}
-                                        className="w-12 h-12 rounded-full border-2 border-slate-200 cursor-pointer"
-                                        onClick={() => handleTouchUser(owner.user_name)}
-                                      />
-                                    ) : (
-                                      <div 
-                                        onClick={() => handleTouchUser(owner.user_name)} 
-                                        className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer"
-                                      >
-                                        <span className="text-sm text-slate-600 font-medium">
-                                          {owner.user_name
-                                            .charAt(0)
-                                            .toUpperCase()}
-                                        </span>
-                                      </div>
-                                    )}
+                              owner.currentLocation ===
+                              room.id_private_room &&
+                              owner.locationType === "private" && (
+                                <div className="group relative">
+                                  {owner.imageURL ? (
+                                    <img
+                                      src={
+                                        import.meta.env.VITE_API_BASE_URL +
+                                        owner.imageURL
+                                      }
+                                      alt={owner.user_name}
+                                      className="w-12 h-12 rounded-full border-2 border-slate-200 cursor-pointer object-cover flex-shrink-0"
+                                      onClick={() => handleTouchUser(owner.user_name)}
+                                    />
+                                  ) : (
                                     <div
-                                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                                        owner.status === "online"
-                                          ? "bg-green-500"
-                                          : owner.status === "busy"
-                                          ? "bg-red-500"
-                                          : owner.status === "inactive"
+                                      onClick={() => handleTouchUser(owner.user_name)}
+                                      className="w-12 h-12 rounded-full border-2 border-slate-200 bg-slate-300 flex items-center justify-center cursor-pointer flex-shrink-0"
+                                    >
+                                      <span className="text-sm text-slate-600 font-medium">
+                                        {owner.user_name
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div
+                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${owner.status === "online"
+                                      ? "bg-green-500"
+                                      : owner.status === "busy"
+                                        ? "bg-red-500"
+                                        : owner.status === "inactive"
                                           ? "bg-gray-400"
                                           : "bg-yellow-500"
                                       }`}
-                                    />
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                      {owner.user_name}
-                                    </div>
+                                  />
+                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    {owner.user_name}
                                   </div>
-                                )}
+                                </div>
+                              )}
                           </div>
                         </div>
                       );
@@ -969,14 +957,12 @@ export default function App() {
                             !isCurrentUserHere &&
                             enterWorkSpace(room.id_room, "shared")
                           }
-                          className={`rounded-lg p-4 transition-all cursor-pointer ${
-                            room.is_locked
-                              ? "border-2 border-red-600 bg-red-50"
-                              : "border border-slate-200 bg-slate-50"
-                          } ${
-                            !isCurrentUserHere &&
+                          className={`rounded-lg p-4 transition-all cursor-pointer ${room.is_locked
+                            ? "border-2 border-red-600 bg-red-50"
+                            : "border border-slate-200 bg-slate-50"
+                            } ${!isCurrentUserHere &&
                             "hover:border-blue-500 hover:shadow-md"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -997,11 +983,10 @@ export default function App() {
                                     deleteWorkSpace(room.id_room);
                                   }}
                                   disabled={isCurrentUserHere}
-                                  className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
-                                    isCurrentUserHere
-                                      ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                  }`}
+                                  className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${isCurrentUserHere
+                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border border-slate-300 text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                    }`}
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>
@@ -1013,11 +998,10 @@ export default function App() {
                                     e.stopPropagation();
                                     lockWorkSpace(room.id_room, "shared");
                                   }}
-                                  className={`h-8 w-8 rounded flex items-center justify-center ${
-                                    room.is_locked
-                                      ? "bg-red-600 text-white"
-                                      : "bg-white border border-slate-300 text-slate-700"
-                                  }`}
+                                  className={`h-8 w-8 rounded flex items-center justify-center ${room.is_locked
+                                    ? "bg-red-600 text-white"
+                                    : "bg-white border border-slate-300 text-slate-700"
+                                    }`}
                                 >
                                   {room.is_locked ? (
                                     <Lock className="w-3 h-3" />
@@ -1120,15 +1104,15 @@ export default function App() {
                   api
                     .isAudioMuted()
                     .then((muted: boolean) => setIsMicOn(!muted))
-                    .catch(() => {});
+                    .catch(() => { });
                   api
                     .isVideoMuted()
                     .then((muted: boolean) => setIsCameraOn(!muted))
-                    .catch(() => {});
+                    .catch(() => { });
                   api
                     .isSharingScreen()
                     .then((sharing: boolean) => setIsSharingScreen(sharing))
-                    .catch(() => {});
+                    .catch(() => { });
                 }, 500);
               }
             }}
