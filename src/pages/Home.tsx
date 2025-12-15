@@ -100,6 +100,12 @@ export default function App() {
   const connectingRef = useRef<boolean>(false); // 🟢 Evita conexiones múltiples
   const reconnectRef = useRef<NodeJS.Timeout | null>(null);
 
+
+  window.addEventListener("beforeunload", (event) => {
+      leaveToDashboard(false);
+  });
+
+
   useEffect(() => {
     verifyHive();
   }, []);
@@ -220,13 +226,6 @@ export default function App() {
       ws.onclose = () => {
         console.warn("WS cerrado, reintentando...");
         connectingRef.current = false;
-
-        if (!reconnectRef.current) {
-          reconnectRef.current = setTimeout(() => {
-            reconnectRef.current = null;
-            init();
-          }, 2000);
-        }
       };
     } catch (error) {
       console.error(error);
@@ -239,7 +238,7 @@ export default function App() {
         if(socket.readyState === WebSocket.OPEN){
           socket.send(JSON.stringify({type: "ping"}));
         }
-      }, 20000)
+      }, 15000)
 
       return () => clearInterval(interval);
     }
@@ -252,7 +251,14 @@ export default function App() {
     const dataRID = await getRID(response?.payload?.user.chatUserId,response?.payload?.user.chatAuthToken,username);
     setUserChat(dataRID.rid);
   }
+
   const enterWorkSpace = (workspaceID: number, roomType: WorkspaceType) => {
+    if (!reconnectRef.current) {
+      reconnectRef.current = setTimeout(() => {
+        reconnectRef.current = null;
+        init();
+      }, 2000);
+    }
     if (socket) {
       socket.send(
         JSON.stringify({
@@ -266,6 +272,12 @@ export default function App() {
   };
 
   const lockWorkSpace = (workspaceID: number, roomType?: WorkspaceType) => {
+    if (!reconnectRef.current) {
+      reconnectRef.current = setTimeout(() => {
+        reconnectRef.current = null;
+        init();
+      }, 2000);
+    }
     if (socket) {
       socket.send(
         JSON.stringify({
@@ -278,6 +290,12 @@ export default function App() {
   };
 
   const createWorkSpace = (workspaceMaxUSERS: string) => {
+    if (!reconnectRef.current) {
+      reconnectRef.current = setTimeout(() => {
+        reconnectRef.current = null;
+        init();
+      }, 2000);
+    }
     if (socket) {
       socket.send(
         JSON.stringify({
@@ -289,6 +307,12 @@ export default function App() {
   };
 
   const deleteWorkSpace = (workspaceID: number) => {
+    if (!reconnectRef.current) {
+      reconnectRef.current = setTimeout(() => {
+        reconnectRef.current = null;
+        init();
+      }, 2000);
+    }
     if (socket) {
       socket.send(
         JSON.stringify({
@@ -300,7 +324,13 @@ export default function App() {
     }
   };
 
-  const leaveToDashboard = () => {
+  const leaveToDashboard = (exit = true) => {
+    if (!reconnectRef.current) {
+      reconnectRef.current = setTimeout(() => {
+        reconnectRef.current = null;
+        init();
+      }, 2000);
+    }
     if (socket) {
       socket.send(
         JSON.stringify({
@@ -309,7 +339,7 @@ export default function App() {
         })
       );
     }
-    navigate("/");
+    if(exit) {navigate("/");}
   };
 
   const panelRef = useRef(null);
